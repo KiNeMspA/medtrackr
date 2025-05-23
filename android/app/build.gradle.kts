@@ -8,9 +8,10 @@ plugins {
 android {
     namespace = "com.kinemspa.medtrackr"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -41,4 +42,15 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // This line ADDS the desugaring library.
+    // Make sure it's spelled correctly and uses parentheses for Kotlin DSL.
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5") // Check for the latest version
+
+// You might have other dependencies here like:
+// implementation(kotlin("stdlib"))
+// implementation("androidx.core:core-ktx:...")
+// etc.
 }
