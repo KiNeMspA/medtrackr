@@ -16,35 +16,52 @@ class MedTrackrApp extends StatelessWidget {
     return MaterialApp(
       title: 'MedTrackr',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
         useMaterial3: true,
-        scaffoldBackgroundColor: Colors.grey.shade100,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blue,
+          brightness: Brightness.light,
+        ),
+        textTheme: Theme.of(context).textTheme.apply(
+          fontFamily: 'Roboto',
+          bodyColor: Colors.black87,
+          displayColor: Colors.black87,
+        ).copyWith(
+          titleLarge: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          bodyMedium: const TextStyle(fontSize: 14),
+        ),
         appBarTheme: AppBarTheme(
-          backgroundColor: Colors.blue.shade700,
-          foregroundColor: Colors.white,
-          elevation: 2,
+          elevation: 0,
+          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+          titleTextStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onPrimaryContainer),
+        ),
+        cardTheme: CardThemeData(
+          elevation: 4,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.all(8),
+          clipBehavior: Clip.antiAlias,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          filled: true,
+          fillColor: Theme.of(context).colorScheme.surface,
+          labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
+          ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue.shade700,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
           ),
-        ),
-        cardTheme: CardThemeData(
-          elevation: 2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          margin: const EdgeInsets.all(8),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          filled: true,
-          fillColor: Colors.grey.shade50,
-        ),
-        textTheme: const TextTheme(
-          titleLarge: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-          bodyMedium: TextStyle(fontSize: 14, color: Colors.blueGrey),
         ),
       ),
       home: const HomeScreen(),

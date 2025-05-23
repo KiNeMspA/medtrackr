@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:medtrackr/models/medication.dart';
 import 'package:medtrackr/models/dosage_schedule.dart';
 import 'package:medtrackr/screens/add_medication_screen.dart';
+import 'package:medtrackr/screens/dosage_schedule_screen.dart';
+import 'package:medtrackr/screens/schedule_summary_screen.dart';
 import 'package:medtrackr/services/medication_manager.dart';
 import 'package:medtrackr/widgets/medication_card.dart';
 
@@ -26,13 +28,33 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('MedTrackr', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+        title: const Text('MedTrackr'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.calendar_today),
+            onPressed: () {
+              Navigator.push(
+                context,
+                PageRouteBuilder(
+                  pageBuilder: (context, animation, secondaryAnimation) => const ScheduleSummaryScreen(),
+                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                    return FadeTransition(opacity: animation, child: child);
+                  },
+                ),
+              );
+            },
+            tooltip: 'View Schedule Summary',
+          ),
+        ],
       ),
       body: medications.isEmpty
           ? Center(
         child: Text(
           'No medications added yet.',
-          style: TextStyle(fontSize: 18, color: Colors.blueGrey.shade400),
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       )
           : ListView.builder(
@@ -68,21 +90,36 @@ class _HomeScreenState extends State<HomeScreen> {
         onPressed: () async {
           final result = await Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => AddMedicationScreen(
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) => AddMedicationScreen(
                 onSave: (medication) {
                   MedicationManager.addMedication(medication);
                 },
               ),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                return FadeTransition(opacity: animation, child: child);
+              },
             ),
           );
-          if (result is DosageSchedule) {
-            MedicationManager.addSchedule(result);
+          if (result is Medication) {
+            print('Navigating to DosageScheduleScreen for: ${result.name}'); // Debug log
+            final schedule = await Navigator.push(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) => DosageScheduleScreen(
+                  medication: result,
+                ),
+                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+              ),
+            );
+            if (schedule is DosageSchedule) {
+              MedicationManager.addSchedule(schedule);
+            }
           }
           setState(() {});
         },
-        backgroundColor: Colors.blue.shade700,
-        foregroundColor: Colors.white,
         tooltip: 'Add Medication',
         child: const Icon(Icons.add),
       ),

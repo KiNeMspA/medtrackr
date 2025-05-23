@@ -22,13 +22,13 @@ class _DosageScheduleScreenState extends State<DosageScheduleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final volume = widget.medication.concentration != 0 ? _totalDose / widget.medication.concentration : 0.0;
+    final volume = widget.medication.concentration != 0
+        ? _totalDose / widget.medication.concentration
+        : 0.0;
     final insulinUnits = volume * 100; // U-100 syringe: 1 mL = 100 IU
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dosage Schedule', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-        backgroundColor: Colors.blue.shade700,
-        foregroundColor: Colors.white,
+        title: const Text('Dosage Schedule'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -36,22 +36,48 @@ class _DosageScheduleScreenState extends State<DosageScheduleScreen> {
           key: _formKey,
           child: ListView(
             children: [
-              _buildDropdownFormField(
-                label: 'Dosage Method',
+              DropdownButtonFormField<DosageMethod>(
                 value: _method,
-                items: DosageMethod.values,
-                itemToString: (method) => method.toString().split('.').last,
+                decoration: InputDecoration(
+                  labelText: 'Dosage Method',
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surface,
+                ),
+                items: DosageMethod.values
+                    .map((method) => DropdownMenuItem(
+                          value: method,
+                          child: Text(method.toString().split('.').last),
+                        ))
+                    .toList(),
                 onChanged: (value) => setState(() => _method = value!),
               ),
-              _buildDropdownFormField(
-                label: 'Dose Unit',
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
                 value: _doseUnit,
-                items: ['mcg', 'mg'],
-                itemToString: (unit) => unit,
+                decoration: InputDecoration(
+                  labelText: 'Dose Unit',
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surface,
+                ),
+                items: ['mcg', 'mg']
+                    .map((unit) =>
+                        DropdownMenuItem(value: unit, child: Text(unit)))
+                    .toList(),
                 onChanged: (value) => setState(() => _doseUnit = value!),
               ),
-              _buildTextFormField(
-                label: 'Total Dose ($_doseUnit)',
+              const SizedBox(height: 12),
+              TextFormField(
+                decoration: InputDecoration(
+                  labelText: 'Total Dose ($_doseUnit)',
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surface,
+                ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value!.isEmpty) return 'Enter a dose';
@@ -59,42 +85,72 @@ class _DosageScheduleScreenState extends State<DosageScheduleScreen> {
                   if (num == null || num <= 0) return 'Enter a valid number';
                   return null;
                 },
-                onChanged: (value) => setState(() => _totalDose = double.tryParse(value) ?? 0.0),
+                onChanged: (value) =>
+                    setState(() => _totalDose = double.tryParse(value) ?? 0.0),
                 onSaved: (value) => _totalDose = double.parse(value!),
               ),
+              const SizedBox(height: 12),
               Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: Text(
                     'Dose Details:\n'
-                        'Volume: ${_formatNumber(volume)} ${widget.medication.reconstitutionVolumeUnit}\n'
-                        '1mL Syringe: ${_formatNumber(insulinUnits)} IU',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.blueGrey,
-                    ),
+                    'Volume: ${_formatNumber(volume)} ${widget.medication.reconstitutionVolumeUnit}\n'
+                    '1mL Syringe: ${_formatNumber(insulinUnits)} IU',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
                   ),
                 ),
               ),
-              _buildDropdownFormField(
-                label: 'Dosage Frequency',
+              const SizedBox(height: 12),
+              DropdownButtonFormField<FrequencyType>(
                 value: _frequencyType,
-                items: FrequencyType.values,
-                itemToString: (freq) => freq.toString().split('.').last,
+                decoration: InputDecoration(
+                  labelText: 'Dosage Frequency',
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surface,
+                ),
+                items: FrequencyType.values
+                    .map((freq) => DropdownMenuItem(
+                          value: freq,
+                          child: Text(freq.toString().split('.').last),
+                        ))
+                    .toList(),
                 onChanged: (value) => setState(() => _frequencyType = value!),
               ),
               if (_frequencyType == FrequencyType.selectedDays)
-                MultiSelectChip(
-                  days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-                  onSelectionChanged: (selected) => setState(() => _selectedDays = selected),
+                Padding(
+                  padding: const EdgeInsets.only(top: 12.0),
+                  child: MultiSelectChip(
+                    days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                    onSelectionChanged: (selected) =>
+                        setState(() => _selectedDays = selected),
+                  ),
                 ),
+              const SizedBox(height: 12),
               ListTile(
-                title: const Text('Notification Time', style: TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text(_notificationTime.format(context), style: const TextStyle(color: Colors.blueGrey)),
-                trailing: const Icon(Icons.access_time, color: Colors.blue),
+                title: Text(
+                  'Notification Time',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyLarge
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  _notificationTime.format(context),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+                trailing: Icon(Icons.access_time,
+                    color: Theme.of(context).colorScheme.primary),
                 onTap: () async {
                   final time = await showTimePicker(
                     context: context,
@@ -107,24 +163,24 @@ class _DosageScheduleScreenState extends State<DosageScheduleScreen> {
               ),
               const SizedBox(height: 16),
               Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: Text(
                     'Schedule Summary: ${_formatNumber(_totalDose)} $_doseUnit '
-                        '(${_formatNumber(volume)} ${widget.medication.reconstitutionVolumeUnit}, '
-                        '${_formatNumber(insulinUnits)} IU) ${_frequencyType.toString().split('.').last}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.blueGrey,
-                    ),
+                    '(${_formatNumber(volume)} ${widget.medication.reconstitutionVolumeUnit}, '
+                    '${_formatNumber(insulinUnits)} IU) ${_frequencyType.toString().split('.').last}',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-              ElevatedButton(
+              FilledButton(
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
                     _formKey.currentState!.save();
@@ -136,18 +192,19 @@ class _DosageScheduleScreenState extends State<DosageScheduleScreen> {
                       volume: volume,
                       insulinUnits: insulinUnits,
                       frequencyType: _frequencyType,
-                      selectedDays: _frequencyType == FrequencyType.selectedDays ? _selectedDays : null,
+                      selectedDays: _frequencyType == FrequencyType.selectedDays
+                          ? _selectedDays
+                          : null,
                       notificationTime: _notificationTime.format(context),
                     );
                     Navigator.pop(context);
                     Navigator.pop(context, schedule);
                   }
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue.shade700,
-                  foregroundColor: Colors.white,
+                style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 child: const Text(
                   'Save',
@@ -162,7 +219,10 @@ class _DosageScheduleScreenState extends State<DosageScheduleScreen> {
   }
 
   String _formatNumber(double number) {
-    return number.toStringAsFixed(2).replaceAll(RegExp(r'\.0+$'), '').replaceAll(RegExp(r'\.(\d)0+$'), r'.$1');
+    return number
+        .toStringAsFixed(2)
+        .replaceAll(RegExp(r'\.0+$'), '')
+        .replaceAll(RegExp(r'\.(\d)0+$'), r'.$1');
   }
 
   Widget _buildTextFormField({
@@ -206,7 +266,10 @@ class _DosageScheduleScreenState extends State<DosageScheduleScreen> {
           filled: true,
           fillColor: Colors.grey.shade50,
         ),
-        items: items.map((item) => DropdownMenuItem(value: item, child: Text(itemToString(item)))).toList(),
+        items: items
+            .map((item) =>
+                DropdownMenuItem(value: item, child: Text(itemToString(item))))
+            .toList(),
         onChanged: onChanged,
       ),
     );
@@ -217,7 +280,8 @@ class MultiSelectChip extends StatefulWidget {
   final List<String> days;
   final Function(List<int>) onSelectionChanged;
 
-  const MultiSelectChip({super.key, required this.days, required this.onSelectionChanged});
+  const MultiSelectChip(
+      {super.key, required this.days, required this.onSelectionChanged});
 
   @override
   State<MultiSelectChip> createState() => _MultiSelectChipState();
@@ -233,7 +297,7 @@ class _MultiSelectChipState extends State<MultiSelectChip> {
       runSpacing: 8.0,
       children: List<Widget>.generate(
         widget.days.length,
-            (index) => ChoiceChip(
+        (index) => ChoiceChip(
           label: Text(widget.days[index]),
           selected: selectedDays.contains(index),
           selectedColor: Colors.blue.shade100,
