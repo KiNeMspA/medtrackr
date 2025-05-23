@@ -4,7 +4,7 @@ import 'package:medtrackr/screens/dosage_schedule_screen.dart';
 
 class AddMedicationScreen extends StatefulWidget {
   final Medication? medication;
-  final void Function(Medication) on clearestate;
+  final void Function(Medication) onSave;
 
   const AddMedicationScreen({super.key, this.medication, required this.onSave});
 
