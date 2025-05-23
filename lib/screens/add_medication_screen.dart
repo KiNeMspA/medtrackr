@@ -15,13 +15,12 @@ class AddMedicationScreen extends StatefulWidget {
 class _AddMedicationScreenState extends State<AddMedicationScreen> {
   final _formKey = GlobalKey<FormState>();
   String _name = '';
-  String _type = 'Injectable';
+  String _type = 'Injection';
   String _storageType = 'Vial';
   String _quantityUnit = 'mg';
   double _quantity = 0.0;
   String _reconstitutionVolumeUnit = 'mL';
   double _reconstitutionVolume = 0.0;
-  double _totalVialVolume = 0.0;
 
   @override
   void initState() {
@@ -34,8 +33,11 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       _quantity = widget.medication!.quantity;
       _reconstitutionVolumeUnit = widget.medication!.reconstitutionVolumeUnit;
       _reconstitutionVolume = widget.medication!.reconstitutionVolume;
-      _totalVialVolume = widget.medication!.totalVialVolume;
     }
+  }
+
+  String _formatNumber(double number) {
+    return number.toStringAsFixed(2).replaceAll(RegExp(r'\.0+$'), '').replaceAll(RegExp(r'\.(\d)0+$'), r'.$1');
   }
 
   @override
@@ -68,7 +70,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               _buildDropdownFormField(
                 label: 'Medication Type',
                 value: _type,
-                items: ['Injectable'],
+                items: ['Injection'],
                 onChanged: (value) => setState(() => _type = value!),
               ),
               _buildDropdownFormField(
@@ -115,20 +117,6 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                 onChanged: (value) => setState(() => _reconstitutionVolume = double.tryParse(value) ?? 0.0),
                 onSaved: (value) => _reconstitutionVolume = double.parse(value!),
               ),
-              _buildTextFormField(
-                label: 'Total Vial Volume (mL)',
-                initialValue: _totalVialVolume.toString(),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value!.isEmpty) return 'Enter a volume';
-                  final num = double.tryParse(value);
-                  if (num == null || num <= 0) return 'Enter a valid number';
-                  if (num < _reconstitutionVolume) return 'Total volume must be >= reconstitution volume';
-                  return null;
-                },
-                onChanged: (value) => setState(() => _totalVialVolume = double.tryParse(value) ?? 0.0),
-                onSaved: (value) => _totalVialVolume = double.parse(value!),
-              ),
               const SizedBox(height: 16),
               Card(
                 elevation: 2,
@@ -137,8 +125,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                   padding: const EdgeInsets.all(12.0),
                   child: Text(
                     'Concentration for $_name:\n'
-                        '${concentration.toStringAsFixed(2)} mcg/$_reconstitutionVolumeUnit\n'
-                        '${concentrationMgPerML.toStringAsFixed(2)} mg/$_reconstitutionVolumeUnit',
+                        '${_formatNumber(concentration)} mcg/$_reconstitutionVolumeUnit\n'
+                        '${_formatNumber(concentrationMgPerML)} mg/$_reconstitutionVolumeUnit',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -161,7 +149,6 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                       quantity: _quantity,
                       reconstitutionVolumeUnit: _reconstitutionVolumeUnit,
                       reconstitutionVolume: _reconstitutionVolume,
-                      totalVialVolume: _totalVialVolume,
                     );
                     widget.onSave(medication);
                     Navigator.push(

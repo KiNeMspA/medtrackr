@@ -50,28 +50,13 @@ class _HomeScreenState extends State<HomeScreen> {
               volume: 0,
               insulinUnits: 0,
               frequencyType: FrequencyType.daily,
-              cycleOn: 0,
-              cycleOff: 0,
-              repeatCycle: false,
+              selectedDays: null,
+              notificationTime: '',
             ),
           );
           return MedicationCard(
             medication: medication,
             schedule: schedule,
-            onEdit: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => AddMedicationScreen(
-                    medication: medication,
-                    onSave: (updatedMedication) {
-                      MedicationManager.updateMedication(updatedMedication);
-                      setState(() {});
-                    },
-                  ),
-                ),
-              );
-            },
             onDoseTaken: () {
               MedicationManager.markDoseTaken(medication, schedule, DateTime.now());
               setState(() {});

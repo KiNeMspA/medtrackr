@@ -17,13 +17,7 @@ class _DosageScheduleScreenState extends State<DosageScheduleScreen> {
   String _doseUnit = 'mcg';
   double _totalDose = 0.0;
   FrequencyType _frequencyType = FrequencyType.daily;
-  int _frequencyValue = 1;
   List<int> _selectedDays = [];
-  int _cycleOn = 1;
-  int _cycleOff = 0;
-  bool _repeatCycle = false;
-  int _totalCycles = 1;
-  int _breakDuration = 0;
   TimeOfDay _notificationTime = const TimeOfDay(hour: 22, minute: 0);
 
   @override
@@ -75,8 +69,8 @@ class _DosageScheduleScreenState extends State<DosageScheduleScreen> {
                   padding: const EdgeInsets.all(12.0),
                   child: Text(
                     'Dose Details:\n'
-                        'Volume: ${volume.toStringAsFixed(2)} ${widget.medication.reconstitutionVolumeUnit}\n'
-                        'Insulin Syringe (U-100): ${insulinUnits.toStringAsFixed(2)} IU',
+                        'Volume: ${_formatNumber(volume)} ${widget.medication.reconstitutionVolumeUnit}\n'
+                        '1mL Syringe: ${_formatNumber(insulinUnits)} IU',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -92,73 +86,11 @@ class _DosageScheduleScreenState extends State<DosageScheduleScreen> {
                 itemToString: (freq) => freq.toString().split('.').last,
                 onChanged: (value) => setState(() => _frequencyType = value!),
               ),
-              if (_frequencyType == FrequencyType.timesPerDay || _frequencyType == FrequencyType.timesPerWeek)
-                _buildTextFormField(
-                  label: 'Frequency Value',
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value!.isEmpty) return 'Enter a value';
-                    final num = int.tryParse(value);
-                    if (num == null || num <= 0) return 'Enter a valid number';
-                    return null;
-                  },
-                  onSaved: (value) => _frequencyValue = int.parse(value!),
-                ),
               if (_frequencyType == FrequencyType.selectedDays)
                 MultiSelectChip(
                   days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
                   onSelectionChanged: (selected) => setState(() => _selectedDays = selected),
                 ),
-              _buildTextFormField(
-                label: 'Cycle On (Days)',
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value!.isEmpty) return 'Enter a value';
-                  final num = int.tryParse(value);
-                  if (num == null || num <= 0) return 'Enter a valid number';
-                  return null;
-                },
-                onSaved: (value) => _cycleOn = int.parse(value!),
-              ),
-              _buildTextFormField(
-                label: 'Cycle Off (Days)',
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value!.isEmpty) return 'Enter a value';
-                  final num = int.tryParse(value);
-                  if (num == null) return 'Enter a valid number';
-                  return null;
-                },
-                onSaved: (value) => _cycleOff = int.parse(value!),
-              ),
-              SwitchListTile(
-                title: const Text('Repeat Cycle', style: TextStyle(fontWeight: FontWeight.bold)),
-                value: _repeatCycle,
-                onChanged: (value) => setState(() => _repeatCycle = value),
-                activeColor: Colors.blue.shade700,
-              ),
-              _buildTextFormField(
-                label: 'Total Cycles',
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value!.isEmpty) return 'Enter a value';
-                  final num = int.tryParse(value);
-                  if (num == null || num <= 0) return 'Enter a valid number';
-                  return null;
-                },
-                onSaved: (value) => _totalCycles = int.parse(value!),
-              ),
-              _buildTextFormField(
-                label: 'Break Duration (Days)',
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value!.isEmpty) return 'Enter a value';
-                  final num = int.tryParse(value);
-                  if (num == null) return 'Enter a valid number';
-                  return null;
-                },
-                onSaved: (value) => _breakDuration = int.parse(value!),
-              ),
               ListTile(
                 title: const Text('Notification Time', style: TextStyle(fontWeight: FontWeight.bold)),
                 subtitle: Text(_notificationTime.format(context), style: const TextStyle(color: Colors.blueGrey)),
@@ -180,11 +112,9 @@ class _DosageScheduleScreenState extends State<DosageScheduleScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: Text(
-                    'Cycle Summary: ${_totalDose.toStringAsFixed(2)} $_doseUnit '
-                        '(${volume.toStringAsFixed(2)} ${widget.medication.reconstitutionVolumeUnit}, '
-                        '${insulinUnits.toStringAsFixed(2)} IU) ${_frequencyType.toString().split('.').last} '
-                        'for $_cycleOn days, ${_cycleOff == 0 ? 'no' : '$_cycleOff'} days off, '
-                        '$_totalCycles cycles, $_breakDuration days break',
+                    'Schedule Summary: ${_formatNumber(_totalDose)} $_doseUnit '
+                        '(${_formatNumber(volume)} ${widget.medication.reconstitutionVolumeUnit}, '
+                        '${_formatNumber(insulinUnits)} IU) ${_frequencyType.toString().split('.').last}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -206,13 +136,7 @@ class _DosageScheduleScreenState extends State<DosageScheduleScreen> {
                       volume: volume,
                       insulinUnits: insulinUnits,
                       frequencyType: _frequencyType,
-                      frequencyValue: _frequencyValue,
-                      selectedDays: _selectedDays,
-                      cycleOn: _cycleOn,
-                      cycleOff: _cycleOff,
-                      repeatCycle: _repeatCycle,
-                      totalCycles: _totalCycles,
-                      breakDuration: _breakDuration,
+                      selectedDays: _frequencyType == FrequencyType.selectedDays ? _selectedDays : null,
                       notificationTime: _notificationTime.format(context),
                     );
                     Navigator.pop(context);
@@ -235,6 +159,10 @@ class _DosageScheduleScreenState extends State<DosageScheduleScreen> {
         ),
       ),
     );
+  }
+
+  String _formatNumber(double number) {
+    return number.toStringAsFixed(2).replaceAll(RegExp(r'\.0+$'), '').replaceAll(RegExp(r'\.(\d)0+$'), r'.$1');
   }
 
   Widget _buildTextFormField({
