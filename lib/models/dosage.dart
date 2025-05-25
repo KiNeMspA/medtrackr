@@ -1,9 +1,12 @@
 // lib/models/dosage.dart
-enum DosageMethod { subcutaneous, intramuscular, oral, other }
+import 'package:flutter/foundation.dart';
+
+enum DosageMethod { subcutaneous, intramuscular, oral, topical, other }
 
 class Dosage {
   final String id;
   final String medicationId;
+  final String name;
   final DosageMethod method;
   final String doseUnit;
   final double totalDose;
@@ -14,6 +17,7 @@ class Dosage {
   Dosage({
     required this.id,
     required this.medicationId,
+    required this.name,
     required this.method,
     required this.doseUnit,
     required this.totalDose,
@@ -25,7 +29,8 @@ class Dosage {
   Map<String, dynamic> toJson() => {
     'id': id,
     'medicationId': medicationId,
-    'method': method.toString(),
+    'name': name,
+    'method': method.toString().split('.').last,
     'doseUnit': doseUnit,
     'totalDose': totalDose,
     'volume': volume,
@@ -36,26 +41,33 @@ class Dosage {
   factory Dosage.fromJson(Map<String, dynamic> json) => Dosage(
     id: json['id'],
     medicationId: json['medicationId'],
-    method: DosageMethod.values.firstWhere((e) => e.toString() == json['method']),
+    name: json['name'] ?? 'Default Dose',
+    method: DosageMethod.values.firstWhere(
+          (e) => e.toString().split('.').last == json['method'],
+      orElse: () => DosageMethod.other,
+    ),
     doseUnit: json['doseUnit'],
     totalDose: json['totalDose'],
-    volume: json['volume'],
-    insulinUnits: json['insulinUnits'],
+    volume: json['volume'] ?? 0.0,
+    insulinUnits: json['insulinUnits'] ?? 0.0,
     takenTime: json['takenTime'] != null ? DateTime.parse(json['takenTime']) : null,
   );
 
   Dosage copyWith({
+    String? id,
     String? medicationId,
-    DateTime? takenTime,
+    String? name,
     DosageMethod? method,
     String? doseUnit,
     double? totalDose,
     double? volume,
     double? insulinUnits,
+    DateTime? takenTime,
   }) =>
       Dosage(
-        id: id,
+        id: id ?? this.id,
         medicationId: medicationId ?? this.medicationId,
+        name: name ?? this.name,
         method: method ?? this.method,
         doseUnit: doseUnit ?? this.doseUnit,
         totalDose: totalDose ?? this.totalDose,

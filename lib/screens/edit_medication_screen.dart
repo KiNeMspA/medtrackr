@@ -1,32 +1,47 @@
-// lib/screens/add_medication_screen.dart
+// lib/screens/edit_medication_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:medtrackr/models/medication.dart';
 import 'package:medtrackr/models/schedule.dart';
-import 'package:medtrackr/models/dosage.dart';
 import 'package:medtrackr/screens/add_dosage_screen.dart';
 import 'package:medtrackr/screens/add_schedule_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
-import 'package:uuid/uuid.dart';
 
-class AddMedicationScreen extends StatefulWidget {
-  const AddMedicationScreen({super.key});
+class EditMedicationScreen extends StatefulWidget {
+  final Medication medication;
+  final Schedule? schedule;
+
+  const EditMedicationScreen({super.key, required this.medication, this.schedule});
 
   @override
-  _AddMedicationScreenState createState() => _AddMedicationScreenState();
+  _EditMedicationScreenState createState() => _EditMedicationScreenState();
 }
 
-class _AddMedicationScreenState extends State<AddMedicationScreen> {
-  final _nameController = TextEditingController();
-  String _type = 'Injection';
-  String? _storedIn;
-  String _quantityUnit = 'mcg';
-  final _quantityController = TextEditingController();
-  bool _isReconstituting = false;
-  final _targetDoseController = TextEditingController();
-  String _targetDoseUnit = 'mcg';
+class _EditMedicationScreenState extends State<EditMedicationScreen> {
+  late TextEditingController _nameController;
+  late String _type;
+  late String? _storedIn;
+  late String _quantityUnit;
+  late TextEditingController _quantityController;
+  late bool _isReconstituting;
+  late TextEditingController _targetDoseController;
+  late String _targetDoseUnit;
   List<Map<String, dynamic>> _reconstitutionSuggestions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.medication.name);
+    _type = widget.medication.type;
+    _storedIn = widget.medication.storageType.isNotEmpty ? widget.medication.storageType : null;
+    _quantityUnit = widget.medication.quantityUnit;
+    _quantityController = TextEditingController(text: widget.medication.quantity.toInt().toString());
+    _isReconstituting = widget.medication.reconstitutionVolume > 0;
+    _targetDoseController = TextEditingController();
+    _targetDoseUnit = 'mcg';
+    _calculateReconstitutionSuggestions();
+  }
 
   @override
   void dispose() {
@@ -74,9 +89,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       return;
     }
 
-    final medicationId = const Uuid().v4();
-    final medication = Medication(
-      id: medicationId,
+    final updatedMedication = Medication(
+      id: widget.medication.id,
       name: _nameController.text,
       type: _type,
       storageType: _type == 'Injection' || _type == 'Other' ? (_storedIn ?? '') : '',
@@ -87,16 +101,17 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       reconstitutionVolume: _isReconstituting && _reconstitutionSuggestions.isNotEmpty ? _reconstitutionSuggestions[0]['volume'] : 0.0,
     );
 
-    Provider.of<DataProvider>(context, listen: false).addMedication(medication);
+    Provider.of<DataProvider>(context, listen: false).updateMedication(widget.medication.id, updatedMedication);
 
-    final dosage = await Navigator.push(
+    // Navigate to AddDosageScreen
+    await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AddDosageScreen(medication: medication),
+        builder: (context) => AddDosageScreen(medication: updatedMedication),
       ),
     );
 
-    Navigator.pop(context, (medication, null, dosage));
+    Navigator.pop(context);
   }
 
   @override
@@ -108,7 +123,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
-        title: const Text('Add Medication'),
+        title: const Text('Edit Medication'),
         backgroundColor: const Color(0xFFFFC107),
       ),
       body: Padding(
@@ -322,6 +337,43 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                   )),
                 ],
               ],
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () async {
+                  final dosage = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AddDosageScreen()),
+                  );
+                  if (dosage != null) {
+                    Provider.of<DataProvider>(context, listen: false).addDosage(dosage);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFC107),
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text('Add Dosage', style: TextStyle(color: Colors.black)),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () async {
+                  final schedule = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AddScheduleScreen()),
+                  );
+                  if (schedule != null) {
+                    Provider.of<DataProvider>(context, listen: false)
+                        .addSchedule(schedule.copyWith(medicationId: widget.medication.id));
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFC107),
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text('Add Schedule', style: TextStyle(color: Colors.black)),
+              ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () => _saveMedication(context),
@@ -330,7 +382,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                   minimumSize: const Size(double.infinity, 50),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                child: const Text('Save Medication', style: TextStyle(color: Colors.black)),
+                child: const Text('Save Changes', style: TextStyle(color: Colors.black)),
               ),
             ],
           ),

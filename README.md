@@ -174,6 +174,27 @@ This section logs key discussion points and outcomes from each coding session to
   - Style `settings_screen.dart` with National Geographic aesthetic (e.g., toggle notifications).
   - Enhance notification details to include medication names.
   - Add editing/deleting functionality for medications and schedules.
+  - - **Topics Discussed**:
+  - Enhanced medication flow: navigate to `AddDosageScreen` after saving medication, pre-fill medication name.
+  - Added `MedicationDetailsScreen` for `MedicationCard` tap to edit, add dosages/schedules.
+  - Updated reconstitution UI with “Yes/No” toggle, “Target Single Dosage” label, calculation help.
+  - Added dosage naming and linked schedules to dosages.
+  - Implemented quantity deduction from `Medication.remainingQuantity` when doses are taken.
+- **Outcomes**:
+  - Improved usability for peptide dosing with precise reconstitution and dosage management.
+  - Enhanced scheduling with dosage-specific notifications.
+- **Pending Tasks**:
+  - Add time picker for schedules in `add_schedule_screen.dart`.
+  - Implement dark mode in `SettingsScreen`.
+  - Add filtering/search to `HistoryScreen`.
+  - Add confirmation dialogs for deletions.
+
+**Features**:
+- Add/edit/delete medications with reconstitution calculator.
+- Multiple named dosages per medication with auto-calculated volume/IU for reconstituted medications.
+- Schedules linked to specific dosages, deducting from remaining quantity.
+- Medication details screen for managing medications, dosages, and schedules.
+- 
 
 ## To-Do List
 - Short-term:

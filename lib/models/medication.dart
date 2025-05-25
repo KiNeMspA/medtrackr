@@ -1,33 +1,28 @@
 // lib/models/medication.dart
-import 'package:uuid/uuid.dart';
+import 'package:flutter/foundation.dart';
 
 class Medication {
   final String id;
   final String name;
-  final String type; // e.g., Injection, Tablet
-  final String storageType; // e.g., Refrigerated, Room Temperature
-  final String quantityUnit; // e.g., mg, mcg
-  final double quantity; // Total available quantity
-  final String reconstitutionVolumeUnit; // e.g., mL
-  final double reconstitutionVolume; // Volume for reconstitution
-  final double concentration; // e.g., mcg/mL
+  final String type;
+  final String storageType;
+  final String quantityUnit;
+  final double quantity;
   final double remainingQuantity;
+  final String reconstitutionVolumeUnit;
+  final double reconstitutionVolume;
 
   Medication({
-    String? id,
+    required this.id,
     required this.name,
-    this.type = 'Injection',
+    required this.type,
     required this.storageType,
     required this.quantityUnit,
     required this.quantity,
+    required this.remainingQuantity,
     required this.reconstitutionVolumeUnit,
     required this.reconstitutionVolume,
-    double? remainingQuantity,
-  })  : id = id ?? const Uuid().v4(),
-        concentration = reconstitutionVolume != 0
-            ? (quantityUnit == 'mg' ? quantity * 1000 : quantity) / reconstitutionVolume
-            : 0,
-        remainingQuantity = remainingQuantity ?? quantity;
+  });
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -36,10 +31,9 @@ class Medication {
     'storageType': storageType,
     'quantityUnit': quantityUnit,
     'quantity': quantity,
+    'remainingQuantity': remainingQuantity,
     'reconstitutionVolumeUnit': reconstitutionVolumeUnit,
     'reconstitutionVolume': reconstitutionVolume,
-    'concentration': concentration,
-    'remainingQuantity': remainingQuantity,
   };
 
   factory Medication.fromJson(Map<String, dynamic> json) => Medication(
@@ -49,20 +43,31 @@ class Medication {
     storageType: json['storageType'],
     quantityUnit: json['quantityUnit'],
     quantity: json['quantity'],
+    remainingQuantity: json['remainingQuantity'] ?? json['quantity'],
     reconstitutionVolumeUnit: json['reconstitutionVolumeUnit'],
     reconstitutionVolume: json['reconstitutionVolume'],
-    remainingQuantity: json['remainingQuantity'],
   );
 
-  Medication copyWith({double? remainingQuantity}) => Medication(
-    id: id,
-    name: name,
-    type: type,
-    storageType: storageType,
-    quantityUnit: quantityUnit,
-    quantity: quantity,
-    reconstitutionVolumeUnit: reconstitutionVolumeUnit,
-    reconstitutionVolume: reconstitutionVolume,
-    remainingQuantity: remainingQuantity ?? this.remainingQuantity,
-  );
+  Medication copyWith({
+    String? id,
+    String? name,
+    String? type,
+    String? storageType,
+    String? quantityUnit,
+    double? quantity,
+    double? remainingQuantity,
+    String? reconstitutionVolumeUnit,
+    double? reconstitutionVolume,
+  }) =>
+      Medication(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        type: type ?? this.type,
+        storageType: storageType ?? this.storageType,
+        quantityUnit: quantityUnit ?? this.quantityUnit,
+        quantity: quantity ?? this.quantity,
+        remainingQuantity: remainingQuantity ?? this.remainingQuantity,
+        reconstitutionVolumeUnit: reconstitutionVolumeUnit ?? this.reconstitutionVolumeUnit,
+        reconstitutionVolume: reconstitutionVolume ?? this.reconstitutionVolume,
+      );
 }

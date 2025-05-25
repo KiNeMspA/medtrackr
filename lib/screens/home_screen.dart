@@ -1,9 +1,9 @@
-// lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:medtrackr/models/medication.dart';
 import 'package:medtrackr/models/dosage.dart';
 import 'package:medtrackr/models/schedule.dart';
 import 'package:medtrackr/screens/add_medication_screen.dart';
+import 'package:medtrackr/screens/medication_details_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
 import 'package:uuid/uuid.dart';
@@ -45,26 +45,16 @@ class HomeScreen extends StatelessWidget {
                     orElse: () => Schedule(
                       id: '',
                       medicationId: '',
+                      dosageId: '',
                       frequencyType: FrequencyType.daily,
                       notificationTime: '',
                     ),
                   );
-                  final dosage = dataProvider.dosages.firstWhere(
-                        (dos) => dos.medicationId == medication.id,
-                    orElse: () => Dosage(
-                      id: '',
-                      medicationId: '',
-                      method: DosageMethod.other,
-                      doseUnit: '',
-                      totalDose: 0.0,
-                      volume: 0.0,
-                      insulinUnits: 0.0,
-                    ),
-                  );
+                  final dosages = dataProvider.dosages.where((dos) => dos.medicationId == medication.id).toList();
                   return MedicationCard(
                     medication: medication,
                     schedule: schedule.id.isNotEmpty ? schedule : null,
-                    dosage: dosage.id.isNotEmpty ? dosage : null,
+                    dosages: dosages,
                   );
                 },
               ),
@@ -101,13 +91,13 @@ class HomeScreen extends StatelessWidget {
 class MedicationCard extends StatefulWidget {
   final Medication medication;
   final Schedule? schedule;
-  final Dosage? dosage;
+  final List<Dosage> dosages;
 
   const MedicationCard({
     super.key,
     required this.medication,
     this.schedule,
-    this.dosage,
+    required this.dosages,
   });
 
   @override
@@ -136,23 +126,75 @@ class _MedicationCardState extends State<MedicationCard> with SingleTickerProvid
     super.dispose();
   }
 
+  void _showEditDeleteDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Manage ${widget.medication.name}'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MedicationDetailsScreen(
+                    medication: widget.medication,
+                    schedule: widget.schedule,
+                    dosages: widget.dosages,
+                  ),
+                ),
+              );
+            },
+            child: const Text('Edit'),
+          ),
+          TextButton(
+            onPressed: () {
+              Provider.of<DataProvider>(context, listen: false).deleteMedication(widget.medication.id);
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('${widget.medication.name} deleted')),
+              );
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
+    final primaryDosage = widget.dosages.isNotEmpty ? widget.dosages[0] : null;
 
     return GestureDetector(
       onTapDown: (_) => _controller.forward(),
       onTapUp: (_) => _controller.reverse(),
       onTapCancel: () => _controller.reverse(),
       onTap: () {
-        // Navigate to medication details (implement later)
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MedicationDetailsScreen(
+              medication: widget.medication,
+              schedule: widget.schedule,
+              dosages: widget.dosages,
+            ),
+          ),
+        );
       },
+      onLongPress: () => _showEditDeleteDialog(context),
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: Semantics(
           label: 'Medication: ${widget.medication.name}, '
               '${widget.schedule != null ? 'Next Dose: ${widget.schedule!.notificationTime}, ' : ''}'
-              '${widget.dosage != null ? 'Dose: ${widget.dosage!.totalDose} ${widget.dosage!.doseUnit}' : ''}',
+              '${primaryDosage != null ? 'Dose: ${primaryDosage.totalDose} ${primaryDosage.doseUnit}' : ''}',
           child: Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             elevation: 4,
@@ -175,28 +217,40 @@ class _MedicationCardState extends State<MedicationCard> with SingleTickerProvid
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
-                  if (widget.dosage != null) ...[
+                  if (primaryDosage != null) ...[
                     const SizedBox(height: 8),
                     Text(
-                      'Dose: ${widget.dosage!.totalDose} ${widget.dosage!.doseUnit}',
+                      'Dose: ${primaryDosage.totalDose} ${primaryDosage.doseUnit}',
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
+                  const SizedBox(height: 8),
+                  Text(
+                    'Remaining: ${widget.medication.remainingQuantity} ${widget.medication.quantityUnit}',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                   const Spacer(),
                   ElevatedButton(
                     onPressed: () {
-                      if (widget.dosage != null) {
+                      if (primaryDosage != null) {
                         final takenDosage = Dosage(
                           id: const Uuid().v4(),
                           medicationId: widget.medication.id,
-                          method: widget.dosage!.method,
-                          doseUnit: widget.dosage!.doseUnit,
-                          totalDose: widget.dosage!.totalDose,
-                          volume: widget.dosage!.volume,
-                          insulinUnits: widget.dosage!.insulinUnits,
+                          name: primaryDosage.name,
+                          method: primaryDosage.method,
+                          doseUnit: primaryDosage.doseUnit,
+                          totalDose: primaryDosage.totalDose,
+                          volume: primaryDosage.volume,
+                          insulinUnits: primaryDosage.insulinUnits,
                           takenTime: DateTime.now(),
                         );
                         dataProvider.addDosage(takenDosage);
+                        dataProvider.updateMedication(
+                          widget.medication.id,
+                          widget.medication.copyWith(
+                            remainingQuantity: widget.medication.remainingQuantity - primaryDosage.totalDose,
+                          ),
+                        );
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('${widget.medication.name} dose recorded')),
                         );
