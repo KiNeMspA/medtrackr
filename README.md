@@ -80,6 +80,23 @@ This section logs key discussion points and outcomes from each coding session to
     - Finalize notification system.
     - Test offline data persistence.
 
+### Session: May 25, 2025
+- **Topics Discussed**:
+  - Redesigned MedTrackr UI to align with National Geographic app’s aesthetic using Flutter.
+  - Implemented bottom navigation bar in `main.dart` with Home, Add Dosage, History, and Settings.
+  - Updated `home_screen.dart` with swipeable medication cards using `ListView.horizontal`.
+  - Enhanced `add_dosage_screen.dart` with clean input forms and yellow (#FFC107) accents.
+  - Adopted color scheme: light gray background, National Geographic yellow accents, and high-contrast text.
+- **Outcomes**:
+  - Improved Home Screen with swipeable, tappable medication cards.
+  - Added modern navigation and input forms for better usability.
+  - Ensured accessibility with high-contrast text and `Semantics` support.
+- **Pending Tasks**:
+  - Test UI on various screen sizes and Android/iOS devices.
+  - Add animations for card taps and screen transitions (e.g., using `Hero`).
+  - Update `history_screen.dart` and `settings_screen.dart` to match new design.
+  - Implement notification system for medication reminders.
+
 ## To-Do List
 - Short-term:
     - Test and finalize notifications for medication reminders.
