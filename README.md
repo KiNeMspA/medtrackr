@@ -122,6 +122,20 @@ This section logs key discussion points and outcomes from each coding session to
   - Add notification system using `flutter_local_notifications`.
   - Test UI on multiple devices for responsiveness.
   - Add navigation to medication details from `MedicationCard` tap.
+  - - **Topics Discussed**:
+  - Restructured data model into `Medication`, `Dosage`, and `Schedule` classes for clarity.
+  - Updated `medication.dart` and created `dosage.dart` and `schedule.dart`.
+  - Modified `home_screen.dart` to use `Schedule` and `Medication` for displaying next dose times.
+  - Updated `add_medication_screen.dart` to create `Medication` and `Schedule` objects.
+  - Maintained National Geographic-inspired UI with yellow accents, swipeable cards, and tap animations.
+- **Outcomes**:
+  - Implemented new data model, resolving previous build errors.
+  - Home Screen displays schedules with correct medication names and times.
+- **Pending Tasks**:
+  - Implement data persistence using `provider` and `path_provider`.
+  - Style `history_screen.dart` and `settings_screen.dart` with National Geographic aesthetic.
+  - Add notification system using `flutter_local_notifications`.
+  - Add navigation to medication details from `MedicationCard` tap.
 
 ## To-Do List
 - Short-term:
