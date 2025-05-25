@@ -1,34 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:medtrackr/screens/home_screen.dart';
-import 'package:medtrackr/screens/add_medication_screen.dart';
+import 'package:medtrackr/screens/medication_form_screen.dart';
 import 'package:medtrackr/screens/history_screen.dart';
 import 'package:medtrackr/screens/settings_screen.dart';
-import 'package:medtrackr/screens/edit_medication_screen.dart';
 import 'package:medtrackr/screens/add_dosage_screen.dart';
 import 'package:medtrackr/screens/add_schedule_screen.dart';
 import 'package:medtrackr/screens/medication_details_screen.dart';
 import 'package:medtrackr/models/medication.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/data/latest.dart' as tz;
-
-final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-FlutterLocalNotificationsPlugin();
-
-Future<void> initNotifications() async {
-  const androidInit = AndroidInitializationSettings('app_icon');
-  const initializationSettings = InitializationSettings(android: androidInit);
-  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-}
+import 'package:medtrackr/providers/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  tz.initializeTimeZones();
-  await initNotifications();
+  final notificationService = NotificationService();
+  await notificationService.init();
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => DataProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => DataProvider(notificationService: notificationService)),
+        Provider(create: (context) => notificationService),
+      ],
       child: const MedTrackrApp(),
     ),
   );
@@ -44,21 +36,28 @@ class MedTrackrApp extends StatelessWidget {
         primaryColor: const Color(0xFFFFC107),
         scaffoldBackgroundColor: Colors.grey[200],
         textTheme: const TextTheme(
-          headlineMedium: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.bold, color: Colors.black),
+          headlineMedium: TextStyle(
+              fontFamily: 'Roboto', fontWeight: FontWeight.bold, color: Colors.black),
           bodyMedium: TextStyle(fontFamily: 'Roboto', color: Colors.grey),
           bodyLarge: TextStyle(fontFamily: 'Roboto', fontSize: 18, color: Colors.black),
-          titleLarge: TextStyle(fontFamily: 'Roboto', fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
+          titleLarge: TextStyle(
+              fontFamily: 'Roboto', fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
         ),
         useMaterial3: true,
       ),
       home: const MainScreen(),
       routes: {
-        '/edit_medication': (context) => EditMedicationScreen(
-          medication: ModalRoute.of(context)!.settings.arguments as Medication,
+        '/medication_form': (context) => MedicationFormScreen(
+          medication: ModalRoute.of(context)!.settings.arguments as Medication?,
         ),
-        '/add_dosage': (context) => AddDosageScreen(
-          medication: ModalRoute.of(context)!.settings.arguments as Medication,
-        ),
+        '/add_dosage': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+          return AddDosageScreen(
+            medication: args['medication'] as Medication,
+            targetDoseMcg: args['targetDoseMcg'] as double?,
+            selectedIU: args['selectedIU'] as double?,
+          );
+        },
         '/add_schedule': (context) => const AddScheduleScreen(),
         '/medication_details': (context) => MedicationDetailsScreen(
           medication: ModalRoute.of(context)!.settings.arguments as Medication,
@@ -80,7 +79,7 @@ class _MainScreenState extends State<MainScreen> {
 
   static const List<Widget> _screens = [
     HomeScreen(),
-    AddMedicationScreen(),
+    MedicationFormScreen(),
     HistoryScreen(),
     SettingsScreen(),
   ];

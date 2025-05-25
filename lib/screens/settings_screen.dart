@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:medtrackr/providers/data_provider.dart';
-import 'package:medtrackr/models/schedule.dart';
-import 'package:medtrackr/models/dosage.dart';
-import 'package:medtrackr/models/medication.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/timezone.dart' as tz;
-import 'package:medtrackr/main.dart';
+import 'package:medtrackr/providers/data_provider.dart';
+import 'package:medtrackr/providers/notification_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -19,78 +14,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
 
   Future<void> _toggleNotifications(bool enabled) async {
+    final notificationService = Provider.of<NotificationService>(context, listen: false);
+    final dataProvider = Provider.of<DataProvider>(context, listen: false);
     if (!enabled) {
-      await flutterLocalNotificationsPlugin.cancelAll();
+      await notificationService.cancelAllNotifications();
     } else {
-      final dataProvider = Provider.of<DataProvider>(context, listen: false);
-      for (final schedule in dataProvider.schedules) {
-        final medication = dataProvider.medications.firstWhere(
-              (m) => m.id == schedule.medicationId,
-          orElse: () => Medication(
-            id: '',
-            name: 'Unknown Medication',
-            type: '',
-            quantityUnit: '',
-            quantity: 0.0,
-            remainingQuantity: 0.0,
-            reconstitutionVolumeUnit: '',
-            reconstitutionVolume: 0.0,
-            reconstitutionFluid: '',
-            notes: '',
-          ),
-        );
-        final dosage = dataProvider.dosages.firstWhere(
-              (d) => d.id == schedule.dosageId,
-          orElse: () => Dosage(
-            id: '',
-            medicationId: '',
-            name: 'Unknown Dosage',
-            method: DosageMethod.subcutaneous,
-            doseUnit: '',
-            totalDose: 0.0,
-            volume: 0.0,
-            insulinUnits: 0.0,
-          ),
-        );
-
-        final timeParts = schedule.notificationTime.split(':');
-        final hour = int.parse(timeParts[0]);
-        final minute = int.parse(timeParts[1].split(' ')[0]);
-        final isPM = timeParts[1].contains('PM');
-        final adjustedHour = isPM && hour != 12 ? hour + 12 : (hour == 12 && !isPM ? 0 : hour);
-
-        await flutterLocalNotificationsPlugin.zonedSchedule(
-          schedule.id.hashCode,
-          'Reminder: ${medication.name} - ${dosage.name}',
-          'Time to take ${dosage.totalDose} ${dosage.doseUnit} of ${medication.name}',
-          _nextInstanceOfTime(adjustedHour, minute),
-          const NotificationDetails(
-            android: AndroidNotificationDetails(
-              'medtrackr_channel',
-              'Medication Reminders',
-              importance: Importance.high,
-              priority: Priority.high,
-            ),
-          ),
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-          matchDateTimeComponents: schedule.frequencyType == FrequencyType.daily
-              ? DateTimeComponents.time
-              : DateTimeComponents.dayOfWeekAndTime,
-        );
-      }
+      await notificationService.rescheduleAllNotifications(
+        dataProvider.schedules,
+        dataProvider.medications,
+        dataProvider.dosages,
+      );
     }
     setState(() {
       _notificationsEnabled = enabled;
     });
-  }
-
-  tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
-    final now = tz.TZDateTime.now(tz.local);
-    var scheduledDate = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
-    if (scheduledDate.isBefore(now)) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1));
-    }
-    return scheduledDate;
   }
 
   @override
