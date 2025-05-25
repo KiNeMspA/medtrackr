@@ -46,6 +46,21 @@ class DataProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void deleteDosage(String id) {
+    _dosages.removeWhere((d) => d.id == id);
+    _schedules.removeWhere((s) => s.dosageId == id);
+    flutterLocalNotificationsPlugin.cancel(id.hashCode);
+    _saveData();
+    notifyListeners();
+  }
+
+  void deleteSchedule(String id) {
+    _schedules.removeWhere((s) => s.id == id);
+    flutterLocalNotificationsPlugin.cancel(id.hashCode);
+    _saveData();
+    notifyListeners();
+  }
+
   void addSchedule(Schedule schedule) {
     _schedules.add(schedule);
     _scheduleNotification(schedule);

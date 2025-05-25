@@ -194,7 +194,25 @@ This section logs key discussion points and outcomes from each coding session to
 - Multiple named dosages per medication with auto-calculated volume/IU for reconstituted medications.
 - Schedules linked to specific dosages, deducting from remaining quantity.
 - Medication details screen for managing medications, dosages, and schedules.
-- 
+- **Topics Discussed**:
+  - Fixed time picker display in `AddScheduleScreen` (time disappearing after dosage selection).
+  - Enhanced reconstitution UI in `AddMedicationScreen`: “Yes/No” toggle with labels, fixed “Calculate” button, added four IU-based options, and “Add” button to update storage.
+- **Outcomes**:
+  - Resolved time picker UI issue with `TextEditingController`.
+  - Improved reconstitution workflow with clear toggle, functional calculations, and storage updates.
+- **Pending Tasks**:
+  - Apply lighter fields to `edit_medication_screen.dart`, `add_dosage_screen.dart`.
+  - Implement vertical `HomeScreen` cards sorted by next dose.
+  - Add `CalendarScreen` with `table_calendar`.
+  - Update cards/FAB to `Colors.grey[50]`.
+  - Implement dark mode toggle in `SettingsScreen`.
+  - Add filtering/search to `HistoryScreen`.
+
+**Features**:
+- Persistent time picker display in `AddScheduleScreen`.
+- Enhanced reconstitution UI with “Yes/No” toggle, IU calculations, and “Add” button.
+- Dosage and schedule deletion with confirmation dialogs.
+- Lighter form fields (`Colors.grey[50]`) in `AddMedicationScreen`.
 
 ## To-Do List
 - Short-term:

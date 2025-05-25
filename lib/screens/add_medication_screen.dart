@@ -1,11 +1,7 @@
-// lib/screens/add_medication_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:medtrackr/models/medication.dart';
-import 'package:medtrackr/models/schedule.dart';
-import 'package:medtrackr/models/dosage.dart';
 import 'package:medtrackr/screens/add_dosage_screen.dart';
-import 'package:medtrackr/screens/add_schedule_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
 import 'package:uuid/uuid.dart';
@@ -27,6 +23,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
   final _targetDoseController = TextEditingController();
   String _targetDoseUnit = 'mcg';
   List<Map<String, dynamic>> _reconstitutionSuggestions = [];
+  bool _showReconstitutionOptions = false;
+  double? _selectedReconstitutionVolume; // Added for selected volume
 
   @override
   void dispose() {
@@ -37,18 +35,26 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
   }
 
   void _calculateReconstitutionSuggestions() {
-    final totalAmount = int.tryParse(_quantityController.text) ?? 0;
+    final totalAmount = double.tryParse(_quantityController.text) ?? 0;
     final targetDose = double.tryParse(_targetDoseController.text) ?? 0;
-    if (totalAmount <= 0 || targetDose <= 0 || _quantityUnit != 'mcg' || _targetDoseUnit != 'mcg') {
-      setState(() => _reconstitutionSuggestions = []);
+    if (totalAmount <= 0 || targetDose <= 0) {
+      setState(() {
+        _reconstitutionSuggestions = [];
+        _showReconstitutionOptions = false;
+      });
       return;
     }
 
+    // Convert total amount and target dose to mcg
+    final totalMcg = _quantityUnit == 'mg' ? totalAmount * 1000 : totalAmount;
+    final targetMcg = _targetDoseUnit == 'mg' ? targetDose * 1000 : targetDose;
+
+    // Define four reconstitution volumes
     const volumes = [1.0, 2.0, 3.0, 4.0];
     final suggestions = <Map<String, dynamic>>[];
     for (final volume in volumes) {
-      final concentration = (totalAmount * (_quantityUnit == 'mg' ? 1000 : 1)) / volume;
-      final iuPerDose = (targetDose / concentration) * 100;
+      final concentration = totalMcg / volume; // mcg/mL
+      final iuPerDose = (targetMcg / concentration) * 100; // IU for 100-unit syringe
       if (iuPerDose >= 1 && iuPerDose <= 100) {
         suggestions.add({
           'volume': volume,
@@ -57,7 +63,11 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
         });
       }
     }
-    setState(() => _reconstitutionSuggestions = suggestions);
+    setState(() {
+      _reconstitutionSuggestions = suggestions;
+      _showReconstitutionOptions = true;
+      _selectedReconstitutionVolume = null;
+    });
   }
 
   Future<void> _saveMedication(BuildContext context) async {
@@ -73,6 +83,12 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       );
       return;
     }
+    if (_isReconstituting && _selectedReconstitutionVolume == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a reconstitution option')),
+      );
+      return;
+    }
 
     final medicationId = const Uuid().v4();
     final medication = Medication(
@@ -81,10 +97,10 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       type: _type,
       storageType: _type == 'Injection' || _type == 'Other' ? (_storedIn ?? '') : '',
       quantityUnit: _quantityUnit,
-      quantity: int.tryParse(_quantityController.text)?.toDouble() ?? 0.0,
-      remainingQuantity: int.tryParse(_quantityController.text)?.toDouble() ?? 0.0,
+      quantity: double.tryParse(_quantityController.text) ?? 0.0,
+      remainingQuantity: double.tryParse(_quantityController.text) ?? 0.0,
       reconstitutionVolumeUnit: _isReconstituting ? 'mL' : '',
-      reconstitutionVolume: _isReconstituting && _reconstitutionSuggestions.isNotEmpty ? _reconstitutionSuggestions[0]['volume'] : 0.0,
+      reconstitutionVolume: _isReconstituting ? _selectedReconstitutionVolume ?? 0.0 : 0.0,
     );
 
     Provider.of<DataProvider>(context, listen: false).addMedication(medication);
@@ -106,7 +122,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     final storedInOptions = ['Syringe', 'Vial', 'Pen'];
 
     return Scaffold(
-      backgroundColor: Colors.grey[200],
+      backgroundColor: Colors.grey[300], // Updated to darker background
       appBar: AppBar(
         title: const Text('Add Medication'),
         backgroundColor: const Color(0xFFFFC107),
@@ -134,6 +150,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                     borderSide: const BorderSide(color: Color(0xFFFFC107)),
                     borderRadius: BorderRadius.circular(8),
                   ),
+                  filled: true,
+                  fillColor: Colors.grey[50], // Added for lighter field
                 ),
               ),
               const SizedBox(height: 16),
@@ -149,6 +167,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                     borderSide: const BorderSide(color: Color(0xFFFFC107)),
                     borderRadius: BorderRadius.circular(8),
                   ),
+                  filled: true,
+                  fillColor: Colors.grey[50], // Added for lighter field
                 ),
                 items: ['Injection', 'Tablet', 'Capsule', 'Other']
                     .map((type) => DropdownMenuItem(value: type, child: Text(type)))
@@ -178,6 +198,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                       borderSide: const BorderSide(color: Color(0xFFFFC107)),
                       borderRadius: BorderRadius.circular(8),
                     ),
+                    filled: true,
+                    fillColor: Colors.grey[50], // Added for lighter field
                   ),
                   items: storedInOptions
                       .map((type) => DropdownMenuItem(value: type, child: Text(type)))
@@ -202,6 +224,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                           borderSide: const BorderSide(color: Color(0xFFFFC107)),
                           borderRadius: BorderRadius.circular(8),
                         ),
+                        filled: true,
+                        fillColor: Colors.grey[50], // Added for lighter field
                       ),
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -223,6 +247,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                           borderSide: const BorderSide(color: Color(0xFFFFC107)),
                           borderRadius: BorderRadius.circular(8),
                         ),
+                        filled: true,
+                        fillColor: Colors.grey[50], // Added for lighter field
                       ),
                       items: ['mcg', 'mg', 'mL', 'IU']
                           .map((unit) => DropdownMenuItem(value: unit, child: Text(unit)))
@@ -236,23 +262,30 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                 ],
               ),
               const SizedBox(height: 24),
-              Row(
-                children: [
-                  const Text(
-                    'Reconstitute this medication?',
-                    style: TextStyle(fontSize: 16),
+              ToggleButtons(
+                borderRadius: BorderRadius.circular(8),
+                borderColor: Colors.grey[300],
+                selectedBorderColor: const Color(0xFFFFC107),
+                selectedColor: Colors.black,
+                fillColor: Colors.grey[50],
+                constraints: const BoxConstraints(minWidth: 80, minHeight: 40),
+                isSelected: [_isReconstituting, !_isReconstituting],
+                onPressed: (index) => setState(() {
+                  _isReconstituting = index == 0;
+                  if (!_isReconstituting) {
+                    _reconstitutionSuggestions = [];
+                    _showReconstitutionOptions = false;
+                    _selectedReconstitutionVolume = null;
+                  }
+                }),
+                children: const [
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Text('Yes'),
                   ),
-                  const Spacer(),
-                  DropdownButton<bool>(
-                    value: _isReconstituting,
-                    items: [
-                      DropdownMenuItem(value: true, child: Text('Yes')),
-                      DropdownMenuItem(value: false, child: Text('No')),
-                    ],
-                    onChanged: (value) => setState(() {
-                      _isReconstituting = value!;
-                      if (!value) _reconstitutionSuggestions = [];
-                    }),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Text('No'),
                   ),
                 ],
               ),
@@ -265,7 +298,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                       child: TextField(
                         controller: _targetDoseController,
                         decoration: InputDecoration(
-                          labelText: 'Target Single Dosage (mcg) *',
+                          labelText: 'Target Single Dosage *',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(color: Colors.grey[300]!),
@@ -274,9 +307,10 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                             borderSide: const BorderSide(color: Color(0xFFFFC107)),
                             borderRadius: BorderRadius.circular(8),
                           ),
+                          filled: true,
+                          fillColor: Colors.grey[50],
                         ),
                         keyboardType: TextInputType.number,
-                        onChanged: (_) => _calculateReconstitutionSuggestions(),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -294,30 +328,47 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                             borderSide: const BorderSide(color: Color(0xFFFFC107)),
                             borderRadius: BorderRadius.circular(8),
                           ),
+                          filled: true,
+                          fillColor: Colors.grey[50],
                         ),
-                        items: ['mcg']
+                        items: ['mcg', 'mg']
                             .map((unit) => DropdownMenuItem(value: unit, child: Text(unit)))
                             .toList(),
-                        onChanged: (value) => setState(() {
-                          _targetDoseUnit = value!;
-                          _calculateReconstitutionSuggestions();
-                        }),
+                        onChanged: (value) => setState(() => _targetDoseUnit = value!),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                if (_reconstitutionSuggestions.isNotEmpty) ...[
+                ElevatedButton(
+                  onPressed: _calculateReconstitutionSuggestions,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFFC107),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const Text('Calculate', style: TextStyle(color: Colors.black)),
+                ),
+                const SizedBox(height: 16),
+                if (_showReconstitutionOptions && _reconstitutionSuggestions.isNotEmpty) ...[
                   const Text(
-                    'Reconstitution Suggestions:',
+                    'Reconstitution Options:',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  ..._reconstitutionSuggestions.map((suggestion) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: Text(
-                      'Reconstitute with ${suggestion['volume']} mL to get ${suggestion['iu'].toStringAsFixed(1)} IU per ${suggestion['concentration'].toStringAsFixed(0)} mcg/mL',
-                      style: Theme.of(context).textTheme.bodyMedium,
+                  ..._reconstitutionSuggestions.take(4).map((suggestion) => ListTile(
+                    title: Text(
+                      'Add ${suggestion['volume']} mL: ${suggestion['iu'].toStringAsFixed(1)} IU at ${suggestion['concentration'].toStringAsFixed(0)} mcg/mL',
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.add, color: Color(0xFFFFC107)),
+                      onPressed: () {
+                        setState(() {
+                          _selectedReconstitutionVolume = suggestion['volume'];
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Added ${suggestion['volume']} mL reconstitution fluid')),
+                        );
+                      },
                     ),
                   )),
                 ],

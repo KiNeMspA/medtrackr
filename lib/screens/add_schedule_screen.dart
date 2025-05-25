@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:medtrackr/models/schedule.dart';
 import 'package:medtrackr/models/dosage.dart';
+import 'package:medtrackr/models/medication.dart';
 import 'package:uuid/uuid.dart';
 
 class AddScheduleScreen extends StatefulWidget {
@@ -15,14 +16,36 @@ class AddScheduleScreen extends StatefulWidget {
 
 class _AddScheduleScreenState extends State<AddScheduleScreen> {
   FrequencyType _frequencyType = FrequencyType.daily;
-  final _notificationTimeController = TextEditingController();
+  TimeOfDay? _notificationTime;
+  final _timeController = TextEditingController();
   List<String> _selectedDays = [];
   String? _selectedDosageId;
 
   @override
   void dispose() {
-    _notificationTimeController.dispose();
+    _timeController.dispose();
     super.dispose();
+  }
+
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _notificationTime ?? TimeOfDay.now(),
+    );
+    if (picked != null && picked != _notificationTime) {
+      setState(() {
+        _notificationTime = picked;
+        _timeController.text = _formatTime(picked);
+      });
+    }
+  }
+
+  String _formatTime(TimeOfDay? time) {
+    if (time == null) return 'Select Time';
+    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final minute = time.minute.toString().padLeft(2, '0');
+    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
+    return '$hour:$minute $period';
   }
 
   @override
@@ -30,7 +53,7 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
     final daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
     return Scaffold(
-      backgroundColor: Colors.grey[200],
+      backgroundColor: Colors.grey[300],
       appBar: AppBar(
         title: const Text('Add Schedule'),
         backgroundColor: const Color(0xFFFFC107),
@@ -91,9 +114,11 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
               const SizedBox(height: 16),
             ],
             TextField(
-              controller: _notificationTimeController,
+              controller: _timeController,
+              readOnly: true,
+              onTap: () => _selectTime(context),
               decoration: InputDecoration(
-                labelText: 'Notification Time (e.g., 8:00 AM) *',
+                labelText: 'Notification Time *',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(color: Colors.grey[300]!),
@@ -102,6 +127,9 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
                   borderSide: const BorderSide(color: Color(0xFFFFC107)),
                   borderRadius: BorderRadius.circular(8),
                 ),
+                hintText: 'Select Time',
+                filled: true,
+                fillColor: Colors.grey[50],
               ),
             ),
             const SizedBox(height: 16),
@@ -131,7 +159,7 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () {
-                if (_notificationTimeController.text.isEmpty || (widget.dosages != null && _selectedDosageId == null)) {
+                if (_notificationTime == null || (widget.dosages != null && _selectedDosageId == null)) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Please fill all required fields')),
                   );
@@ -142,7 +170,7 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
                   medicationId: widget.medication?.id ?? '',
                   dosageId: _selectedDosageId ?? '',
                   frequencyType: _frequencyType,
-                  notificationTime: _notificationTimeController.text,
+                  notificationTime: _formatTime(_notificationTime),
                   selectedDays: _selectedDays,
                 );
                 Navigator.pop(context, schedule);
