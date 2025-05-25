@@ -65,10 +65,17 @@ final List<Dosage> _dosages = [
 ];
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  final Dosage? dosage;
+  final String? medicationId;
+
+  const HomeScreen({super.key, this.dosage, this.medicationId});
 
   @override
   Widget build(BuildContext context) {
+    if (dosage != null && medicationId != null) {
+      _dosages.add(dosage!.copyWith(medicationId: medicationId!));
+    }
+
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(16.0),

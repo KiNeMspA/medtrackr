@@ -3,13 +3,13 @@ enum DosageMethod { subcutaneous, intramuscular, oral, other }
 
 class Dosage {
   final String id;
-  final String medicationId; // Links to Medication
+  final String medicationId;
   final DosageMethod method;
-  final String doseUnit; // e.g., mcg, mg
-  final double totalDose; // Amount for this dosage
-  final double volume; // e.g., mL
-  final double insulinUnits; // e.g., IU
-  final DateTime? takenTime; // When this dosage was taken (null if not taken)
+  final String doseUnit;
+  final double totalDose;
+  final double volume;
+  final double insulinUnits;
+  final DateTime? takenTime;
 
   Dosage({
     required this.id,
@@ -44,14 +44,23 @@ class Dosage {
     takenTime: json['takenTime'] != null ? DateTime.parse(json['takenTime']) : null,
   );
 
-  Dosage copyWith({DateTime? takenTime}) => Dosage(
-    id: id,
-    medicationId: medicationId,
-    method: method,
-    doseUnit: doseUnit,
-    totalDose: totalDose,
-    volume: volume,
-    insulinUnits: insulinUnits,
-    takenTime: takenTime ?? this.takenTime,
-  );
+  Dosage copyWith({
+    String? medicationId,
+    DateTime? takenTime,
+    DosageMethod? method,
+    String? doseUnit,
+    double? totalDose,
+    double? volume,
+    double? insulinUnits,
+  }) =>
+      Dosage(
+        id: id,
+        medicationId: medicationId ?? this.medicationId,
+        method: method ?? this.method,
+        doseUnit: doseUnit ?? this.doseUnit,
+        totalDose: totalDose ?? this.totalDose,
+        volume: volume ?? this.volume,
+        insulinUnits: insulinUnits ?? this.insulinUnits,
+        takenTime: takenTime ?? this.takenTime,
+      );
 }

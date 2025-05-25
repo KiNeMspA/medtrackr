@@ -148,6 +148,18 @@ This section logs key discussion points and outcomes from each coding session to
   - Style `history_screen.dart` and `settings_screen.dart` with National Geographic aesthetic.
   - Implement notification system using `flutter_local_notifications`.
   - Add `Dosage` creation and tracking when marking doses as taken.
+  - - Enhanced `AddMedicationScreen` by renaming `Storage Type` to `Stored In` (Syringe/Vial/Pen), `Total Storage Quantity` to `Total Medication Amount`, and moving `Measure` dropdown to the right.
+  - Replaced reconstitution button with a toggle question and added a dosage calculator suggesting 3–4 reconstitution volumes based on single dose input.
+  - Added dialog to prompt navigation to `AddDosageScreen` after saving.
+  - Softened field outlines to `Colors.grey[300]` and darkened screen to `Colors.grey[200]`, maintaining National Geographic-inspired UI.
+- **Outcomes**:
+  - Improved `AddMedicationScreen` with user-friendly dosing calculations and intuitive navigation.
+  - Ensured modular file structure and UI consistency.
+- **Pending Tasks**:
+  - Implement data persistence using `provider` and `path_provider`.
+  - Style `history_screen.dart` and `settings_screen.dart` with National Geographic aesthetic.
+  - Implement notification system using `flutter_local_notifications`.
+  - Add `Dosage` creation and tracking when marking doses as taken.
 
 ## To-Do List
 - Short-term:

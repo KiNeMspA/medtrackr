@@ -3,10 +3,10 @@ enum FrequencyType { daily, selectedDays }
 
 class Schedule {
   final String id;
-  final String medicationId; // Links to Medication
+  final String medicationId;
   final FrequencyType frequencyType;
-  final List<int>? selectedDays; // e.g., [1, 3, 5] for Mon, Wed, Fri
-  final String notificationTime; // e.g., "22:00"
+  final List<int>? selectedDays;
+  final String notificationTime;
 
   Schedule({
     required this.id,
@@ -32,11 +32,17 @@ class Schedule {
     notificationTime: json['notificationTime'],
   );
 
-  Schedule copyWith({String? notificationTime}) => Schedule(
-    id: id,
-    medicationId: medicationId,
-    frequencyType: frequencyType,
-    selectedDays: selectedDays,
-    notificationTime: notificationTime ?? this.notificationTime,
-  );
+  Schedule copyWith({
+    String? medicationId,
+    String? notificationTime,
+    FrequencyType? frequencyType,
+    List<int>? selectedDays,
+  }) =>
+      Schedule(
+        id: id,
+        medicationId: medicationId ?? this.medicationId,
+        frequencyType: frequencyType ?? this.frequencyType,
+        selectedDays: selectedDays ?? this.selectedDays,
+        notificationTime: notificationTime ?? this.notificationTime,
+      );
 }
