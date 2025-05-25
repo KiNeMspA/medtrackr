@@ -1,14 +1,17 @@
-// lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:medtrackr/screens/home_screen.dart';
 import 'package:medtrackr/screens/add_medication_screen.dart';
 import 'package:medtrackr/screens/history_screen.dart';
 import 'package:medtrackr/screens/settings_screen.dart';
+import 'package:medtrackr/screens/edit_medication_screen.dart';
+import 'package:medtrackr/screens/add_dosage_screen.dart';
+import 'package:medtrackr/screens/add_schedule_screen.dart';
+import 'package:medtrackr/screens/medication_details_screen.dart';
+import 'package:medtrackr/models/medication.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
-import 'package:timezone/timezone.dart' as tz;
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 FlutterLocalNotificationsPlugin();
@@ -21,7 +24,7 @@ Future<void> initNotifications() async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  tz.initializeTimeZones(); // Initialize timezone database
+  tz.initializeTimeZones();
   await initNotifications();
   runApp(
     ChangeNotifierProvider(
@@ -43,11 +46,24 @@ class MedTrackrApp extends StatelessWidget {
         textTheme: const TextTheme(
           headlineMedium: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.bold, color: Colors.black),
           bodyMedium: TextStyle(fontFamily: 'Roboto', color: Colors.grey),
+          bodyLarge: TextStyle(fontFamily: 'Roboto', fontSize: 18, color: Colors.black),
           titleLarge: TextStyle(fontFamily: 'Roboto', fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
         ),
         useMaterial3: true,
       ),
       home: const MainScreen(),
+      routes: {
+        '/edit_medication': (context) => EditMedicationScreen(
+          medication: ModalRoute.of(context)!.settings.arguments as Medication,
+        ),
+        '/add_dosage': (context) => AddDosageScreen(
+          medication: ModalRoute.of(context)!.settings.arguments as Medication,
+        ),
+        '/add_schedule': (context) => const AddScheduleScreen(),
+        '/medication_details': (context) => MedicationDetailsScreen(
+          medication: ModalRoute.of(context)!.settings.arguments as Medication,
+        ),
+      },
     );
   }
 }

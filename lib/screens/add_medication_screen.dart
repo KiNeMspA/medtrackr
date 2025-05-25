@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:medtrackr/models/medication.dart';
-import 'package:medtrackr/screens/add_dosage_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
 import 'package:uuid/uuid.dart';
@@ -16,58 +15,157 @@ class AddMedicationScreen extends StatefulWidget {
 class _AddMedicationScreenState extends State<AddMedicationScreen> {
   final _nameController = TextEditingController();
   String _type = 'Injection';
-  String? _storedIn;
   String _quantityUnit = 'mcg';
   final _quantityController = TextEditingController();
   bool _isReconstituting = false;
   final _targetDoseController = TextEditingController();
   String _targetDoseUnit = 'mcg';
+  final _reconstitutionFluidController = TextEditingController();
+  final _notesController = TextEditingController();
   List<Map<String, dynamic>> _reconstitutionSuggestions = [];
-  bool _showReconstitutionOptions = false;
-  double? _selectedReconstitutionVolume; // Added for selected volume
+  Map<String, dynamic>? _selectedReconstitution;
+  double _totalAmount = 0;
+  double _targetDose = 0;
+  String _medicationName = '';
 
   @override
   void dispose() {
     _nameController.dispose();
     _quantityController.dispose();
     _targetDoseController.dispose();
+    _reconstitutionFluidController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
   void _calculateReconstitutionSuggestions() {
-    final totalAmount = double.tryParse(_quantityController.text) ?? 0;
-    final targetDose = double.tryParse(_targetDoseController.text) ?? 0;
+    final totalAmount = int.tryParse(_quantityController.text) ?? 0;
+    final targetDose = int.tryParse(_targetDoseController.text) ?? 0;
+    print('Calculate: totalAmount=$totalAmount, targetDose=$targetDose, quantityUnit=$_quantityUnit, targetDoseUnit=$_targetDoseUnit');
     if (totalAmount <= 0 || targetDose <= 0) {
+      print('Invalid input: totalAmount or targetDose is zero or negative');
       setState(() {
         _reconstitutionSuggestions = [];
-        _showReconstitutionOptions = false;
+        _selectedReconstitution = null;
+        _totalAmount = 0;
+        _targetDose = 0;
+        _medicationName = '';
       });
       return;
     }
 
-    // Convert total amount and target dose to mcg
     final totalMcg = _quantityUnit == 'mg' ? totalAmount * 1000 : totalAmount;
     final targetMcg = _targetDoseUnit == 'mg' ? targetDose * 1000 : targetDose;
 
-    // Define four reconstitution volumes
-    const volumes = [1.0, 2.0, 3.0, 4.0];
+    setState(() {
+      _totalAmount = _quantityUnit == 'mg' ? totalAmount.toDouble() : (totalMcg / 1000).toDouble();
+      _targetDose = targetMcg.toDouble();
+      _medicationName = _nameController.text.isNotEmpty ? _nameController.text : 'Medication';
+    });
+
+    const volumes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     final suggestions = <Map<String, dynamic>>[];
     for (final volume in volumes) {
-      final concentration = totalMcg / volume; // mcg/mL
-      final iuPerDose = (targetMcg / concentration) * 100; // IU for 100-unit syringe
-      if (iuPerDose >= 1 && iuPerDose <= 100) {
+      final concentration = totalMcg / volume;
+      final iuPerDose = (targetMcg / concentration) * 100; // Assuming 100 IU per mL syringe
+      if (iuPerDose >= 10 && iuPerDose <= 100) {
         suggestions.add({
           'volume': volume,
-          'iu': iuPerDose,
-          'concentration': concentration,
+          'iu': iuPerDose.round(),
+          'concentration': concentration.round(),
         });
       }
     }
+    print('Suggestions generated: $suggestions');
     setState(() {
       _reconstitutionSuggestions = suggestions;
-      _showReconstitutionOptions = true;
-      _selectedReconstitutionVolume = null;
+      if (_selectedReconstitution != null && !suggestions.any((s) => s['volume'] == _selectedReconstitution!['volume'])) {
+        _selectedReconstitution = null;
+      }
     });
+  }
+
+  void _editReconstitution(Map<String, dynamic> suggestion) async {
+    final volumeController = TextEditingController(text: suggestion['volume'].toString());
+    final iuController = TextEditingController(text: suggestion['iu'].toString());
+    final fluidController = TextEditingController(text: _reconstitutionFluidController.text);
+
+    final updated = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey[50],
+        title: const Text('Edit Reconstitution'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: volumeController,
+                decoration: InputDecoration(
+                  labelText: 'Volume (mL)',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Color(0xFFFFC107)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: iuController,
+                decoration: InputDecoration(
+                  labelText: 'IU per Dose',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Color(0xFFFFC107)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: fluidController,
+                decoration: InputDecoration(
+                  labelText: 'Reconstitution Fluid',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Color(0xFFFFC107)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              final volume = int.tryParse(volumeController.text) ?? suggestion['volume'];
+              final iu = int.tryParse(iuController.text) ?? suggestion['iu'];
+              Navigator.pop(context, {
+                'volume': volume,
+                'iu': iu,
+                'concentration': suggestion['concentration'],
+              });
+              _reconstitutionFluidController.text = fluidController.text;
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (updated != null) {
+      setState(() {
+        _selectedReconstitution = updated;
+      });
+    }
   }
 
   Future<void> _saveMedication(BuildContext context) async {
@@ -77,13 +175,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       );
       return;
     }
-    if (_type == 'Injection' && _storedIn == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select how the medication is stored')),
-      );
-      return;
-    }
-    if (_isReconstituting && _selectedReconstitutionVolume == null) {
+    if (_isReconstituting && _selectedReconstitution == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a reconstitution option')),
       );
@@ -95,34 +187,84 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       id: medicationId,
       name: _nameController.text,
       type: _type,
-      storageType: _type == 'Injection' || _type == 'Other' ? (_storedIn ?? '') : '',
       quantityUnit: _quantityUnit,
-      quantity: double.tryParse(_quantityController.text) ?? 0.0,
-      remainingQuantity: double.tryParse(_quantityController.text) ?? 0.0,
+      quantity: (int.tryParse(_quantityController.text) ?? 0).toDouble(),
+      remainingQuantity: (int.tryParse(_quantityController.text) ?? 0).toDouble(),
       reconstitutionVolumeUnit: _isReconstituting ? 'mL' : '',
-      reconstitutionVolume: _isReconstituting ? _selectedReconstitutionVolume ?? 0.0 : 0.0,
+      reconstitutionVolume: _isReconstituting ? (_selectedReconstitution != null ? _selectedReconstitution!['volume'].toDouble() : 0) : 0,
+      reconstitutionFluid: _isReconstituting ? _reconstitutionFluidController.text : '',
+      notes: _notesController.text,
+      reconstitutionOptions: _isReconstituting ? _reconstitutionSuggestions : [], // Store options
+      selectedReconstitution: _isReconstituting ? _selectedReconstitution : null, // Store selected
     );
 
-    Provider.of<DataProvider>(context, listen: false).addMedication(medication);
-
-    final dosage = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AddDosageScreen(medication: medication),
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.green[100],
+        title: Text(
+          'Confirm Medication Settings',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            color: Colors.green[900],
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          child: Text(
+            'Name: ${medication.name}\n'
+                'Type: ${medication.type}\n'
+                'Quantity: ${medication.quantity.toInt()} ${medication.quantityUnit}\n'
+                '${medication.reconstitutionVolume > 0 ? 'Reconstituted with ${medication.reconstitutionVolume.toInt()} mL\nIU per Dose: ${_selectedReconstitution?['iu'] ?? 0} IU\nFluid: ${medication.reconstitutionFluid.isNotEmpty ? medication.reconstitutionFluid : 'None'}\n' : ''}'
+                'Notes: ${medication.notes.isNotEmpty ? medication.notes : 'None'}',
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: Colors.green[900],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: Colors.green[900], fontWeight: FontWeight.w600),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              'Confirm',
+              style: TextStyle(color: Colors.green[900], fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
       ),
     );
 
-    Navigator.pop(context, (medication, null, dosage));
+    if (confirmed != true) return;
+
+    Provider.of<DataProvider>(context, listen: false).addMedication(medication);
+
+    // Pass reconstitution data to AddDosageScreen
+    await Navigator.pushNamed(
+      context,
+      '/add_dosage',
+      arguments: {
+        'medication': medication,
+        'targetDoseMcg': _targetDose,
+        'selectedIU': _selectedReconstitution?['iu']?.toDouble() ?? 0,
+      },
+    );
+
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    final isInjection = _type == 'Injection';
     final isTabletOrCapsule = _type == 'Tablet' || _type == 'Capsule';
-    final storedInOptions = ['Syringe', 'Vial', 'Pen'];
 
     return Scaffold(
-      backgroundColor: Colors.grey[300], // Updated to darker background
+      backgroundColor: Colors.grey[200],
       appBar: AppBar(
         title: const Text('Add Medication'),
         backgroundColor: const Color(0xFFFFC107),
@@ -142,71 +284,67 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                 controller: _nameController,
                 decoration: InputDecoration(
                   labelText: 'Medication Name *',
+                  labelStyle: const TextStyle(color: Colors.grey),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
+                    borderSide: BorderSide(color: Colors.grey[300]!.withOpacity(0.5)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderSide: const BorderSide(color: Color(0xFFFFC107)),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   filled: true,
-                  fillColor: Colors.grey[50], // Added for lighter field
+                  fillColor: Colors.grey[50],
                 ),
+                onChanged: (value) => setState(() {
+                  _medicationName = value.isNotEmpty ? value : 'Medication';
+                  _calculateReconstitutionSuggestions();
+                }),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _type,
                 decoration: InputDecoration(
                   labelText: 'Type',
+                  labelStyle: const TextStyle(color: Colors.grey),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
+                    borderSide: BorderSide(color: Colors.grey[300]!.withOpacity(0.5)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderSide: const BorderSide(color: Color(0xFFFFC107)),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   filled: true,
-                  fillColor: Colors.grey[50], // Added for lighter field
+                  fillColor: Colors.grey[50],
                 ),
                 items: ['Injection', 'Tablet', 'Capsule', 'Other']
                     .map((type) => DropdownMenuItem(value: type, child: Text(type)))
                     .toList(),
                 onChanged: (value) => setState(() {
                   _type = value!;
-                  if (isTabletOrCapsule) {
-                    _storedIn = null;
-                  } else if (value == 'Injection') {
-                    _storedIn = 'Vial';
-                  } else {
-                    _storedIn = 'Vial';
-                  }
+                  _calculateReconstitutionSuggestions();
                 }),
               ),
-              if (!isTabletOrCapsule) ...[
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: _storedIn,
-                  decoration: InputDecoration(
-                    labelText: 'Stored In${isInjection ? ' *' : ''}',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Color(0xFFFFC107)),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50], // Added for lighter field
+              const SizedBox(height: 16),
+              TextField(
+                controller: _notesController,
+                decoration: InputDecoration(
+                  labelText: 'Notes',
+                  labelStyle: const TextStyle(color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey[300]!.withOpacity(0.5)),
                   ),
-                  items: storedInOptions
-                      .map((type) => DropdownMenuItem(value: type, child: Text(type)))
-                      .toList(),
-                  onChanged: (value) => setState(() => _storedIn = value),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Color(0xFFFFC107)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[50],
                 ),
-              ],
+                maxLines: 3,
+              ),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -216,20 +354,23 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                       controller: _quantityController,
                       decoration: InputDecoration(
                         labelText: 'Total Medication Amount *',
+                        labelStyle: const TextStyle(color: Colors.grey),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
+                          borderSide: BorderSide(color: Colors.grey[300]!.withOpacity(0.5)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderSide: const BorderSide(color: Color(0xFFFFC107)),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         filled: true,
-                        fillColor: Colors.grey[50], // Added for lighter field
+                        fillColor: Colors.grey[50],
                       ),
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      onChanged: (_) => _calculateReconstitutionSuggestions(),
+                      onChanged: (_) => setState(() {
+                        _calculateReconstitutionSuggestions();
+                      }),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -239,16 +380,17 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                       value: _quantityUnit,
                       decoration: InputDecoration(
                         labelText: 'Measure',
+                        labelStyle: const TextStyle(color: Colors.grey),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
+                          borderSide: BorderSide(color: Colors.grey[300]!.withOpacity(0.5)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderSide: const BorderSide(color: Color(0xFFFFC107)),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         filled: true,
-                        fillColor: Colors.grey[50], // Added for lighter field
+                        fillColor: Colors.grey[50],
                       ),
                       items: ['mcg', 'mg', 'mL', 'IU']
                           .map((unit) => DropdownMenuItem(value: unit, child: Text(unit)))
@@ -262,34 +404,51 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                 ],
               ),
               const SizedBox(height: 24),
-              ToggleButtons(
-                borderRadius: BorderRadius.circular(8),
-                borderColor: Colors.grey[300],
-                selectedBorderColor: const Color(0xFFFFC107),
-                selectedColor: Colors.black,
-                fillColor: Colors.grey[50],
-                constraints: const BoxConstraints(minWidth: 80, minHeight: 40),
-                isSelected: [_isReconstituting, !_isReconstituting],
-                onPressed: (index) => setState(() {
-                  _isReconstituting = index == 0;
-                  if (!_isReconstituting) {
-                    _reconstitutionSuggestions = [];
-                    _showReconstitutionOptions = false;
-                    _selectedReconstitutionVolume = null;
-                  }
-                }),
-                children: const [
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Text('Yes'),
+              Row(
+                children: [
+                  const Text(
+                    'Reconstitute this medication?',
+                    style: TextStyle(fontSize: 16),
                   ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Text('No'),
+                  const Spacer(),
+                  Switch(
+                    value: _isReconstituting,
+                    activeColor: const Color(0xFFFFC107),
+                    onChanged: (value) => setState(() {
+                      _isReconstituting = value;
+                      if (!value) {
+                        _reconstitutionSuggestions = [];
+                        _selectedReconstitution = null;
+                        _totalAmount = 0;
+                        _targetDose = 0;
+                        _medicationName = _nameController.text.isNotEmpty ? _nameController.text : 'Medication';
+                        _reconstitutionFluidController.text = '';
+                      }
+                      _calculateReconstitutionSuggestions();
+                    }),
                   ),
                 ],
               ),
               if (_isReconstituting) ...[
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _reconstitutionFluidController,
+                  decoration: InputDecoration(
+                    labelText: 'Reconstitution Fluid (e.g., Saline, Water)',
+                    labelStyle: const TextStyle(color: Colors.grey),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey[300]!.withOpacity(0.5)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Color(0xFFFFC107)),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[50],
+                  ),
+                  onChanged: (_) => _calculateReconstitutionSuggestions(),
+                ),
                 const SizedBox(height: 16),
                 Row(
                   children: [
@@ -299,9 +458,10 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                         controller: _targetDoseController,
                         decoration: InputDecoration(
                           labelText: 'Target Single Dosage *',
+                          labelStyle: const TextStyle(color: Colors.grey),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                            borderSide: BorderSide(color: Colors.grey[300]!.withOpacity(0.5)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderSide: const BorderSide(color: Color(0xFFFFC107)),
@@ -311,6 +471,10 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                           fillColor: Colors.grey[50],
                         ),
                         keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        onChanged: (_) => setState(() {
+                          _calculateReconstitutionSuggestions();
+                        }),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -320,9 +484,10 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                         value: _targetDoseUnit,
                         decoration: InputDecoration(
                           labelText: 'Unit',
+                          labelStyle: const TextStyle(color: Colors.grey),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                            borderSide: BorderSide(color: Colors.grey[300]!.withOpacity(0.5)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderSide: const BorderSide(color: Color(0xFFFFC107)),
@@ -334,43 +499,140 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                         items: ['mcg', 'mg']
                             .map((unit) => DropdownMenuItem(value: unit, child: Text(unit)))
                             .toList(),
-                        onChanged: (value) => setState(() => _targetDoseUnit = value!),
+                        onChanged: (value) => setState(() {
+                          _targetDoseUnit = value!;
+                          _calculateReconstitutionSuggestions();
+                        }),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: _calculateReconstitutionSuggestions,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFFC107),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: const Text('Calculate', style: TextStyle(color: Colors.black)),
-                ),
-                const SizedBox(height: 16),
-                if (_showReconstitutionOptions && _reconstitutionSuggestions.isNotEmpty) ...[
+                if (_reconstitutionSuggestions.isNotEmpty && _selectedReconstitution == null) ...[
                   const Text(
                     'Reconstitution Options:',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  ..._reconstitutionSuggestions.take(4).map((suggestion) => ListTile(
-                    title: Text(
-                      'Add ${suggestion['volume']} mL: ${suggestion['iu'].toStringAsFixed(1)} IU at ${suggestion['concentration'].toStringAsFixed(0)} mcg/mL',
+                  ..._reconstitutionSuggestions.take(4).map((suggestion) => Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: const BorderSide(color: Color(0xFFFFC107), width: 2),
                     ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.add, color: Color(0xFFFFC107)),
-                      onPressed: () {
-                        setState(() {
-                          _selectedReconstitutionVolume = suggestion['volume'];
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Added ${suggestion['volume']} mL reconstitution fluid')),
-                        );
-                      },
+                    elevation: 4,
+                    color: Colors.grey[50],
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.all(16),
+                      title: RichText(
+                        text: TextSpan(
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          children: [
+                            const TextSpan(text: 'Option: '),
+                            TextSpan(
+                              text: '${suggestion['volume']} mL',
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFFFC107),
+                              ),
+                            ),
+                            const TextSpan(text: ' = '),
+                            TextSpan(
+                              text: '${suggestion['iu']} IU',
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFFFC107),
+                              ),
+                            ),
+                          ],
+                        ),
+                        softWrap: true,
+                      ),
+                      subtitle: Text(
+                        'For ${_totalAmount.toInt()} $_quantityUnit of “$_medicationName” at ${_targetDose.toInt()} mcg',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.add, color: Color(0xFFFFC107)),
+                        onPressed: () {
+                          setState(() {
+                            _selectedReconstitution = suggestion;
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Selected ${suggestion['volume']} mL reconstitution')),
+                          );
+                        },
+                      ),
                     ),
                   )),
+                ],
+                if (_selectedReconstitution != null) ...[
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Selected Reconstitution:',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: Colors.green[900]!, width: 2),
+                    ),
+                    elevation: 4,
+                    color: Colors.green[100],
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.all(16),
+                      title: RichText(
+                        text: TextSpan(
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.green[900]),
+                          children: [
+                            const TextSpan(text: 'Option: '),
+                            TextSpan(
+                              text: '${_selectedReconstitution!['volume']} mL',
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const TextSpan(text: ' = '),
+                            TextSpan(
+                              text: '${_selectedReconstitution!['iu']} IU',
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        softWrap: true,
+                      ),
+                      subtitle: Text(
+                        'For ${_totalAmount.toInt()} $_quantityUnit of “$_medicationName” at ${_targetDose.toInt()} mcg\n'
+                            'Fluid: ${_reconstitutionFluidController.text.isNotEmpty ? _reconstitutionFluidController.text : 'None'}',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.green[900]),
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.edit, color: Colors.green[900]),
+                            onPressed: () => _editReconstitution(_selectedReconstitution!),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.clear, color: Colors.green[900]),
+                            onPressed: () {
+                              setState(() {
+                                _selectedReconstitution = null;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ],
               const SizedBox(height: 24),

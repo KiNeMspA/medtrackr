@@ -1,186 +1,198 @@
 import 'package:flutter/material.dart';
-import 'package:medtrackr/models/schedule.dart';
-import 'package:medtrackr/models/dosage.dart';
 import 'package:medtrackr/models/medication.dart';
+import 'package:medtrackr/models/dosage.dart';
+import 'package:provider/provider.dart';
+import 'package:medtrackr/providers/data_provider.dart';
 import 'package:uuid/uuid.dart';
 
-class AddScheduleScreen extends StatefulWidget {
-  final Medication? medication;
-  final List<Dosage>? dosages;
+class AddDosageScreen extends StatefulWidget {
+  final Map<String, dynamic> arguments;
 
-  const AddScheduleScreen({super.key, this.medication, this.dosages});
+  const AddDosageScreen({super.key, required this.arguments});
 
   @override
-  _AddScheduleScreenState createState() => _AddScheduleScreenState();
+  _AddDosageScreenState createState() => _AddDosageScreenState();
 }
 
-class _AddScheduleScreenState extends State<AddScheduleScreen> {
-  FrequencyType _frequencyType = FrequencyType.daily;
-  TimeOfDay? _notificationTime;
-  final _timeController = TextEditingController();
-  List<String> _selectedDays = [];
-  String? _selectedDosageId;
+class _AddDosageScreenState extends State<AddDosageScreen> {
+  final _nameController = TextEditingController();
+  String _doseUnit = 'IU';
+  final _doseController = TextEditingController();
+  DosageMethod _method = DosageMethod.subcutaneous;
+  double _targetDoseMcg = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    final medication = widget.arguments['medication'] as Medication;
+    _targetDoseMcg = widget.arguments['targetDoseMcg'] as double? ?? 0;
+    final selectedIU = widget.arguments['selectedIU'] as double? ?? 0;
+    _doseController.text = selectedIU.toString();
+    _nameController.text = '${medication.name} Dose';
+  }
 
   @override
   void dispose() {
-    _timeController.dispose();
+    _nameController.dispose();
+    _doseController.dispose();
     super.dispose();
   }
 
-  Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: _notificationTime ?? TimeOfDay.now(),
-    );
-    if (picked != null && picked != _notificationTime) {
-      setState(() {
-        _notificationTime = picked;
-        _timeController.text = _formatTime(picked);
-      });
+  void _saveDosage(BuildContext context) {
+    if (_nameController.text.isEmpty || _doseController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all required fields')),
+      );
+      return;
     }
-  }
 
-  String _formatTime(TimeOfDay? time) {
-    if (time == null) return 'Select Time';
-    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
-    final minute = time.minute.toString().padLeft(2, '0');
-    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
-    return '$hour:$minute $period';
+    final medication = widget.arguments['medication'] as Medication;
+    final dosage = Dosage(
+      id: const Uuid().v4(),
+      medicationId: medication.id,
+      name: _nameController.text,
+      method: _method,
+      doseUnit: _doseUnit,
+      totalDose: (double.tryParse(_doseController.text) ?? 0),
+      volume: 0.0,
+      insulinUnits: (double.tryParse(_doseController.text) ?? 0),
+      takenTime: null,
+    );
+
+    Provider.of<DataProvider>(context, listen: false).addDosage(dosage);
+    Navigator.of(context).pop(dosage);
   }
 
   @override
   Widget build(BuildContext context) {
-    final daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final medication = widget.arguments['medication'] as Medication;
 
     return Scaffold(
-      backgroundColor: Colors.grey[300],
+      backgroundColor: Colors.grey[200],
       appBar: AppBar(
-        title: const Text('Add Schedule'),
+        title: Text('Add Dosage for ${medication.name}'),
         backgroundColor: const Color(0xFFFFC107),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Schedule Details',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<FrequencyType>(
-              value: _frequencyType,
-              decoration: InputDecoration(
-                labelText: 'Frequency',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Color(0xFFFFC107)),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              items: FrequencyType.values
-                  .map((freq) => DropdownMenuItem(
-                value: freq,
-                child: Text(freq == FrequencyType.daily ? 'Daily' : 'Weekly'),
-              ))
-                  .toList(),
-              onChanged: (value) => setState(() => _frequencyType = value!),
-            ),
-            const SizedBox(height: 16),
-            if (_frequencyType == FrequencyType.weekly) ...[
-              const Text('Select Days:', style: TextStyle(fontSize: 16)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: daysOfWeek
-                    .map((day) => FilterChip(
-                  label: Text(day),
-                  selected: _selectedDays.contains(day),
-                  onSelected: (selected) {
-                    setState(() {
-                      if (selected) {
-                        _selectedDays.add(day);
-                      } else {
-                        _selectedDays.remove(day);
-                      }
-                    });
-                  },
-                ))
-                    .toList(),
-              ),
-              const SizedBox(height: 16),
-            ],
             TextField(
-              controller: _timeController,
-              readOnly: true,
-              onTap: () => _selectTime(context),
+              controller: _nameController,
               decoration: InputDecoration(
-                labelText: 'Notification Time *',
+                labelText: 'Dosage Name *',
+                labelStyle: const TextStyle(color: Colors.grey),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
+                  borderSide: BorderSide(color: Colors.grey[300]!.withOpacity(0.5)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderSide: const BorderSide(color: Color(0xFFFFC107)),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                hintText: 'Select Time',
                 filled: true,
                 fillColor: Colors.grey[50],
               ),
             ),
             const SizedBox(height: 16),
-            if (widget.dosages != null && widget.dosages!.isNotEmpty) ...[
-              DropdownButtonFormField<String>(
-                value: _selectedDosageId,
-                decoration: InputDecoration(
-                  labelText: 'Select Dosage *',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Color(0xFFFFC107)),
-                    borderRadius: BorderRadius.circular(8),
+            Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: TextField(
+                    controller: _doseController,
+                    decoration: InputDecoration(
+                      labelText: 'Dose Amount *',
+                      labelStyle: const TextStyle(color: Colors.grey),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey[300]!.withOpacity(0.5)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Color(0xFFFFC107)),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                    ),
+                    keyboardType: TextInputType.number,
                   ),
                 ),
-                items: widget.dosages!
-                    .map((dosage) => DropdownMenuItem(
-                  value: dosage.id,
-                  child: Text(dosage.name),
-                ))
-                    .toList(),
-                onChanged: (value) => setState(() => _selectedDosageId = value),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 2,
+                  child: DropdownButtonFormField<String>(
+                    value: _doseUnit,
+                    decoration: InputDecoration(
+                      labelText: 'Unit',
+                      labelStyle: const TextStyle(color: Colors.grey),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey[300]!.withOpacity(0.5)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Color(0xFFFFC107)),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                    ),
+                    items: ['IU', 'mcg', 'mg', 'mL']
+                        .map((unit) => DropdownMenuItem(value: unit, child: Text(unit)))
+                        .toList(),
+                    onChanged: (value) => setState(() {
+                      _doseUnit = value!;
+                    }),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Target Dose: ${_targetDoseMcg.toInt()} mcg',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<DosageMethod>(
+              value: _method,
+              decoration: InputDecoration(
+                labelText: 'Method',
+                labelStyle: const TextStyle(color: Colors.grey),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey[300]!.withOpacity(0.5)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(color: Color(0xFFFFC107)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                filled: true,
+                fillColor: Colors.grey[50],
               ),
-            ],
+              items: DosageMethod.values
+                  .map((method) => DropdownMenuItem(
+                value: method,
+                child: Text(method.toString().split('.').last),
+              ))
+                  .toList(),
+              onChanged: (value) => setState(() {
+                _method = value!;
+              }),
+            ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () {
-                if (_notificationTime == null || (widget.dosages != null && _selectedDosageId == null)) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please fill all required fields')),
-                  );
-                  return;
-                }
-                final schedule = Schedule(
-                  id: const Uuid().v4(),
-                  medicationId: widget.medication?.id ?? '',
-                  dosageId: _selectedDosageId ?? '',
-                  frequencyType: _frequencyType,
-                  notificationTime: _formatTime(_notificationTime),
-                  selectedDays: _selectedDays,
-                );
-                Navigator.pop(context, schedule);
-              },
+              onPressed: () => _saveDosage(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFFFC107),
                 minimumSize: const Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              child: const Text('Save Schedule', style: TextStyle(color: Colors.black)),
+              child: const Text('Save Dosage', style: TextStyle(color: Colors.black)),
             ),
           ],
         ),

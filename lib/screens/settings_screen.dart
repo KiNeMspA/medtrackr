@@ -1,15 +1,12 @@
-// lib/screens/settings_screen.dart
 import 'package:flutter/material.dart';
 import 'package:medtrackr/providers/data_provider.dart';
 import 'package:medtrackr/models/schedule.dart';
+import 'package:medtrackr/models/dosage.dart';
+import 'package:medtrackr/models/medication.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:medtrackr/main.dart';
-import 'package:medtrackr/models/medication.dart';
-import 'package:medtrackr/models/dosage.dart';
-
-
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -33,12 +30,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             id: '',
             name: 'Unknown Medication',
             type: '',
-            storageType: '',
             quantityUnit: '',
             quantity: 0.0,
             remainingQuantity: 0.0,
             reconstitutionVolumeUnit: '',
             reconstitutionVolume: 0.0,
+            reconstitutionFluid: '',
+            notes: '',
           ),
         );
         final dosage = dataProvider.dosages.firstWhere(
@@ -47,7 +45,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             id: '',
             medicationId: '',
             name: 'Unknown Dosage',
-            method: DosageMethod.other,
+            method: DosageMethod.subcutaneous,
             doseUnit: '',
             totalDose: 0.0,
             volume: 0.0,

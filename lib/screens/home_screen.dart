@@ -1,94 +1,57 @@
 import 'package:flutter/material.dart';
 import 'package:medtrackr/models/medication.dart';
-import 'package:medtrackr/models/dosage.dart';
 import 'package:medtrackr/models/schedule.dart';
-import 'package:medtrackr/screens/add_medication_screen.dart';
-import 'package:medtrackr/screens/medication_details_screen.dart';
+import 'package:medtrackr/models/dosage.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
-import 'package:uuid/uuid.dart';
+import 'package:medtrackr/screens/medication_details_screen.dart';
 
 class HomeScreen extends StatelessWidget {
-  final Dosage? dosage;
-  final String? medicationId;
-
-  const HomeScreen({super.key, this.dosage, this.medicationId});
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final dataProvider = Provider.of<DataProvider>(context);
-
-    if (dosage != null && medicationId != null) {
-      dataProvider.addDosage(dosage!.copyWith(medicationId: medicationId!));
-    }
+    final upcomingDoses = dataProvider.upcomingDoses;
 
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Your Medications',
+      backgroundColor: Colors.grey[200],
+      appBar: AppBar(
+        title: const Text('MedTrackr'),
+        backgroundColor: const Color(0xFFFFC107),
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'Upcoming Doses',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 220,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: dataProvider.medications.length,
-                itemBuilder: (context, index) {
-                  final medication = dataProvider.medications[index];
-                  final schedule = dataProvider.schedules.firstWhere(
-                        (sch) => sch.medicationId == medication.id,
-                    orElse: () => Schedule(
-                      id: '',
-                      medicationId: '',
-                      dosageId: '',
-                      frequencyType: FrequencyType.daily,
-                      notificationTime: '',
-                    ),
-                  );
-                  final dosages = dataProvider.dosages.where((dos) => dos.medicationId == medication.id).toList();
-                  return MedicationCard(
-                    medication: medication,
-                    schedule: schedule.id.isNotEmpty ? schedule : null,
-                    dosages: dosages,
-                  );
-                },
-              ),
+          ),
+          Expanded(
+            child: upcomingDoses.isEmpty
+                ? const Center(child: Text('No upcoming doses'))
+                : ListView.builder(
+              itemCount: upcomingDoses.length,
+              itemBuilder: (context, index) {
+                final item = upcomingDoses[index];
+                return MedicationCard(
+                  medication: item['medication'] as Medication,
+                  schedule: item['schedule'] as Schedule?,
+                  dosages: item['dosages'] as List<Dosage>,
+                );
+              },
             ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddMedicationScreen()),
-          );
-          if (result != null) {
-            final (medication, schedule, dosage) = result as (Medication?, Schedule?, Dosage?);
-            if (medication != null) {
-              dataProvider.addMedication(medication);
-              if (schedule != null) {
-                dataProvider.addSchedule(schedule.copyWith(medicationId: medication.id));
-              }
-              if (dosage != null) {
-                dataProvider.addDosage(dosage.copyWith(medicationId: medication.id));
-              }
-            }
-          }
-        },
-        backgroundColor: const Color(0xFFFFC107),
-        child: const Icon(Icons.add),
+          ),
+        ],
       ),
     );
   }
 }
 
-class MedicationCard extends StatefulWidget {
+class MedicationCard extends StatelessWidget {
   final Medication medication;
   final Schedule? schedule;
   final List<Dosage> dosages;
@@ -100,171 +63,175 @@ class MedicationCard extends StatefulWidget {
     required this.dosages,
   });
 
-  @override
-  _MedicationCardState createState() => _MedicationCardState();
-}
-
-class _MedicationCardState extends State<MedicationCard> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 100),
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _showEditDeleteDialog(BuildContext context) {
+  void _postponeDose(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Manage ${widget.medication.name}'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => MedicationDetailsScreen(
-                    medication: widget.medication,
-                    schedule: widget.schedule,
-                    dosages: widget.dosages,
-                  ),
-                ),
-              );
-            },
-            child: const Text('Edit'),
+      builder: (context) {
+        DateTime selectedDateTime = DateTime.now();
+        return AlertDialog(
+          title: const Text('Postpone Dose'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ElevatedButton(
+                onPressed: () async {
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: selectedDateTime,
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (date != null) {
+                    final time = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.fromDateTime(selectedDateTime),
+                    );
+                    if (time != null) {
+                      selectedDateTime = DateTime(
+                        date.year,
+                        date.month,
+                        date.day,
+                        time.hour,
+                        time.minute,
+                      );
+                    }
+                  }
+                },
+                child: const Text('Select New Date & Time'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              Provider.of<DataProvider>(context, listen: false).deleteMedication(widget.medication.id);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('${widget.medication.name} deleted')),
-              );
-            },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                final timeString = '${selectedDateTime.hour % 12 == 0 ? 12 : selectedDateTime.hour % 12}:${selectedDateTime.minute.toString().padLeft(2, '0')} ${selectedDateTime.hour >= 12 ? 'PM' : 'AM'}';
+                Provider.of<DataProvider>(context, listen: false).postponeDose(schedule!.id, timeString);
+                Navigator.pop(context);
+              },
+              child: const Text('Confirm'),
+            ),
+          ],
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final dataProvider = Provider.of<DataProvider>(context, listen: false);
-    final primaryDosage = widget.dosages.isNotEmpty ? widget.dosages[0] : null;
+    final dosage = dosages.isNotEmpty ? dosages.first : null;
 
-    return GestureDetector(
-      onTapDown: (_) => _controller.forward(),
-      onTapUp: (_) => _controller.reverse(),
-      onTapCancel: () => _controller.reverse(),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MedicationDetailsScreen(
-              medication: widget.medication,
-              schedule: widget.schedule,
-              dosages: widget.dosages,
-            ),
-          ),
-        );
-      },
-      onLongPress: () => _showEditDeleteDialog(context),
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: Semantics(
-          label: 'Medication: ${widget.medication.name}, '
-              '${widget.schedule != null ? 'Next Dose: ${widget.schedule!.notificationTime}, ' : ''}'
-              '${primaryDosage != null ? 'Dose: ${primaryDosage.totalDose} ${primaryDosage.doseUnit}' : ''}',
-          child: Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            elevation: 4,
-            margin: const EdgeInsets.only(right: 8),
-            child: Container(
-              width: 180,
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: InkWell(
+        onTap: () {
+          Navigator.pushNamed(context, '/medication_details', arguments: medication);
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                medication.name,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Remaining: ${medication.remainingQuantity.toInt()} ${medication.reconstitutionVolume > 0 ? 'mg' : medication.quantityUnit}${medication.reconstitutionVolume > 0 ? ' with ${medication.reconstitutionVolume.toInt()} mL' : ''}',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Colors.grey[700],
+                ),
+              ),
+              if (schedule != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Next: ${schedule!.notificationTime}',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: Colors.grey[700],
+                  ),
+                ),
+              ],
+              Text(
+                medication.type,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Colors.grey[700],
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+              if (dosage != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Dosage: ${dosage.name}',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: Colors.grey[700],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Text(
-                    widget.medication.name,
-                    style: Theme.of(context).textTheme.titleLarge,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (widget.schedule != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      'Next Dose: ${widget.schedule!.notificationTime}',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ],
-                  if (primaryDosage != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      'Dose: ${primaryDosage.totalDose} ${primaryDosage.doseUnit}',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ],
-                  const SizedBox(height: 8),
-                  Text(
-                    'Remaining: ${widget.medication.remainingQuantity} ${widget.medication.quantityUnit}',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const Spacer(),
                   ElevatedButton(
-                    onPressed: () {
-                      if (primaryDosage != null) {
-                        final takenDosage = Dosage(
-                          id: const Uuid().v4(),
-                          medicationId: widget.medication.id,
-                          name: primaryDosage.name,
-                          method: primaryDosage.method,
-                          doseUnit: primaryDosage.doseUnit,
-                          totalDose: primaryDosage.totalDose,
-                          volume: primaryDosage.volume,
-                          insulinUnits: primaryDosage.insulinUnits,
-                          takenTime: DateTime.now(),
-                        );
-                        dataProvider.addDosage(takenDosage);
-                        dataProvider.updateMedication(
-                          widget.medication.id,
-                          widget.medication.copyWith(
-                            remainingQuantity: widget.medication.remainingQuantity - primaryDosage.totalDose,
-                          ),
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('${widget.medication.name} dose recorded')),
-                        );
-                      }
-                    },
+                    onPressed: schedule != null && dosage != null
+                        ? () {
+                      Provider.of<DataProvider>(context, listen: false)
+                          .takeDose(medication.id, schedule!.id, dosage.id);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Took dose for ${medication.name}')),
+                      );
+                    }
+                        : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFC107),
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
-                    child: const Text('Take Now', style: TextStyle(color: Colors.black)),
+                    child: const Text('Take Now'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: schedule != null
+                        ? () => _postponeDose(context)
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey[400],
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    child: const Text('Postpone'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: schedule != null
+                        ? () {
+                      Provider.of<DataProvider>(context, listen: false).cancelDose(schedule!.id);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Canceled dose for ${medication.name}')),
+                      );
+                    }
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    child: const Text('Cancel'),
                   ),
                 ],
               ),
-            ),
+            ],
           ),
         ),
       ),
