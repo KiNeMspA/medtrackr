@@ -4,65 +4,9 @@ import 'package:medtrackr/models/medication.dart';
 import 'package:medtrackr/models/dosage.dart';
 import 'package:medtrackr/models/schedule.dart';
 import 'package:medtrackr/screens/add_medication_screen.dart';
-
-// Temporary storage (replace with provider later)
-final List<Medication> _medications = [
-  Medication(
-    id: 'med1',
-    name: 'BPC-157',
-    storageType: 'Vial',
-    quantityUnit: 'mg',
-    quantity: 5,
-    reconstitutionVolumeUnit: 'mL',
-    reconstitutionVolume: 2.0,
-  ),
-  Medication(
-    id: 'med2',
-    name: 'Ibuprofen',
-    storageType: '',
-    quantityUnit: 'mg',
-    quantity: 200,
-    reconstitutionVolumeUnit: '',
-    reconstitutionVolume: 0.0,
-  ),
-];
-
-final List<Schedule> _schedules = [
-  Schedule(
-    id: 'sch1',
-    medicationId: 'med1',
-    frequencyType: FrequencyType.daily,
-    notificationTime: '8:00 AM',
-  ),
-  Schedule(
-    id: 'sch2',
-    medicationId: 'med2',
-    frequencyType: FrequencyType.selectedDays,
-    selectedDays: [1, 3, 5],
-    notificationTime: '12:00 PM',
-  ),
-];
-
-final List<Dosage> _dosages = [
-  Dosage(
-    id: 'dos1',
-    medicationId: 'med1',
-    method: DosageMethod.subcutaneous,
-    doseUnit: 'mcg',
-    totalDose: 500.0,
-    volume: 0.2,
-    insulinUnits: 0.0,
-  ),
-  Dosage(
-    id: 'dos2',
-    medicationId: 'med2',
-    method: DosageMethod.oral,
-    doseUnit: 'mg',
-    totalDose: 400.0,
-    volume: 0.0,
-    insulinUnits: 0.0,
-  ),
-];
+import 'package:provider/provider.dart';
+import 'package:medtrackr/providers/data_provider.dart';
+import 'package:uuid/uuid.dart';
 
 class HomeScreen extends StatelessWidget {
   final Dosage? dosage;
@@ -72,8 +16,10 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dataProvider = Provider.of<DataProvider>(context);
+
     if (dosage != null && medicationId != null) {
-      _dosages.add(dosage!.copyWith(medicationId: medicationId!));
+      dataProvider.addDosage(dosage!.copyWith(medicationId: medicationId!));
     }
 
     return Scaffold(
@@ -91,10 +37,10 @@ class HomeScreen extends StatelessWidget {
               height: 220,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: _medications.length,
+                itemCount: dataProvider.medications.length,
                 itemBuilder: (context, index) {
-                  final medication = _medications[index];
-                  final schedule = _schedules.firstWhere(
+                  final medication = dataProvider.medications[index];
+                  final schedule = dataProvider.schedules.firstWhere(
                         (sch) => sch.medicationId == medication.id,
                     orElse: () => Schedule(
                       id: '',
@@ -103,7 +49,7 @@ class HomeScreen extends StatelessWidget {
                       notificationTime: '',
                     ),
                   );
-                  final dosage = _dosages.firstWhere(
+                  final dosage = dataProvider.dosages.firstWhere(
                         (dos) => dos.medicationId == medication.id,
                     orElse: () => Dosage(
                       id: '',
@@ -135,14 +81,13 @@ class HomeScreen extends StatelessWidget {
           if (result != null) {
             final (medication, schedule, dosage) = result as (Medication?, Schedule?, Dosage?);
             if (medication != null) {
-              _medications.add(medication);
+              dataProvider.addMedication(medication);
               if (schedule != null) {
-                _schedules.add(schedule.copyWith(medicationId: medication.id));
+                dataProvider.addSchedule(schedule.copyWith(medicationId: medication.id));
               }
               if (dosage != null) {
-                _dosages.add(dosage.copyWith(medicationId: medication.id));
+                dataProvider.addDosage(dosage.copyWith(medicationId: medication.id));
               }
-              (context as Element).markNeedsBuild();
             }
           }
         },
@@ -193,6 +138,8 @@ class _MedicationCardState extends State<MedicationCard> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
+    final dataProvider = Provider.of<DataProvider>(context, listen: false);
+
     return GestureDetector(
       onTapDown: (_) => _controller.forward(),
       onTapUp: (_) => _controller.reverse(),
@@ -238,7 +185,22 @@ class _MedicationCardState extends State<MedicationCard> with SingleTickerProvid
                   const Spacer(),
                   ElevatedButton(
                     onPressed: () {
-                      // Mark dose as taken (implement later)
+                      if (widget.dosage != null) {
+                        final takenDosage = Dosage(
+                          id: const Uuid().v4(),
+                          medicationId: widget.medication.id,
+                          method: widget.dosage!.method,
+                          doseUnit: widget.dosage!.doseUnit,
+                          totalDose: widget.dosage!.totalDose,
+                          volume: widget.dosage!.volume,
+                          insulinUnits: widget.dosage!.insulinUnits,
+                          takenTime: DateTime.now(),
+                        );
+                        dataProvider.addDosage(takenDosage);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('${widget.medication.name} dose recorded')),
+                        );
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFFC107),

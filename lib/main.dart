@@ -4,9 +4,28 @@ import 'package:medtrackr/screens/home_screen.dart';
 import 'package:medtrackr/screens/add_medication_screen.dart';
 import 'package:medtrackr/screens/history_screen.dart';
 import 'package:medtrackr/screens/settings_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:medtrackr/providers/data_provider.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-void main() {
-  runApp(const MedTrackrApp());
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+FlutterLocalNotificationsPlugin();
+
+Future<void> initNotifications() async {
+  const androidInit = AndroidInitializationSettings('app_icon');
+  const initializationSettings = InitializationSettings(android: androidInit);
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initNotifications();
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => DataProvider(),
+      child: const MedTrackrApp(),
+    ),
+  );
 }
 
 class MedTrackrApp extends StatelessWidget {
@@ -17,7 +36,7 @@ class MedTrackrApp extends StatelessWidget {
     return MaterialApp(
       theme: ThemeData(
         primaryColor: const Color(0xFFFFC107),
-        scaffoldBackgroundColor: Colors.grey[100],
+        scaffoldBackgroundColor: Colors.grey[200],
         textTheme: const TextTheme(
           headlineMedium: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.bold, color: Colors.black),
           bodyMedium: TextStyle(fontFamily: 'Roboto', color: Colors.grey),
