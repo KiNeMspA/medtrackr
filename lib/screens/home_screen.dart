@@ -71,6 +71,7 @@ class MedicationCard extends StatelessWidget {
         return AlertDialog(
           title: const Text('Postpone Dose'),
           content: Column(
+
             mainAxisSize: MainAxisSize.min,
             children: [
               ElevatedButton(
