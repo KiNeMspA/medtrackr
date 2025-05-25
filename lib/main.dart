@@ -1,10 +1,11 @@
+// lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:medtrackr/screens/home_screen.dart';
-import 'package:medtrackr/services/notification_service.dart';
+import 'package:medtrackr/screens/add_medication_screen.dart';
+import 'package:medtrackr/screens/history_screen.dart';
+import 'package:medtrackr/screens/settings_screen.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await NotificationService.init();
+void main() {
   runApp(const MedTrackrApp());
 }
 
@@ -14,57 +15,62 @@ class MedTrackrApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'MedTrackr',
       theme: ThemeData(
+        primaryColor: const Color(0xFFFFC107),
+        scaffoldBackgroundColor: Colors.grey[100],
+        textTheme: const TextTheme(
+          headlineMedium: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.bold, color: Colors.black),
+          bodyMedium: TextStyle(fontFamily: 'Roboto', color: Colors.grey),
+          titleLarge: TextStyle(fontFamily: 'Roboto', fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
+        ),
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-          brightness: Brightness.light,
-        ),
-        textTheme: Theme.of(context).textTheme.apply(
-          fontFamily: 'Roboto',
-          bodyColor: Colors.black87,
-          displayColor: Colors.black87,
-        ).copyWith(
-          titleLarge: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-          bodyMedium: const TextStyle(fontSize: 14),
-        ),
-        appBarTheme: AppBarTheme(
-          elevation: 0,
-          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-          titleTextStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-          iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onPrimaryContainer),
-        ),
-        cardTheme: CardThemeData(
-          elevation: 4,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          margin: const EdgeInsets.all(8),
-          clipBehavior: Clip.antiAlias,
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          filled: true,
-          fillColor: Theme.of(context).colorScheme.surface,
-          labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            foregroundColor: Theme.of(context).colorScheme.onPrimary,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-          ),
-        ),
       ),
-      home: const HomeScreen(),
+      home: const MainScreen(),
+    );
+  }
+}
+
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
+
+  @override
+  _MainScreenState createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  int _selectedIndex = 0;
+
+  static const List<Widget> _screens = [
+    HomeScreen(),
+    AddMedicationScreen(),
+    HistoryScreen(),
+    SettingsScreen(),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _screens[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.add_circle), label: 'Add'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: const Color(0xFFFFC107),
+        unselectedItemColor: Colors.grey,
+        backgroundColor: Colors.white,
+        elevation: 8,
+        onTap: _onItemTapped,
+      ),
     );
   }
 }

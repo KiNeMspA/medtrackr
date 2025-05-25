@@ -1,15 +1,16 @@
+// lib/models/medication.dart
 import 'package:uuid/uuid.dart';
 
 class Medication {
   final String id;
   final String name;
-  final String type;
-  final String storageType;
-  final String quantityUnit;
-  final double quantity;
-  final String reconstitutionVolumeUnit; // mL
-  final double reconstitutionVolume;
-  final double concentration; // mcg/mL
+  final String type; // e.g., Injection, Tablet
+  final String storageType; // e.g., Refrigerated, Room Temperature
+  final String quantityUnit; // e.g., mg, mcg
+  final double quantity; // Total available quantity
+  final String reconstitutionVolumeUnit; // e.g., mL
+  final double reconstitutionVolume; // Volume for reconstitution
+  final double concentration; // e.g., mcg/mL
   final double remainingQuantity;
 
   Medication({

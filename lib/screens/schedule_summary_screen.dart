@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:medtrackr/models/medication.dart';
-import 'package:medtrackr/models/dosage_schedule.dart';
+import 'package:medtrackr/models/dddosage_schedule.dart';
 import 'package:medtrackr/services/medication_manager.dart';
 
 class ScheduleSummaryScreen extends StatelessWidget {

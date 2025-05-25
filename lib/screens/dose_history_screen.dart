@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:medtrackr/models/dosage_schedule.dart';
+import 'package:medtrackr/models/dddosage_schedule.dart';
 import 'package:intl/intl.dart';
 
 class DoseHistoryScreen extends StatelessWidget {

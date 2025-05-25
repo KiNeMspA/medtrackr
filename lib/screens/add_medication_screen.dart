@@ -1,211 +1,247 @@
+// lib/screens/add_medication_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:medtrackr/models/medication.dart';
-import 'package:medtrackr/screens/dosage_schedule_screen.dart';
+import 'package:medtrackr/screens/add_dosage_screen.dart';
+import 'package:medtrackr/screens/add_schedule_screen.dart';
+import 'package:uuid/uuid.dart';
 
 class AddMedicationScreen extends StatefulWidget {
-  final Medication? medication;
-  final void Function(Medication) onSave;
-
-  const AddMedicationScreen({super.key, this.medication, required this.onSave});
+  const AddMedicationScreen({super.key});
 
   @override
-  State<AddMedicationScreen> createState() => _AddMedicationScreenState();
+  _AddMedicationScreenState createState() => _AddMedicationScreenState();
 }
 
 class _AddMedicationScreenState extends State<AddMedicationScreen> {
-  final _formKey = GlobalKey<FormState>();
-  String _name = '';
+  final _nameController = TextEditingController();
   String _type = 'Injection';
   String _storageType = 'Vial';
   String _quantityUnit = 'mg';
-  double _quantity = 0.0;
-  String _reconstitutionVolumeUnit = 'mL';
-  double _reconstitutionVolume = 0.0;
+  final _quantityController = TextEditingController();
+  final _reconstitutionVolumeController = TextEditingController();
+  bool _showReconstitute = false;
 
   @override
-  void initState() {
-    super.initState();
-    if (widget.medication != null) {
-      _name = widget.medication!.name;
-      _type = widget.medication!.type == 'Injection' ? 'Injection' : 'Injection';
-      _storageType = widget.medication!.storageType == 'Vial' ? 'Vial' : 'Vial';
-      _quantityUnit = ['mg', 'mcg'].contains(widget.medication!.quantityUnit)
-          ? widget.medication!.quantityUnit
-          : 'mg';
-      _quantity = widget.medication!.quantity;
-      _reconstitutionVolumeUnit = widget.medication!.reconstitutionVolumeUnit == 'mL' ? 'mL' : 'mL';
-      _reconstitutionVolume = widget.medication!.reconstitutionVolume;
-    }
+  void dispose() {
+    _nameController.dispose();
+    _quantityController.dispose();
+    _reconstitutionVolumeController.dispose();
+    super.dispose();
   }
 
-  String _formatNumber(double number) {
-    return number.toStringAsFixed(2).replaceAll(RegExp(r'\.0+$'), '').replaceAll(RegExp(r'\.(\d)0+$'), r'.$1');
+  Future<void> _saveMedication(BuildContext context) async {
+    if (_nameController.text.isEmpty || _quantityController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all required fields')),
+      );
+      return;
+    }
+
+    final medication = Medication(
+      id: const Uuid().v4(),
+      name: _nameController.text,
+      type: _type,
+      storageType: _type == 'Injection' || _type == 'Other' ? _storageType : '',
+      quantityUnit: _quantityUnit,
+      quantity: int.tryParse(_quantityController.text)?.toDouble() ?? 0.0,
+      reconstitutionVolumeUnit: _showReconstitute ? 'mL' : '',
+      reconstitutionVolume: _showReconstitute ? (double.tryParse(_reconstitutionVolumeController.text) ?? 0.0) : 0.0,
+    );
+
+    Navigator.pop(context, (medication, null, null));
   }
 
   @override
   Widget build(BuildContext context) {
-    final concentration = _reconstitutionVolume != 0
-        ? (_quantityUnit == 'mg' ? _quantity * 1000 : _quantity) / _reconstitutionVolume
-        : 0.0;
-    final concentrationMgPerML = concentration / 1000;
+    final isInjection = _type == 'Injection';
+    final isTabletOrCapsule = _type == 'Tablet' || _type == 'Capsule';
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          widget.medication == null ? 'Add Medication' : 'Edit Medication',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-        ),
-        elevation: 0,
-        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+        title: const Text('Add Medication'),
+        backgroundColor: const Color(0xFFFFC107),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextFormField(
-                initialValue: _name,
-                decoration: InputDecoration(
-                  labelText: 'Medication Name',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  filled: true,
-                  fillColor: Theme.of(context).colorScheme.surface,
-                ),
-                validator: (value) => value!.isEmpty ? 'Enter a name' : null,
-                onSaved: (value) => _name = value!,
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                value: _type,
-                decoration: InputDecoration(
-                  labelText: 'Medication Type',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  filled: true,
-                  fillColor: Theme.of(context).colorScheme.surface,
-                ),
-                items: ['Injection'].map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
-                onChanged: (value) => setState(() => _type = value!),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                value: _storageType,
-                decoration: InputDecoration(
-                  labelText: 'Storage Type',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  filled: true,
-                  fillColor: Theme.of(context).colorScheme.surface,
-                ),
-                items: ['Vial'].map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
-                onChanged: (value) => setState(() => _storageType = value!),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                value: _quantityUnit,
-                decoration: InputDecoration(
-                  labelText: 'Quantity Unit',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  filled: true,
-                  fillColor: Theme.of(context).colorScheme.surface,
-                ),
-                items: ['mg', 'mcg'].map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
-                onChanged: (value) => setState(() => _quantityUnit = value!),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                initialValue: _quantity.toString(),
-                decoration: InputDecoration(
-                  labelText: 'Quantity ($_quantityUnit)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  filled: true,
-                  fillColor: Theme.of(context).colorScheme.surface,
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value!.isEmpty) return 'Enter a quantity';
-                  final num = double.tryParse(value);
-                  if (num == null || num <= 0) return 'Enter a valid number';
-                  return null;
-                },
-                onChanged: (value) => setState(() => _quantity = double.tryParse(value) ?? 0.0),
-                onSaved: (value) => _quantity = double.parse(value!),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                value: _reconstitutionVolumeUnit,
-                decoration: InputDecoration(
-                  labelText: 'Reconstitution Volume Unit',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  filled: true,
-                  fillColor: Theme.of(context).colorScheme.surface,
-                ),
-                items: ['mL'].map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
-                onChanged: (value) => setState(() => _reconstitutionVolumeUnit = value!),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                initialValue: _reconstitutionVolume.toString(),
-                decoration: InputDecoration(
-                  labelText: 'Reconstitution Volume (mL)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  filled: true,
-                  fillColor: Theme.of(context).colorScheme.surface,
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value!.isEmpty) return 'Enter a volume';
-                  final num = double.tryParse(value);
-                  if (num == null || num <= 0) return 'Enter a valid number';
-                  return null;
-                },
-                onChanged: (value) => setState(() => _reconstitutionVolume = double.tryParse(value) ?? 0.0),
-                onSaved: (value) => _reconstitutionVolume = double.parse(value!),
+              Text(
+                'Medication Details',
+                style: Theme.of(context).textTheme.headlineMedium,
               ),
               const SizedBox(height: 16),
-              Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Text(
-                    'Concentration for $_name:\n'
-                        '${_formatNumber(concentration)} mcg/$_reconstitutionVolumeUnit\n'
-                        '${_formatNumber(concentrationMgPerML)} mg/$_reconstitutionVolumeUnit',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
+              TextField(
+                controller: _nameController,
+                decoration: InputDecoration(
+                  labelText: 'Medication Name *',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey[400]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Color(0xFFFFC107)),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-              FilledButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    _formKey.currentState!.save();
-                    final medication = Medication(
-                      id: widget.medication?.id,
-                      name: _name,
-                      type: _type,
-                      storageType: _storageType,
-                      quantityUnit: _quantityUnit,
-                      quantity: _quantity,
-                      reconstitutionVolumeUnit: _reconstitutionVolumeUnit,
-                      reconstitutionVolume: _reconstitutionVolume,
-                    );
-                    print('Saving medication: ${medication.name}'); // Debug log
-                    widget.onSave(medication);
-                    Navigator.pop(context, medication); // Return to HomeScreen
+              DropdownButtonFormField<String>(
+                value: _type,
+                decoration: InputDecoration(
+                  labelText: 'Type',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey[400]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Color(0xFFFFC107)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                items: ['Injection', 'Tablet', 'Capsule', 'Other']
+                    .map((type) => DropdownMenuItem(value: type, child: Text(type)))
+                    .toList(),
+                onChanged: (value) => setState(() {
+                  _type = value!;
+                  _storageType = isInjection ? 'Vial' : 'Other';
+                }),
+              ),
+              if (!isTabletOrCapsule) ...[
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _storageType,
+                  decoration: InputDecoration(
+                    labelText: 'Storage Type${isInjection ? ' *' : ''}',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey[400]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Color(0xFFFFC107)),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  items: ['Vial', 'Pen', if (_type == 'Other') 'Other']
+                      .map((type) => DropdownMenuItem(value: type, child: Text(type)))
+                      .toList(),
+                  onChanged: (value) => setState(() => _storageType = value!),
+                ),
+              ],
+              const SizedBox(height: 16),
+              TextField(
+                controller: _quantityController,
+                decoration: InputDecoration(
+                  labelText: 'Total Storage Quantity *',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey[400]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Color(0xFFFFC107)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _quantityUnit,
+                decoration: InputDecoration(
+                  labelText: 'Measure',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey[400]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Color(0xFFFFC107)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                items: ['mcg', 'mg', 'mL', 'IU']
+                    .map((unit) => DropdownMenuItem(value: unit, child: Text(unit)))
+                    .toList(),
+                onChanged: (value) => setState(() => _quantityUnit = value!),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => setState(() => _showReconstitute = !_showReconstitute),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFC107),
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: Text(
+                  _showReconstitute ? 'Hide Reconstitution' : 'Reconstitute',
+                  style: const TextStyle(color: Colors.black),
+                ),
+              ),
+              if (_showReconstitute) ...[
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _reconstitutionVolumeController,
+                  decoration: InputDecoration(
+                    labelText: 'Reconstitution Volume (mL)',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey[400]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Color(0xFFFFC107)),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+              ],
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () async {
+                  final dosage = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AddDosageScreen()),
+                  );
+                  if (dosage != null) {
+                    Navigator.pop(context, (null, null, dosage));
                   }
                 },
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFC107),
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                child: const Text(
-                  'Save and Set Dosage',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                child: const Text('Add Dosage', style: TextStyle(color: Colors.black)),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () async {
+                  final schedule = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AddScheduleScreen()),
+                  );
+                  if (schedule != null) {
+                    Navigator.pop(context, (null, schedule, null));
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFC107),
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
+                child: const Text('Add Schedule', style: TextStyle(color: Colors.black)),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => _saveMedication(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFC107),
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text('Save Medication', style: TextStyle(color: Colors.black)),
               ),
             ],
           ),

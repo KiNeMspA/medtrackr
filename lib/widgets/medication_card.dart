@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:medtrackr/models/medication.dart';
-import 'package:medtrackr/models/dosage_schedule.dart';
+import 'package:medtrackr/models/dddosage_schedule.dart';
 import 'package:medtrackr/screens/add_medication_screen.dart';
 import 'package:medtrackr/screens/dosage_schedule_screen.dart';
 import 'package:medtrackr/screens/dose_history_screen.dart';

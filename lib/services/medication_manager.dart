@@ -1,5 +1,5 @@
 import 'package:medtrackr/models/medication.dart';
-import 'package:medtrackr/models/dosage_schedule.dart';
+import 'package:medtrackr/models/dddosage_schedule.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:medtrackr/services/notification_service.dart';

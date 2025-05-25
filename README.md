@@ -136,6 +136,18 @@ This section logs key discussion points and outcomes from each coding session to
   - Style `history_screen.dart` and `settings_screen.dart` with National Geographic aesthetic.
   - Add notification system using `flutter_local_notifications`.
   - Add navigation to medication details from `MedicationCard` tap.
+  -   - Reorganized file structure: Renamed `add_dosage_screen.dart` to `add_medication_screen.dart`, created `add_dosage_screen.dart` and `add_schedule_screen.dart`.
+  - Updated `AddMedicationScreen` with dynamic `Storage Type`, integer `Total Storage Quantity`, and navigation to `AddDosageScreen` and `AddScheduleScreen`.
+  - Implemented `AddDosageScreen` and `AddScheduleScreen` for modular data entry.
+  - Maintained National Geographic-inspired UI with yellow accents, softened outlines, and swipeable cards.
+- **Outcomes**:
+  - Improved modularity with separate screens for `Medication`, `Dosage`, and `Schedule`.
+  - Enhanced `AddMedicationScreen` with user-friendly features and navigation.
+- **Pending Tasks**:
+  - Implement data persistence using `provider` and `path_provider`.
+  - Style `history_screen.dart` and `settings_screen.dart` with National Geographic aesthetic.
+  - Implement notification system using `flutter_local_notifications`.
+  - Add `Dosage` creation and tracking when marking doses as taken.
 
 ## To-Do List
 - Short-term:
