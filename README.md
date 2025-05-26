@@ -29,7 +29,8 @@ A Flutter-based medication tracking app to manage medications, dosages, schedule
   - Commit `e74e621a05e653bd8d730056e2519cf07164dd5c`: Added `Dosage`, `doseUnits`.
   - Commit `0a51ccb38b274a19219cc576c682d097291d12c6`: Enhanced UI, fixed reconstitution.
   - Commit `f1b5971aa29a8a2f225f227f857e7d54ba8956c4`: Added home screen, schedule model.
-  - Commit [Insert New Commit Hash]: Fixed `upcomingDoses` parsing in `DataProvider`.
+  - Commit `6f0eff93734fccc40feabdb07914376e48ca0754`: Fixed `upcomingDoses` parsing.
+  - Commit `d252f5421fb91218394db19fe45378d3bc7647b7`: Fixed schedule imports, async methods, notifications.
 
 ## Workflow Preservation
 To maintain the current development workflow with Grok:
