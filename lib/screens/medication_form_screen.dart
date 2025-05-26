@@ -24,7 +24,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
   final _targetDoseController = TextEditingController();
   final _notesController = TextEditingController();
   String _type = 'Tablet';
-  String _quantityUnit = 'mcg';
+  String _quantityUnit = 'mg';
   String _targetDoseUnit = 'mcg';
   bool _isReconstituting = false;
   List<Map<String, dynamic>> _reconstitutionSuggestions = [];
@@ -33,6 +33,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
   double _targetDose = 0;
   String _medicationName = '';
   String? _reconstitutionError;
+  double _syringeSize = 1.0; // Default syringe size (mL)
 
   @override
   void initState() {
@@ -41,17 +42,20 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
       _nameController.text = widget.medication!.name;
       _type = widget.medication!.type;
       _quantityUnit = widget.medication!.quantityUnit;
-      _quantityController.text = widget.medication!.quantity.toStringAsFixed(0);
+      _quantityController.text = widget.medication!.quantity.toStringAsFixed(2);
       _isReconstituting = widget.medication!.reconstitutionVolume > 0;
       _reconstitutionFluidController.text = widget.medication!.reconstitutionFluid;
       _notesController.text = widget.medication!.notes;
-      _reconstitutionSuggestions = widget.medication!.reconstitutionOptions;
+      _reconstitutionSuggestions = widget.medication!.reconstitutionOptions ?? [];
       _selectedReconstitution = widget.medication!.selectedReconstitution;
       _totalAmount = widget.medication!.quantity;
       _medicationName = widget.medication!.name;
-      _targetDose = widget.medication!.selectedReconstitution?['iu']?.toDouble() ?? 0;
-      _targetDoseController.text = _targetDose.toStringAsFixed(_targetDose % 1 == 0 ? 0 : 1);
-      _targetDoseUnit = widget.medication!.quantityUnit;
+      _targetDose = widget.medication!.selectedReconstitution?['doseVolume']?.toDouble() ?? 0;
+      _targetDoseController.text = _targetDose.toStringAsFixed(_targetDose % 1 == 0 ? 0 : 2);
+      _targetDoseUnit = widget.medication!.quantityUnit == 'IU' ? 'mcg' : widget.medication!.quantityUnit;
+      _syringeSize = widget.medication!.reconstitutionVolume > 0
+          ? widget.medication!.reconstitutionVolume
+          : 1.0;
     }
   }
 
@@ -72,22 +76,23 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
       quantityUnit: _quantityUnit,
       targetDoseUnit: _targetDoseUnit,
       medicationName: _nameController.text,
+      syringeSize: _syringeSize,
     );
     final result = calculator.calculate();
-    final iuPerML = result.selectedReconstitution != null
-        ? (result.selectedReconstitution!['iu'] as num).toDouble() /
-        (result.selectedReconstitution!['volume'] as num).toDouble()
+    final concentration = result['selectedReconstitution'] != null
+        ? result['selectedReconstitution']['concentration'] as double
         : 0.0;
 
     setState(() {
-      _reconstitutionSuggestions = result['suggestions'];
-      _selectedReconstitution = result['selectedReconstitution'];
-      _totalAmount = result['totalAmount'];
-      _targetDose = result['targetDose'];
-      _medicationName = result['medicationName'];
-      _reconstitutionError = iuPerML < 10 || iuPerML > 100
-          ? 'Warning: IU/mL is ${iuPerML.toStringAsFixed(1)}, recommended range is 10–100 for insulin syringe.'
-          : null;
+      _reconstitutionSuggestions = result['suggestions'] as List<Map<String, dynamic>>;
+      _selectedReconstitution = result['selectedReconstitution'] as Map<String, dynamic>?;
+      _totalAmount = result['totalAmount'] as double;
+      _targetDose = result['targetDose'] as double;
+      _medicationName = result['medicationName'] as String;
+      _reconstitutionError = result['error'] as String? ??
+          (concentration < 0.1 || concentration > 10
+              ? 'Warning: Concentration is ${concentration.toStringAsFixed(2)} mg/mL, recommended range is 0.1–10 mg/mL.'
+              : null);
     });
   }
 
@@ -179,8 +184,8 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
         '/add_dosage',
         arguments: {
           'medication': medication,
-          'targetDoseMcg': _targetDose,
-          'selectedIU': _isReconstituting ? (_selectedReconstitution?['iu']?.toDouble() ?? 0) : 0.0,
+          'targetDoseMcg': _targetDose * 1000, // Convert mg to mcg
+          'selectedIU': _isReconstituting ? (_selectedReconstitution?['syringeUnits']?.toDouble() ?? 0) : 0.0,
         },
       );
 
@@ -226,8 +231,8 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
         child: Text(
           'Name: ${medication.name}\n'
               'Type: ${medication.type}\n'
-              'Quantity: ${medication.quantity.toStringAsFixed(0)} ${medication.quantityUnit}\n'
-              '${medication.reconstitutionVolume > 0 ? 'Reconstituted with ${medication.reconstitutionFluid.isNotEmpty ? medication.reconstitutionFluid : 'None'} ${medication.reconstitutionVolume} mL\nIU per mL: ${(medication.selectedReconstitution?['iu'] ?? 0) / medication.reconstitutionVolume} IU\n' : ''}'
+              'Quantity: ${medication.quantity.toStringAsFixed(2)} ${medication.quantityUnit}\n'
+              '${medication.reconstitutionVolume > 0 ? 'Reconstituted with ${medication.reconstitutionFluid.isNotEmpty ? medication.reconstitutionFluid : 'None'} ${medication.reconstitutionVolume} mL\nConcentration: ${(medication.selectedReconstitution?['concentration'] ?? 0).toStringAsFixed(2)} mg/mL\n' : ''}'
               'Notes: ${medication.notes.isNotEmpty ? medication.notes : 'None'}',
           style: const TextStyle(color: Colors.grey, fontSize: 16),
         ),
@@ -275,9 +280,9 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
               const SizedBox(height: 8),
               Text(
                 _type == 'Injection'
-                    ? 'Enter the potency of the vial (e.g., total IU or mcg in the vial).'
+                    ? 'Enter the potency of the vial (e.g., total mg or mcg in the vial).'
                     : _type == 'Tablet' || _type == 'Capsule'
-                    ? 'Enter the potency per tablet/capsule (e.g., mcg per tablet) and the total number of tablets/capsules.'
+                    ? 'Enter the potency per tablet/capsule (e.g., mg per tablet) and the total number of tablets/capsules.'
                     : 'Enter the total quantity of the medication.',
                 style: const TextStyle(fontSize: 14, color: Colors.grey),
               ),
@@ -296,19 +301,20 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                 onTypeChanged: (value) => setState(() {
                   _type = value ?? 'Tablet';
                   _quantityUnit = {
-                    'Tablet': 'mcg',
-                    'Capsule': 'mcg',
-                    'Injection': 'IU',
-                    'Other': 'mcg',
+                    'Tablet': 'mg',
+                    'Capsule': 'mg',
+                    'Injection': 'mg',
+                    'Other': 'mg',
                   }[value]!;
+                  _targetDoseUnit = 'mcg';
                   _isReconstituting = false;
                   _reconstitutionSuggestions = [];
                   _selectedReconstitution = null;
                   _calculateReconstitutionSuggestions();
                 }),
                 onQuantityUnitChanged: (value) => setState(() {
-                  _quantityUnit = value ?? 'mcg';
-                  _targetDoseUnit = value ?? 'mcg';
+                  _quantityUnit = value ?? 'mg';
+                  _targetDoseUnit = value == 'IU' ? 'mcg' : 'mcg';
                   _calculateReconstitutionSuggestions();
                 }),
               ),
@@ -334,6 +340,28 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                     _calculateReconstitutionSuggestions();
                   }),
                 ),
+                if (_isReconstituting) ...[
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<double>(
+                    value: _syringeSize,
+                    decoration: InputDecoration(
+                      labelText: 'Syringe Size (mL)',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    items: [0.3, 0.5, 1.0, 3.0, 5.0]
+                        .map((size) => DropdownMenuItem(
+                      value: size,
+                      child: Text('$size mL'),
+                    ))
+                        .toList(),
+                    onChanged: (value) => setState(() {
+                      _syringeSize = value ?? 1.0;
+                      _calculateReconstitutionSuggestions();
+                    }),
+                  ),
+                ],
               ],
               if (_isReconstituting) ...[
                 ReconstitutionWidgets(
@@ -370,7 +398,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                   onSuggestionSelected: (suggestion) => setState(() {
                     _selectedReconstitution = suggestion;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Selected ${suggestion['volume']} mL reconstitution')),
+                      SnackBar(content: Text('Selected ${suggestion['volume']} mL, ${suggestion['concentration'].toStringAsFixed(2)} mg/mL')),
                     );
                     _calculateReconstitutionSuggestions();
                   }),
@@ -394,13 +422,16 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                     if (_selectedReconstitution != null) {
                       setState(() {
                         final currentVolume = (_selectedReconstitution!['volume'] as num).toDouble();
-                        final newVolume = (currentVolume + increment).clamp(0.1, 100.0);
+                        final newVolume = (currentVolume + increment).clamp(0.1, _syringeSize);
                         _selectedReconstitution = {
                           ..._selectedReconstitution!,
                           'volume': newVolume,
+                          'concentration': _totalAmount / newVolume,
+                          'doseVolume': _targetDose / (_totalAmount / newVolume),
+                          'syringeUnits': (_targetDose / (_totalAmount / newVolume)) * 100,
                         };
-                        _calculateReconstitutionSuggestions();
                       });
+                      _calculateReconstitutionSuggestions();
                     }
                   },
                   onClearReconstitution: () => setState(() {
@@ -437,8 +468,8 @@ class _ReconstitutionEditDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final volumeController = TextEditingController(text: suggestion['volume'].toString());
-    final iuController = TextEditingController(text: suggestion['iu'].toString());
+    final volumeController = TextEditingController(text: suggestion['volume'].toStringAsFixed(2));
+    final concentrationController = TextEditingController(text: suggestion['concentration'].toStringAsFixed(2));
     final fluidController = TextEditingController(text: fluid);
 
     return AlertDialog(
@@ -463,9 +494,9 @@ class _ReconstitutionEditDialog extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           TextFormField(
-            controller: iuController,
+            controller: concentrationController,
             decoration: InputDecoration(
-              labelText: 'IU',
+              labelText: 'Concentration (mg/mL)',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               filled: true,
               fillColor: Colors.white,
@@ -494,9 +525,13 @@ class _ReconstitutionEditDialog extends StatelessWidget {
         ),
         TextButton(
           onPressed: () {
+            final volume = double.tryParse(volumeController.text) ?? suggestion['volume'];
+            final concentration = double.tryParse(concentrationController.text) ?? suggestion['concentration'];
             Navigator.pop(context, {
-              'volume': double.tryParse(volumeController.text) ?? suggestion['volume'],
-              'iu': double.tryParse(iuController.text) ?? suggestion['iu'],
+              'volume': volume,
+              'concentration': concentration,
+              'doseVolume': suggestion['doseVolume'],
+              'syringeUnits': suggestion['syringeUnits'],
               'fluid': fluidController.text,
             });
           },
