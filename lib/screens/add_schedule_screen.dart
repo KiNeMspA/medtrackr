@@ -80,7 +80,7 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
       dosageUnit: dataProvider.dosages
           .firstWhere((d) => d.id == _selectedDosageId)
           .unit,
-      cyclePeriod: _cyclePeriodController.text.isNotEmpty
+      notificationTime: _cyclePeriodController.text.isNotEmpty
           ? int.tryParse(_cyclePeriodController.text)
           : null,
     );

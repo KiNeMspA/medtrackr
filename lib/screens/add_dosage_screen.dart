@@ -6,8 +6,9 @@ import 'package:medtrackr/providers/data_provider.dart';
 import 'package:uuid/uuid.dart';
 
 class AddDosageScreen extends StatefulWidget {
-  const AddDosageScreen({super.key, required this.medication});
+  const AddDosageScreen({super.key, required this.medication, this.dosage});
   final Medication medication;
+  final Dosage? dosage;
 
   @override
   _AddDosageScreenState createState() => _AddDosageScreenState();
@@ -17,6 +18,7 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
   final _nameController = TextEditingController();
   final _amountController = TextEditingController();
   String _unit = 'mcg';
+  Dosage? _dosage;
   Medication? _medication;
 
   @override
@@ -25,9 +27,16 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
     final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     if (args != null) {
       _medication = args['medication'] as Medication?;
-      final targetDoseMcg = args['targetDoseMcg'] as double?;
-      if (targetDoseMcg != null) {
-        _amountController.text = targetDoseMcg.toStringAsFixed(2);
+      _dosage = args['dosage'] as Dosage?;
+      if (_dosage != null) {
+        _nameController.text = _dosage!.name;
+        _amountController.text = _dosage!.dosageAmount.toStringAsFixed(2);
+        _unit = _dosage!.unit;
+      } else {
+        final targetDoseMcg = args['targetDoseMcg'] as double?;
+        if (targetDoseMcg != null) {
+          _amountController.text = targetDoseMcg.toStringAsFixed(2);
+        }
       }
     }
   }
@@ -51,7 +60,7 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
       id: const Uuid().v4(),
       medicationId: _medication!.id,
       name: _nameController.text,
-      dosageAmount: double.tryParse(_amountController.text) ?? 0,
+      amount: double.tryParse(_amountController.text) ?? 0,
       unit: _unit,
     );
 

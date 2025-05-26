@@ -70,6 +70,3 @@ To maintain the current development workflow with Grok:
 - OS: Windows 11
 - Emulator: sdk gphone64 x86 64
 - 
-## Update - May 26, 2025
-- Fixed build errors in add_dosage_screen.dart (medication and dosageAmount parameters).
-- Corrected frequencyType in add_schedule_screen.dart.
