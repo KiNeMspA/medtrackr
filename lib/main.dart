@@ -46,7 +46,6 @@ class MedTrackrApp extends StatelessWidget {
       ),
       home: const MainScreen(),
       routes: {
-        '/': (context) => const HomeScreen(),
         '/medication_form': (context) => MedicationFormScreen(
           medication: ModalRoute.of(context)!.settings.arguments as Medication?,
         ),
@@ -55,8 +54,8 @@ class MedTrackrApp extends StatelessWidget {
           return AddDosageScreen(
             medication: args['medication'] as Medication,
             dosage: args['dosage'] as Dosage?,
-            targetDoseMcg: args['targetDoseMcg'] as double?,
-            selectedIU: args['selectedIU'] as double?,
+            targetDoseMcg: args['targetDoseMcg'] != null ? (args['targetDoseMcg'] as num).toDouble() : null,
+            selectedIU: args['selectedIU'] != null ? (args['selectedIU'] as num).toDouble() : null,
           );
         },
         '/add_schedule': (context) => const AddScheduleScreen(),

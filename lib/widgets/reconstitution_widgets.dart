@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 class ReconstitutionWidgets extends StatelessWidget {
   final bool isReconstituting;
@@ -12,13 +11,15 @@ class ReconstitutionWidgets extends StatelessWidget {
   final double targetDose;
   final String medicationName;
   final String quantityUnit;
+  final String? reconstitutionError;
   final ValueChanged<bool> onReconstitutingChanged;
   final VoidCallback onFluidChanged;
   final VoidCallback onTargetDoseChanged;
   final ValueChanged<String?> onTargetDoseUnitChanged;
   final ValueChanged<Map<String, dynamic>> onSuggestionSelected;
-  final Function(Map<String, dynamic>) onEditReconstitution;
+  final ValueChanged<Map<String, dynamic>> onEditReconstitution;
   final VoidCallback onClearReconstitution;
+  final ValueChanged<double> onAdjustVolume;
 
   const ReconstitutionWidgets({
     super.key,
@@ -31,7 +32,8 @@ class ReconstitutionWidgets extends StatelessWidget {
     required this.totalAmount,
     required this.targetDose,
     required this.medicationName,
-    required this.quantityUnit, // Add this
+    required this.quantityUnit,
+    this.reconstitutionError,
     required this.onReconstitutingChanged,
     required this.onFluidChanged,
     required this.onTargetDoseChanged,
@@ -39,216 +41,123 @@ class ReconstitutionWidgets extends StatelessWidget {
     required this.onSuggestionSelected,
     required this.onEditReconstitution,
     required this.onClearReconstitution,
+    required this.onAdjustVolume,
   });
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Reconstitute this medication?',
-              style: TextStyle(fontSize: 16),
+              'Reconstitution Settings',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
             ),
-            const Spacer(),
-            Switch(
-              value: isReconstituting,
-              activeColor: const Color(0xFFFFC107),
-              onChanged: onReconstitutingChanged,
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: reconstitutionFluidController,
+              decoration: InputDecoration(
+                labelText: 'Reconstitution Fluid',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                filled: true,
+                fillColor: Colors.white,
+              ),
+              onChanged: (value) => onFluidChanged(),
             ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: targetDoseController,
+              decoration: InputDecoration(
+                labelText: 'Target Dose',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                filled: true,
+                fillColor: Colors.white,
+                suffixText: targetDoseUnit,
+              ),
+              keyboardType: TextInputType.number,
+              onChanged: (value) => onTargetDoseChanged(),
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: targetDoseUnit,
+              decoration: InputDecoration(
+                labelText: 'Target Dose Unit',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                filled: true,
+                fillColor: Colors.white,
+              ),
+              items: ['g', 'mg', 'mcg', 'mL', 'IU', 'Unit']
+                  .map((unit) => DropdownMenuItem(value: unit, child: Text(unit)))
+                  .toList(),
+              onChanged: onTargetDoseUnitChanged,
+            ),
+            const SizedBox(height: 16),
+            if (reconstitutionSuggestions.isNotEmpty) ...[
+              const Text(
+                'Suggested Reconstitutions',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+              ),
+              const SizedBox(height: 8),
+              ...reconstitutionSuggestions.map((suggestion) {
+                final isSelected = suggestion == selectedReconstitution;
+                return ListTile(
+                  title: Text(
+                    'Reconstitute with ${suggestion['volume']} mL for ${suggestion['iu']} IU',
+                    style: TextStyle(
+                      color: isSelected ? const Color(0xFFFFC107) : Colors.black,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                  trailing: isSelected
+                      ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Color(0xFFFFC107)),
+                        onPressed: () => onEditReconstitution(suggestion),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.add, color: Color(0xFFFFC107)),
+                        onPressed: () => onAdjustVolume(0.1),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.remove, color: Color(0xFFFFC107)),
+                        onPressed: () => onAdjustVolume(-0.1),
+                      ),
+                    ],
+                  )
+                      : null,
+                  onTap: () => onSuggestionSelected(suggestion),
+                );
+              }),
+            ],
+            if (reconstitutionError != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Text(
+                  reconstitutionError!,
+                  style: const TextStyle(color: Colors.red, fontSize: 14),
+                ),
+              ),
+            const SizedBox(height: 16),
+            if (selectedReconstitution != null)
+              ElevatedButton(
+                onPressed: onClearReconstitution,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('Clear Reconstitution', style: TextStyle(color: Colors.white)),
+              ),
           ],
         ),
-        if (isReconstituting) ...[
-          const SizedBox(height: 16),
-          TextField(
-            controller: reconstitutionFluidController,
-            decoration: InputDecoration(
-              labelText: 'Reconstitution Fluid (e.g., Saline, Water)',
-              labelStyle: const TextStyle(color: Colors.grey),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey[300]!.withOpacity(0.5)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: Color(0xFFFFC107)),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              filled: true,
-              fillColor: Colors.grey[50],
-            ),
-            onChanged: (_) => onFluidChanged(),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: TextField(
-                  controller: targetDoseController,
-                  decoration: InputDecoration(
-                    labelText: 'Target Single Dosage *',
-                    labelStyle: const TextStyle(color: Colors.grey),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey[300]!.withOpacity(0.5)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Color(0xFFFFC107)),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
-                  ),
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  onChanged: (_) => onTargetDoseChanged(),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 2,
-                child: DropdownButtonFormField<String>(
-                  value: targetDoseUnit,
-                  decoration: InputDecoration(
-                    labelText: 'Unit',
-                    labelStyle: const TextStyle(color: Colors.grey),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey[300]!.withOpacity(0.5)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Color(0xFFFFC107)),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
-                  ),
-                  items: ['mcg', 'mg']
-                      .map((unit) => DropdownMenuItem(value: unit, child: Text(unit)))
-                      .toList(),
-                  onChanged: onTargetDoseUnitChanged,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          if (reconstitutionSuggestions.isNotEmpty && selectedReconstitution == null) ...[
-            const Text(
-              'Reconstitution Options:',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            ...reconstitutionSuggestions.take(4).map((suggestion) => Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: const BorderSide(color: Color(0xFFFFC107), width: 2),
-              ),
-              elevation: 4,
-              color: Colors.grey[50],
-              margin: const EdgeInsets.symmetric(vertical: 4),
-              child: ListTile(
-                contentPadding: const EdgeInsets.all(16),
-                title: RichText(
-                  text: TextSpan(
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    children: [
-                      const TextSpan(text: 'Option: '),
-                      TextSpan(
-                        text: '${suggestion['volume']} mL',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFFFFC107),
-                        ),
-                      ),
-                      const TextSpan(text: ' = '),
-                      TextSpan(
-                        text: '${suggestion['iu']} IU',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFFFFC107),
-                        ),
-                      ),
-                    ],
-                  ),
-                  softWrap: true,
-                ),
-                subtitle: Text(
-                  'For ${totalAmount.toInt()} $quantityUnit of “$medicationName” at ${targetDose.toInt()} mcg',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.add, color: Color(0xFFFFC107)),
-                  onPressed: () => onSuggestionSelected(suggestion),
-                ),
-              ),
-            )),
-          ],
-          if (selectedReconstitution != null) ...[
-            const SizedBox(height: 16),
-            const Text(
-              'Selected Reconstitution:',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: BorderSide(color: Colors.green[900]!, width: 2),
-              ),
-              elevation: 4,
-              color: Colors.green[100],
-              margin: const EdgeInsets.symmetric(vertical: 4),
-              child: ListTile(
-                contentPadding: const EdgeInsets.all(16),
-                title: RichText(
-                  text: TextSpan(
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.green[900]),
-                    children: [
-                      const TextSpan(text: 'Option: '),
-                      TextSpan(
-                        text: '${selectedReconstitution!['volume']} mL',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const TextSpan(text: ' = '),
-                      TextSpan(
-                        text: '${selectedReconstitution!['iu']} IU',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  softWrap: true,
-                ),
-                subtitle: Text(
-                  'For ${totalAmount.toInt()} $quantityUnit of “$medicationName” at ${targetDose.toInt()} mcg\n'
-                      'Fluid: ${reconstitutionFluidController.text.isNotEmpty ? reconstitutionFluidController.text : 'None'}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.green[900]),
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.edit, color: Colors.green[900]),
-                      onPressed: () => onEditReconstitution(selectedReconstitution!),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.clear, color: Colors.green[900]),
-                      onPressed: onClearReconstitution,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ],
-      ],
+      ),
     );
   }
 }
@@ -266,67 +175,68 @@ class ReconstitutionEditDialog extends StatelessWidget {
     final fluidController = TextEditingController(text: fluid);
 
     return AlertDialog(
-      backgroundColor: Colors.grey[50],
-      title: const Text('Edit Reconstitution'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: volumeController,
-              decoration: InputDecoration(
-                labelText: 'Volume (mL)',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Color(0xFFFFC107)),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              keyboardType: TextInputType.number,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      title: const Text(
+        'Edit Reconstitution',
+        style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextFormField(
+            controller: volumeController,
+            decoration: InputDecoration(
+              labelText: 'Volume (mL)',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              filled: true,
+              fillColor: Colors.white,
             ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: iuController,
-              decoration: InputDecoration(
-                labelText: 'IU per Dose',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Color(0xFFFFC107)),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              keyboardType: TextInputType.number,
+            keyboardType: TextInputType.number,
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: iuController,
+            decoration: InputDecoration(
+              labelText: 'IU',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              filled: true,
+              fillColor: Colors.white,
             ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: fluidController,
-              decoration: InputDecoration(
-                labelText: 'Reconstitution Fluid',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Color(0xFFFFC107)),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
+            keyboardType: TextInputType.number,
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: fluidController,
+            decoration: InputDecoration(
+              labelText: 'Fluid',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              filled: true,
+              fillColor: Colors.white,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: const Text(
+            'Cancel',
+            style: TextStyle(color: Color(0xFFFFC107)),
+          ),
         ),
         TextButton(
           onPressed: () {
             Navigator.pop(context, {
-              'volume': int.tryParse(volumeController.text) ?? suggestion['volume'],
-              'iu': int.tryParse(iuController.text) ?? suggestion['iu'],
-              'concentration': suggestion['concentration'],
+              'volume': double.tryParse(volumeController.text) ?? suggestion['volume'],
+              'iu': double.tryParse(iuController.text) ?? suggestion['iu'],
               'fluid': fluidController.text,
             });
           },
-          child: const Text('Save'),
+          child: const Text(
+            'Save',
+            style: TextStyle(color: Colors.black),
+          ),
         ),
       ],
     );

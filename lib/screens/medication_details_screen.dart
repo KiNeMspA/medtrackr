@@ -16,8 +16,7 @@ class MedicationDetailsScreen extends StatelessWidget {
       case 'capsule':
         return Icons.medication;
       case 'injection':
-        return Icons.medical_services
-        ;
+        return Icons.medical_services;
       default:
         return Icons.medical_services;
     }
@@ -31,28 +30,15 @@ class MedicationDetailsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
-        title: Text(medication.name),
+        title: Text(medication.name, style: const TextStyle(color: Colors.black)),
         backgroundColor: const Color(0xFFFFC107),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete),
+            icon: const Icon(Icons.delete, color: Colors.black),
             onPressed: () async {
               final confirmed = await showDialog<bool>(
                 context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Delete Medication'),
-                  content: const Text('Are you sure you want to delete this medication and all its dosages?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: const Text('Delete'),
-                    ),
-                  ],
-                ),
+                builder: (context) => _buildConfirmationDialog(context),
               );
               if (confirmed == true && context.mounted) {
                 print('Deleting medication: ${medication.id}');
@@ -70,105 +56,122 @@ class MedicationDetailsScreen extends StatelessWidget {
           children: [
             Text(
               'Medication Details',
-              style: Theme.of(context).textTheme.headlineMedium,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 16),
-            Card(
-              elevation: 4,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(_getMedicationIcon(medication.type), color: Colors.grey[700]),
-                        const SizedBox(width: 8),
-                        Text('Name: ${medication.name}', style: Theme.of(context).textTheme.bodyLarge),
-                      ],
-                    ),
-                    Text('Type: ${medication.type}', style: Theme.of(context).textTheme.bodyLarge),
-                    Text(
-                      'Total: ${medication.quantity.toInt()} ${medication.quantityUnit}${medication.type == 'Tablet' || medication.type == 'Capsule' ? ' units' : ''}',
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                    Text('Remaining: ${medication.remainingQuantity.toInt()} ${medication.quantityUnit}',
-                        style: Theme.of(context).textTheme.bodyLarge),
-                    if (medication.reconstitutionVolume > 0)
-                      Text(
-                        'Reconstituted with ${medication.reconstitutionVolume.toInt()} mL for ${medication.selectedReconstitution?['iu'] ?? 0} IU/mL',
-                        style: Theme.of(context).textTheme.bodyLarge,
+            GestureDetector(
+              onTap: () {
+                print('Navigating to MedicationFormScreen to edit medication');
+                Navigator.pushNamed(
+                  context,
+                  '/medication_form',
+                  arguments: medication,
+                );
+              },
+              child: Card(
+                elevation: 6,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                color: Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(_getMedicationIcon(medication.type), color: const Color(0xFFFFC107)),
+                          const SizedBox(width: 8),
+                          Text(
+                            medication.name,
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+                          ),
+                        ],
                       ),
-                    if (medication.reconstitutionFluid.isNotEmpty)
-                      Text('Fluid: ${medication.reconstitutionFluid}', style: Theme.of(context).textTheme.bodyLarge),
-                    Text('Notes: ${medication.notes.isNotEmpty ? medication.notes : 'None'}',
-                        style: Theme.of(context).textTheme.bodyLarge),
-                  ],
+                      const SizedBox(height: 8),
+                      Text('Type: ${medication.type}', style: const TextStyle(fontSize: 16, color: Colors.grey)),
+                      Text(
+                        'Remaining: ${medication.remainingQuantity.toInt()}/${medication.quantity.toInt()} ${medication.quantityUnit}',
+                        style: const TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                      if (medication.reconstitutionVolume > 0)
+                        Text(
+                          'Reconstituted with ${medication.reconstitutionFluid.isNotEmpty ? medication.reconstitutionFluid : 'Fluid'} ${medication.reconstitutionVolume} mL, ${(medication.selectedReconstitution?['iu'] ?? 0) / medication.reconstitutionVolume} mcg/mL',
+                          style: const TextStyle(fontSize: 16, color: Colors.grey),
+                        ),
+                      if (medication.notes.isNotEmpty)
+                        Text('Notes: ${medication.notes}', style: const TextStyle(fontSize: 16, color: Colors.grey)),
+                    ],
+                  ),
                 ),
               ),
             ),
             const SizedBox(height: 24),
             Text(
               'Dosages',
-              style: Theme.of(context).textTheme.headlineMedium,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 16),
             dosages.isEmpty
-                ? const Text('No dosages added', style: TextStyle(fontSize: 16))
+                ? const Text('No dosages added', style: TextStyle(fontSize: 16, color: Colors.grey))
                 : Expanded(
               child: ListView.builder(
                 itemCount: dosages.length,
                 itemBuilder: (context, index) {
                   final dosage = dosages[index];
-                  return ListTile(
-                    title: Text(dosage.name),
-                    subtitle: Text('Dose: ${dosage.totalDose} ${dosage.doseUnit} (${dosage.method.toString().split('.').last})'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () {
-                            print('Editing dosage: ${dosage.id}');
-                            Navigator.pushNamed(
-                              context,
-                              '/add_dosage',
-                              arguments: {
-                                'medication': medication,
-                                'dosage': dosage,
-                                'targetDoseMcg': dosage.totalDose,
-                                'selectedIU': dosage.insulinUnits,
-                              },
-                            );
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () async {
-                            final confirmed = await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('Delete Dosage'),
-                                content: const Text('Are you sure you want to delete this dosage?'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context, false),
-                                    child: const Text('Cancel'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context, true),
-                                    child: const Text('Delete'),
-                                  ),
-                                ],
-                              ),
-                            );
-                            if (confirmed == true && context.mounted) {
-                              print('Deleting dosage: ${dosage.id}');
-                              dataProvider.deleteDosage(dosage.id);
-                            }
-                          },
-                        ),
-                      ],
+                  return Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.all(16),
+                      title: Text(
+                        dosage.name,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+                      ),
+                      subtitle: Text(
+                        'Dose: ${dosage.totalDose.toStringAsFixed(dosage.totalDose % 1 == 0 ? 0 : 1)} ${dosage.doseUnit}\nMethod: ${dosage.method.toString().split('.').last.replaceAll('subcutaneous', 'Subcutaneous Injection')}',
+                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit, color: Color(0xFFFFC107)),
+                            onPressed: () {
+                              print('Editing dosage: ${dosage.id}');
+                              Navigator.pushNamed(
+                                context,
+                                '/add_dosage',
+                                arguments: {
+                                  'medication': medication,
+                                  'dosage': dosage,
+                                  'targetDoseMcg': dosage.totalDose,
+                                  'selectedIU': dosage.insulinUnits,
+                                },
+                              );
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () async {
+                              final confirmed = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => _buildConfirmationDialog(context, title: 'Delete Dosage'),
+                              );
+                              if (confirmed == true && context.mounted) {
+                                print('Deleting dosage: ${dosage.id}');
+                                dataProvider.deleteDosage(dosage.id);
+                              }
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -191,30 +194,83 @@ class MedicationDetailsScreen extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFFFC107),
                 minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 4,
               ),
-              child: const Text('Add Dosage', style: TextStyle(color: Colors.black)),
+              child: const Text('Add Dosage', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                print('Navigating to MedicationFormScreen to edit medication');
-                Navigator.pushNamed(
-                  context,
-                  '/medication_form',
-                  arguments: medication,
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFFC107),
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            const SizedBox(height: 24),
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Summary',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+                    ),
+                    const SizedBox(height: 8),
+                    Text('Medication: ${medication.name}', style: const TextStyle(fontSize: 16, color: Colors.grey)),
+                    Text('Type: ${medication.type}', style: const TextStyle(fontSize: 16, color: Colors.grey)),
+                    Text(
+                      'Remaining: ${medication.remainingQuantity.toInt()}/${medication.quantity.toInt()} ${medication.quantityUnit}',
+                      style: const TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                    if (medication.reconstitutionVolume > 0)
+                      Text(
+                        'Reconstituted: ${medication.reconstitutionFluid} ${medication.reconstitutionVolume} mL, ${(medication.selectedReconstitution?['iu'] ?? 0) / medication.reconstitutionVolume} mcg/mL',
+                        style: const TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    if (dosages.isNotEmpty)
+                      Text(
+                        'Latest Dosage: ${dosages.last.name} (${dosages.last.totalDose.toStringAsFixed(dosages.last.totalDose % 1 == 0 ? 0 : 1)} ${dosages.last.doseUnit}, ${dosages.last.method.toString().split('.').last.replaceAll('subcutaneous', 'Subcutaneous Injection')})',
+                        style: const TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                  ],
+                ),
               ),
-              child: const Text('Edit Medication', style: TextStyle(color: Colors.black)),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildConfirmationDialog(BuildContext context, {String title = 'Delete Medication'}) {
+    return AlertDialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
+        ),
+      ),
+      content: Text(
+        'Are you sure you want to delete this ${title.toLowerCase().contains('dosage') ? 'dosage' : 'medication and all its dosages'}?',
+        style: const TextStyle(color: Colors.grey, fontSize: 16),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text(
+            'Cancel',
+            style: TextStyle(color: Color(0xFFFFC107), fontWeight: FontWeight.bold),
+          ),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text(
+            'Delete',
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
     );
   }
 }

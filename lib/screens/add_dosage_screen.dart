@@ -28,7 +28,6 @@ class AddDosageScreen extends StatefulWidget {
 class _AddDosageScreenState extends State<AddDosageScreen> {
   final _nameController = TextEditingController();
   final _doseController = TextEditingController();
-  final _volumeController = TextEditingController();
   final _insulinUnitsController = TextEditingController();
   String _doseUnit = 'IU';
   DosageMethod _method = DosageMethod.subcutaneous;
@@ -38,20 +37,19 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
   void initState() {
     super.initState();
     _isReconstituted = widget.medication.reconstitutionVolume > 0;
+    _doseUnit = _isReconstituted ? 'IU' : widget.medication.quantityUnit;
     if (widget.dosage != null) {
       _nameController.text = widget.dosage!.name;
-      _doseController.text = widget.dosage!.totalDose.toString();
-      _volumeController.text = widget.dosage!.volume.toString();
-      _insulinUnitsController.text = widget.dosage!.insulinUnits.toString();
+      _doseController.text = widget.dosage!.totalDose.toStringAsFixed(widget.dosage!.totalDose % 1 == 0 ? 0 : 1);
+      _insulinUnitsController.text = widget.dosage!.insulinUnits.toStringAsFixed(widget.dosage!.insulinUnits % 1 == 0 ? 0 : 1);
       _method = widget.dosage!.method;
       _doseUnit = widget.dosage!.doseUnit;
     } else {
       _nameController.text = _isReconstituted
-          ? 'Dose of ${widget.targetDoseMcg?.toInt() ?? 0} IU'
-          : '${widget.medication.name} Dose 1';
-      _doseController.text = _isReconstituted ? (widget.targetDoseMcg?.toString() ?? '') : '';
-      _insulinUnitsController.text = _isReconstituted ? (widget.selectedIU?.toString() ?? '') : '';
-      _doseUnit = _isReconstituted ? 'IU' : widget.medication.quantityUnit;
+          ? '${widget.medication.name} Dose 1'
+          : '${widget.medication.name} Dose of ${widget.targetDoseMcg?.toStringAsFixed(widget.targetDoseMcg! % 1 == 0 ? 0 : 1) ?? '0'} ${widget.medication.quantityUnit}';
+      _doseController.text = widget.targetDoseMcg?.toStringAsFixed(widget.targetDoseMcg! % 1 == 0 ? 0 : 1) ?? '';
+      _insulinUnitsController.text = widget.selectedIU?.toStringAsFixed(widget.selectedIU! % 1 == 0 ? 0 : 1) ?? '';
     }
   }
 
@@ -59,7 +57,6 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
   void dispose() {
     _nameController.dispose();
     _doseController.dispose();
-    _volumeController.dispose();
     _insulinUnitsController.dispose();
     super.dispose();
   }
@@ -85,7 +82,7 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
       method: _method,
       doseUnit: _doseUnit,
       totalDose: double.tryParse(_doseController.text) ?? 0,
-      volume: _volumeController.text.isNotEmpty ? double.tryParse(_volumeController.text) ?? 0 : 0,
+      volume: 0, // Removed volume
       insulinUnits: _insulinUnitsController.text.isNotEmpty ? double.tryParse(_insulinUnitsController.text) ?? 0 : (widget.selectedIU ?? 0),
       takenTime: null,
     );
@@ -116,7 +113,7 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
   @override
   Widget build(BuildContext context) {
     final doseUnits = _isReconstituted
-        ? ['IU', 'mL']
+        ? ['IU']
         : ['g', 'mg', 'mcg', 'mL', 'IU', 'Unit'];
 
     return Scaffold(
@@ -134,7 +131,7 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
               DosageFormFields(
                 nameController: _nameController,
                 doseController: _doseController,
-                volumeController: _volumeController,
+                volumeController: null, // Removed volume
                 insulinUnitsController: _insulinUnitsController,
                 doseUnit: _doseUnit,
                 doseUnits: doseUnits,
@@ -145,13 +142,13 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
               if (_isReconstituted) ...[
                 const SizedBox(height: 8),
                 Text(
-                  'Target Dose: ${widget.targetDoseMcg?.toInt() ?? 0} IU',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  'Target Dose: ${widget.targetDoseMcg?.toStringAsFixed(widget.targetDoseMcg! % 1 == 0 ? 0 : 1) ?? '0'} ${widget.medication.quantityUnit}',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
                 ),
                 if (widget.selectedIU != null)
                   Text(
-                    'IU per mL: ${widget.selectedIU!.toInt()} IU',
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    'Insulin Units: ${widget.selectedIU!.toStringAsFixed(widget.selectedIU! % 1 == 0 ? 0 : 1)} IU (${(widget.selectedIU! / 100).toStringAsFixed(2)} CC)',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
                   ),
               ],
               const SizedBox(height: 24),
@@ -160,9 +157,10 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFFFC107),
                   minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 4,
                 ),
-                child: const Text('Save Dosage', style: TextStyle(color: Colors.black)),
+                child: const Text('Save Dosage', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
               ),
             ],
           ),

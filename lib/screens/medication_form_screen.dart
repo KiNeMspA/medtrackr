@@ -32,6 +32,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
   double _totalAmount = 0;
   double _targetDose = 0;
   String _medicationName = '';
+  String? _reconstitutionError;
 
   @override
   void initState() {
@@ -49,7 +50,8 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
       _totalAmount = widget.medication!.quantity;
       _medicationName = widget.medication!.name;
       _targetDose = widget.medication!.selectedReconstitution?['iu']?.toDouble() ?? 0;
-      _targetDoseController.text = _targetDose.toInt().toString();
+      _targetDoseController.text = _targetDose.toStringAsFixed(_targetDose % 1 == 0 ? 0 : 1);
+      _targetDoseUnit = widget.medication!.quantityUnit; // Use original unit
     }
   }
 
@@ -72,12 +74,19 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
       medicationName: _nameController.text,
     );
     final result = calculator.calculate();
+    final iuPerML = result.selectedReconstitution != null
+        ? (result.selectedReconstitution!['iu'] as num).toDouble() / (result.selectedReconstitution!['volume'] as num).toDouble()
+        : 0.0;
+
     setState(() {
       _reconstitutionSuggestions = result.suggestions;
       _selectedReconstitution = result.selectedReconstitution;
       _totalAmount = result.totalAmount;
       _targetDose = result.targetDose;
       _medicationName = result.medicationName;
+      _reconstitutionError = iuPerML < 10 || iuPerML > 100
+          ? 'IU/mL must be between 10 and 100 for insulin syringe'
+          : null;
     });
   }
 
@@ -88,9 +97,13 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
       );
       return;
     }
-    if (_isReconstituting && _selectedReconstitution == null) {
+    if (_isReconstituting && (_selectedReconstitution == null || _reconstitutionError != null)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a reconstitution option')),
+        SnackBar(
+          content: Text(
+            _reconstitutionError ?? 'Please select a valid reconstitution option',
+          ),
+        ),
       );
       return;
     }
@@ -122,45 +135,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.green[100],
-        title: Text(
-          widget.medication == null ? 'Confirm Medication Settings' : 'Confirm Changes',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            color: Colors.green[900],
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16.0),
-          child: Text(
-            'Name: ${medication.name}\n'
-                'Type: ${medication.type}\n'
-                'Quantity: ${medication.quantity.toInt()} ${medication.quantityUnit}\n'
-                '${medication.reconstitutionVolume > 0 ? 'Reconstituted with ${medication.reconstitutionVolume.toInt()} mL\nIU per Dose: ${_selectedReconstitution?['iu'] ?? 0} IU\nFluid: ${medication.reconstitutionFluid.isNotEmpty ? medication.reconstitutionFluid : 'None'}\n' : ''}'
-                'Notes: ${medication.notes.isNotEmpty ? medication.notes : 'None'}',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Colors.green[900],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: Colors.green[900], fontWeight: FontWeight.w600),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(
-              'Confirm',
-              style: TextStyle(color: Colors.green[900], fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
-      ),
+      builder: (context) => _buildConfirmationDialog(context, medication),
     );
 
     if (confirmed != true) return;
@@ -182,7 +157,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
         arguments: {
           'medication': medication,
           'targetDoseMcg': _targetDose,
-          'selectedIU': _selectedReconstitution?['iu']?.toDouble() ?? 0,
+          'selectedIU': _isReconstituting ? (_selectedReconstitution?['iu']?.toDouble() ?? 0) : 0.0,
         },
       );
       print('Returned from AddDosageScreen with result: $dosageResult');
@@ -206,6 +181,48 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
     }
   }
 
+  Widget _buildConfirmationDialog(BuildContext context, Medication medication) {
+    return AlertDialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      title: Text(
+        widget.medication == null ? 'Confirm Medication Settings' : 'Confirm Changes',
+        style: const TextStyle(
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
+        ),
+      ),
+      content: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16.0),
+        child: Text(
+          'Name: ${medication.name}\n'
+              'Type: ${medication.type}\n'
+              'Quantity: ${medication.quantity.toInt()} ${medication.quantityUnit}\n'
+              '${medication.reconstitutionVolume > 0 ? 'Reconstituted with ${medication.reconstitutionFluid.isNotEmpty ? medication.reconstitutionFluid : 'None'} ${medication.reconstitutionVolume} mL\nIU per mL: ${(medication.selectedReconstitution?['iu'] ?? 0) / medication.reconstitutionVolume} IU\n' : ''}'
+              'Notes: ${medication.notes.isNotEmpty ? medication.notes : 'None'}',
+          style: const TextStyle(color: Colors.grey, fontSize: 16),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text(
+            'Cancel',
+            style: TextStyle(color: Color(0xFFFFC107), fontWeight: FontWeight.bold),
+          ),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text(
+            'Confirm',
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -222,7 +239,10 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
             children: [
               Text(
                 'Medication Details',
-                style: Theme.of(context).textTheme.headlineMedium,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 16),
               MedicationFormFields(
@@ -243,19 +263,26 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                     'Capsule': 'mcg',
                     'Injection': 'IU',
                     'Other': 'mcg',
-                    'Liquid': 'mL',
                   }[value]!;
-                  _isReconstituting = false; // Reset for non-Injection/Other
+                  _isReconstituting = false;
+                  _reconstitutionSuggestions = [];
+                  _selectedReconstitution = null;
+                  _calculateReconstitutionSuggestions();
                 }),
                 onQuantityUnitChanged: (value) => setState(() {
                   _quantityUnit = value ?? 'mcg';
+                  _targetDoseUnit = value ?? 'mcg'; // Sync target dose unit
                   _calculateReconstitutionSuggestions();
                 }),
               ),
               if (_type == 'Injection' || _type == 'Other') ...[
                 const SizedBox(height: 24),
                 SwitchListTile(
-                  title: const Text('Reconstitute Medication'),
+                  title: const Text(
+                    'Reconstitute Medication',
+                    style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                  ),
+                  activeColor: const Color(0xFFFFC107),
                   value: _isReconstituting,
                   onChanged: (value) => setState(() {
                     _isReconstituting = value;
@@ -265,6 +292,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                       _totalAmount = 0;
                       _targetDose = 0;
                       _reconstitutionFluidController.text = '';
+                      _reconstitutionError = null;
                     }
                     _calculateReconstitutionSuggestions();
                   }),
@@ -282,6 +310,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                   targetDose: _targetDose,
                   medicationName: _medicationName,
                   quantityUnit: _quantityUnit,
+                  reconstitutionError: _reconstitutionError,
                   onReconstitutingChanged: (value) => setState(() {
                     _isReconstituting = value;
                     if (!value) {
@@ -291,6 +320,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                       _targetDose = 0;
                       _medicationName = _nameController.text.isNotEmpty ? _nameController.text : 'Medication';
                       _reconstitutionFluidController.text = '';
+                      _reconstitutionError = null;
                     }
                     _calculateReconstitutionSuggestions();
                   }),
@@ -305,6 +335,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Selected ${suggestion['volume']} mL reconstitution')),
                     );
+                    _calculateReconstitutionSuggestions();
                   }),
                   onEditReconstitution: (suggestion) async {
                     final updated = await showDialog<Map<String, dynamic>>(
@@ -314,14 +345,32 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                         fluid: _reconstitutionFluidController.text,
                       ),
                     );
-                    if (updated != null) {
+                    if (updated != null && context.mounted) {
                       setState(() {
                         _selectedReconstitution = updated;
                         _reconstitutionFluidController.text = updated['fluid'] ?? _reconstitutionFluidController.text;
                       });
+                      _calculateReconstitutionSuggestions();
                     }
                   },
-                  onClearReconstitution: () => setState(() => _selectedReconstitution = null),
+                  onAdjustVolume: (increment) {
+                    if (_selectedReconstitution != null) {
+                      setState(() {
+                        final currentVolume = (_selectedReconstitution!['volume'] as num).toDouble();
+                        final newVolume = (currentVolume + increment).clamp(0.1, 100.0);
+                        _selectedReconstitution = {
+                          ..._selectedReconstitution!,
+                          'volume': newVolume,
+                        };
+                        _calculateReconstitutionSuggestions();
+                      });
+                    }
+                  },
+                  onClearReconstitution: () => setState(() {
+                    _selectedReconstitution = null;
+                    _reconstitutionError = null;
+                    _calculateReconstitutionSuggestions();
+                  }),
                 ),
               ],
               const SizedBox(height: 24),
@@ -330,9 +379,10 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFFFC107),
                   minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 4,
                 ),
-                child: const Text('Save Medication', style: TextStyle(color: Colors.black)),
+                child: const Text('Save Medication', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
