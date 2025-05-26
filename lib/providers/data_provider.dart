@@ -103,20 +103,20 @@ class DataProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void addSchedule(Schedule schedule) {
+  Future<void> addScheduleAsync(Schedule schedule) async {
     _schedules.add(schedule);
-    _notificationService.scheduleNotification(schedule, _medications, _dosages);
-    _saveData();
+    await _notificationService.scheduleNotification(schedule, _medications, _dosages);
+    await _saveData();
     notifyListeners();
   }
 
-  void updateSchedule(String id, Schedule updatedSchedule) {
+  Future<void> updateScheduleAsync(String id, Schedule updatedSchedule) async {
     final index = _schedules.indexWhere((s) => s.id == id);
     if (index != -1) {
       _schedules[index] = updatedSchedule;
-      _notificationService.cancelNotification(id.hashCode);
-      _notificationService.scheduleNotification(updatedSchedule, _medications, _dosages);
-      _saveData();
+      await _notificationService.cancelNotification(id.hashCode);
+      await _notificationService.scheduleNotification(updatedSchedule, _medications, _dosages);
+      await _saveData();
       notifyListeners();
     }
   }
@@ -307,9 +307,12 @@ class DataProvider with ChangeNotifier {
       final file = File('${directory.path}/medtrackr_data.json');
       if (await file.exists()) {
         final data = json.decode(await file.readAsString());
-        _medications = (data['medications'] as List).map((m) => Medication.fromJson(m)).toList();
-        _schedules = (data['schedules'] as List).map((s) => Schedule.fromJson(s)).toList();
-        _dosages = (data['dosages'] as List).map((d) => Dosage.fromJson(d)).toList();
+        _medications.clear();
+        _medications.addAll((data['medications'] as List).map((m) => Medication.fromJson(m)));
+        _schedules.clear();
+        _schedules.addAll((data['schedules'] as List).map((s) => Schedule.fromJson(s)));
+        _dosages.clear();
+        _dosages.addAll((data['dosages'] as List).map((d) => Dosage.fromJson(d)));
         notifyListeners();
       }
     } catch (e) {

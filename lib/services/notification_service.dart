@@ -3,7 +3,6 @@ import 'package:medtrackr/models/dosage.dart';
 import 'package:medtrackr/models/medication.dart';
 import 'package:medtrackr/models/schedule.dart';
 import 'package:medtrackr/models/dosage_method.dart';
-import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 class NotificationService {
@@ -54,16 +53,13 @@ class NotificationService {
 
       final timeParts = schedule.notificationTime.split(':');
       final hour = int.parse(timeParts[0]);
-      final minute = int.parse(timeParts[1].split(' ')[0]);
-      final isPM = timeParts[1].contains('PM');
-      final adjustedHour =
-      isPM && hour != 12 ? hour + 12 : (hour == 12 && !isPM ? 0 : hour);
+      final minute = int.parse(timeParts[1]);
 
       await _flutterLocalNotificationsPlugin.zonedSchedule(
         schedule.id.hashCode,
         'Reminder: ${medication.name} - ${dosage.name}',
         'Time to take ${dosage.totalDose} ${dosage.doseUnit} of ${medication.name}',
-        _nextInstanceOfTime(adjustedHour, minute),
+        _nextInstanceOfTime(hour, minute),
         const NotificationDetails(
           android: AndroidNotificationDetails(
             'medtrackr_channel',
@@ -73,6 +69,7 @@ class NotificationService {
           ),
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: schedule.frequencyType == FrequencyType.daily
             ? DateTimeComponents.time
             : DateTimeComponents.dayOfWeekAndTime,
@@ -100,8 +97,7 @@ class NotificationService {
 
   tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
     final now = tz.TZDateTime.now(tz.local);
-    var scheduledDate =
-    tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+    var scheduledDate = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
     if (scheduledDate.isBefore(now)) {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
     }
