@@ -6,7 +6,8 @@ import 'package:medtrackr/providers/data_provider.dart';
 import 'package:uuid/uuid.dart';
 
 class AddDosageScreen extends StatefulWidget {
-  const AddDosageScreen({super.key});
+  const AddDosageScreen({super.key, required this.medication});
+  final Medication medication;
 
   @override
   _AddDosageScreenState createState() => _AddDosageScreenState();
@@ -50,7 +51,7 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
       id: const Uuid().v4(),
       medicationId: _medication!.id,
       name: _nameController.text,
-      amount: double.tryParse(_amountController.text) ?? 0,
+      dosageAmount: double.tryParse(_amountController.text) ?? 0,
       unit: _unit,
     );
 

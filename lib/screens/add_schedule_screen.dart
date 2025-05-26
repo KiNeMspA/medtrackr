@@ -70,7 +70,7 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
       medicationId: _selectedMedicationId!,
       dosageId: _selectedDosageId!,
       time: _selectedTime,
-      frequency: _frequency,
+      frequencyType: _frequency,
       dosageName: dataProvider.dosages
           .firstWhere((d) => d.id == _selectedDosageId)
           .name,
