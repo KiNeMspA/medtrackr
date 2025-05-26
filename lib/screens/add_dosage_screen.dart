@@ -4,22 +4,9 @@ import 'package:medtrackr/models/dosage.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
 import 'package:uuid/uuid.dart';
-import 'package:medtrackr/widgets/dosage_form_fields.dart';
-import 'package:medtrackr/models/dosage_method.dart';
 
 class AddDosageScreen extends StatefulWidget {
-  final Medication medication;
-  final Dosage? dosage;
-  final double? targetDoseMcg;
-  final double? selectedIU;
-
-  const AddDosageScreen({
-    super.key,
-    required this.medication,
-    this.dosage,
-    this.targetDoseMcg,
-    this.selectedIU,
-  });
+  const AddDosageScreen({super.key});
 
   @override
   _AddDosageScreenState createState() => _AddDosageScreenState();
@@ -27,78 +14,52 @@ class AddDosageScreen extends StatefulWidget {
 
 class _AddDosageScreenState extends State<AddDosageScreen> {
   final _nameController = TextEditingController();
-  final _doseController = TextEditingController();
-  final _insulinUnitsController = TextEditingController();
-  String _doseUnit = 'mcg';
-  DosageMethod _method = DosageMethod.subcutaneous;
-  bool _isReconstituted = false;
+  final _amountController = TextEditingController();
+  String _unit = 'mcg';
+  Medication? _medication;
 
   @override
-  void initState() {
-    super.initState();
-    _isReconstituted = widget.medication.reconstitutionVolume > 0;
-    _doseUnit = _isReconstituted ? widget.medication.quantityUnit : widget.medication.quantityUnit;
-    if (widget.dosage != null) {
-      _nameController.text = widget.dosage!.name;
-      _doseController.text = widget.dosage!.totalDose.toStringAsFixed(widget.dosage!.totalDose % 1 == 0 ? 0 : 1);
-      _insulinUnitsController.text = widget.dosage!.insulinUnits.toStringAsFixed(widget.dosage!.insulinUnits % 1 == 0 ? 0 : 1);
-      _method = widget.dosage!.method;
-      _doseUnit = widget.dosage!.doseUnit;
-    } else {
-      _nameController.text = _isReconstituted
-          ? '${widget.medication.name} Dose 1'
-          : '${widget.medication.name} Dose of ${widget.targetDoseMcg?.toStringAsFixed(widget.targetDoseMcg! % 1 == 0 ? 0 : 1) ?? '0'} ${widget.medication.quantityUnit}';
-      _doseController.text = widget.targetDoseMcg?.toStringAsFixed(widget.targetDoseMcg! % 1 == 0 ? 0 : 1) ?? '';
-      _insulinUnitsController.text = widget.selectedIU?.toStringAsFixed(widget.selectedIU! % 1 == 0 ? 0 : 1) ?? '';
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    if (args != null) {
+      _medication = args['medication'] as Medication?;
+      final targetDoseMcg = args['targetDoseMcg'] as double?;
+      if (targetDoseMcg != null) {
+        _amountController.text = targetDoseMcg.toStringAsFixed(2);
+      }
     }
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _doseController.dispose();
-    _insulinUnitsController.dispose();
+    _amountController.dispose();
     super.dispose();
   }
 
-  void _saveDosage(BuildContext context) async {
-    if (_nameController.text.isEmpty || _doseController.text.isEmpty) {
+  Future<void> _saveDosage(BuildContext context) async {
+    if (_nameController.text.isEmpty || _amountController.text.isEmpty || _medication == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill all required fields')),
       );
       return;
     }
-    if (widget.medication.id.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid medication ID')),
-      );
-      return;
-    }
 
     final dosage = Dosage(
-      id: widget.dosage?.id ?? const Uuid().v4(),
-      medicationId: widget.medication.id,
+      id: const Uuid().v4(),
+      medicationId: _medication!.id,
       name: _nameController.text,
-      method: _method,
-      doseUnit: _doseUnit,
-      totalDose: double.tryParse(_doseController.text) ?? 0,
-      volume: 0,
-      insulinUnits: _insulinUnitsController.text.isNotEmpty ? double.tryParse(_insulinUnitsController.text) ?? 0 : (widget.selectedIU ?? 0),
-      takenTime: null,
+      amount: double.tryParse(_amountController.text) ?? 0,
+      unit: _unit,
     );
 
+    final dataProvider = Provider.of<DataProvider>(context, listen: false);
     try {
-      print('Saving dosage: $dosage');
-      final dataProvider = Provider.of<DataProvider>(context, listen: false);
-      if (widget.dosage == null) {
-        await dataProvider.addDosageAsync(dosage);
-      } else {
-        await dataProvider.updateDosageAsync(dosage.id, dosage);
-      }
-      print('Navigating back from AddDosageScreen');
-      if (context.mounted && Navigator.canPop(context)) {
-        await Future.delayed(const Duration(milliseconds: 200));
-        Navigator.pop(context, dosage);
+      print('Saving dosage: ${dosage.name}');
+      await dataProvider.addDosageAsync(dosage);
+      if (context.mounted) {
+        Navigator.pop(context, dosage); // Return dosage to medication_form_screen
       }
     } catch (e) {
       print('Error saving dosage: $e');
@@ -112,14 +73,10 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final doseUnits = _isReconstituted
-        ? [widget.medication.quantityUnit]
-        : ['g', 'mg', 'mcg', 'mL', 'IU', 'Unit'];
-
     return Scaffold(
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
-        title: Text(widget.dosage == null ? 'Add Dosage' : 'Edit Dosage'),
+        title: const Text('Add Dosage'),
         backgroundColor: const Color(0xFFFFC107),
       ),
       body: Padding(
@@ -128,22 +85,53 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              DosageFormFields(
-                nameController: _nameController,
-                doseController: _doseController,
-                volumeController: null,
-                insulinUnitsController: _insulinUnitsController,
-                doseUnit: _doseUnit,
-                doseUnits: doseUnits,
-                method: _method,
-                onDoseUnitChanged: (value) => setState(() => _doseUnit = value!),
-                onMethodChanged: (value) => setState(() => _method = value!),
+              const Text(
+                'Dosage Details',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _nameController,
+                decoration: InputDecoration(
+                  labelText: 'Dosage Name',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _amountController,
+                decoration: InputDecoration(
+                  labelText: 'Amount',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _unit,
+                decoration: InputDecoration(
+                  labelText: 'Unit',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+                items: ['g', 'mg', 'mcg', 'mL', 'IU', 'Unit']
+                    .map((unit) => DropdownMenuItem(value: unit, child: Text(unit)))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _unit = value ?? 'mcg';
+                  });
+                },
               ),
               const SizedBox(height: 16),
               Card(
                 elevation: 4,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                color: Colors.white,
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -154,33 +142,22 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
                       ),
                       const SizedBox(height: 8),
-                      Text('Medication: ${widget.medication.name}', style: const TextStyle(fontSize: 14, color: Colors.grey)),
-                      Text('Dose: ${_doseController.text.isEmpty ? '0' : _doseController.text} $_doseUnit', style: const TextStyle(fontSize: 14, color: Colors.grey)),
                       Text(
-                        'Method: ${_method == DosageMethod.subcutaneous ? 'Subcutaneous Injection' : _method.toString().split('.').last}',
+                        'Name: ${_nameController.text.isEmpty ? 'N/A' : _nameController.text}',
                         style: const TextStyle(fontSize: 14, color: Colors.grey),
                       ),
-                      if (_isReconstituted)
-                        Text(
-                          'Insulin Units: ${_insulinUnitsController.text.isEmpty ? '0' : _insulinUnitsController.text} IU (${(double.tryParse(_insulinUnitsController.text) ?? 0) / 100} CC)',
-                          style: const TextStyle(fontSize: 14, color: Colors.grey),
-                        ),
+                      Text(
+                        'Amount: ${_amountController.text.isEmpty ? 'N/A' : _amountController.text} $_unit',
+                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                      Text(
+                        'Medication: ${_medication?.name ?? 'N/A'}',
+                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
                     ],
                   ),
                 ),
               ),
-              if (_isReconstituted) ...[
-                const SizedBox(height: 8),
-                Text(
-                  'Target Dose: ${widget.targetDoseMcg?.toStringAsFixed(widget.targetDoseMcg! % 1 == 0 ? 0 : 1) ?? '0'} ${widget.medication.quantityUnit}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
-                ),
-                if (widget.selectedIU != null)
-                  Text(
-                    'Insulin Units: ${widget.selectedIU!.toStringAsFixed(widget.selectedIU! % 1 == 0 ? 0 : 1)} IU (${(widget.selectedIU! / 100).toStringAsFixed(2)} CC)',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
-                  ),
-              ],
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () => _saveDosage(context),
@@ -195,6 +172,24 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
             ],
           ),
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.white,
+        selectedItemColor: const Color(0xFFFFC107),
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Calendar'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+        ],
+        currentIndex: 0,
+        onTap: (index) {
+          if (index == 0) Navigator.pushReplacementNamed(context, '/home');
+          if (index == 1) Navigator.pushReplacementNamed(context, '/calendar');
+          if (index == 2) Navigator.pushReplacementNamed(context, '/history');
+          if (index == 3) Navigator.pushReplacementNamed(context, '/settings');
+        },
       ),
     );
   }

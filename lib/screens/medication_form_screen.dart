@@ -33,7 +33,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
   double _targetDose = 0;
   String _medicationName = '';
   String? _reconstitutionError;
-  double _syringeSize = 1.0; // Single syringe size
+  double _syringeSize = 1.0;
 
   @override
   void initState() {
@@ -111,7 +111,6 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
       return;
     }
 
-    // Handle reconstitution warning
     bool proceed = true;
     if (_isReconstituting && _reconstitutionError != null) {
       proceed = await showDialog<bool>(
@@ -194,15 +193,19 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
         await Navigator.pushNamed(
           context,
           '/add_schedule',
-          arguments: {'medication': medication},
+          arguments: {
+            'medication': medication,
+            'dosage': dosageResult, // Pass dosage to pre-populate
+          },
         );
-        print('Navigating to MedicationDetailsScreen');
-        await Future.delayed(const Duration(milliseconds: 200));
-        Navigator.pushNamed(
-          context,
-          '/medication_details',
-          arguments: medication,
-        );
+        if (context.mounted) {
+          print('Navigating to MedicationDetailsScreen');
+          Navigator.pushReplacementNamed(
+            context,
+            '/medication_details',
+            arguments: medication,
+          );
+        }
       }
     } catch (e) {
       print('Error saving medication: $e');
@@ -360,8 +363,8 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                       if (value != null) {
                         setState(() {
                           _syringeSize = value;
-                          _selectedReconstitution = null; // Reset selection
-                          _reconstitutionSuggestions = []; // Clear suggestions
+                          _selectedReconstitution = null;
+                          _reconstitutionSuggestions = [];
                           _calculateReconstitutionSuggestions();
                         });
                       }
@@ -461,6 +464,24 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
             ],
           ),
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.white,
+        selectedItemColor: const Color(0xFFFFC107),
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Calendar'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+        ],
+        currentIndex: 0, // Home selected
+        onTap: (index) {
+          if (index == 0) Navigator.pushReplacementNamed(context, '/home');
+          if (index == 1) Navigator.pushReplacementNamed(context, '/calendar');
+          if (index == 2) Navigator.pushReplacementNamed(context, '/history');
+          if (index == 3) Navigator.pushReplacementNamed(context, '/settings');
+        },
       ),
     );
   }

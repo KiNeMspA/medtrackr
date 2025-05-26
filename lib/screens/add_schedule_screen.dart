@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:medtrackr/models/medication.dart';
 import 'package:medtrackr/models/schedule.dart';
 import 'package:medtrackr/models/dosage.dart';
-import 'package:medtrackr/models/dosage_method.dart';
-import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
 import 'package:uuid/uuid.dart';
 
@@ -14,25 +14,49 @@ class AddScheduleScreen extends StatefulWidget {
 }
 
 class _AddScheduleScreenState extends State<AddScheduleScreen> {
-  TimeOfDay _time = TimeOfDay.now();
-  FrequencyType _frequencyType = FrequencyType.daily;
-  int _cyclePeriod = 1;
+  final _cyclePeriodController = TextEditingController();
   String? _selectedMedicationId;
   String? _selectedDosageId;
+  TimeOfDay _selectedTime = TimeOfDay.now();
+  String _frequency = 'Daily';
+  Medication? _preselectedMedication;
+  Dosage? _preselectedDosage;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    if (args != null) {
+      _preselectedMedication = args['medication'] as Medication?;
+      _preselectedDosage = args['dosage'] as Dosage?;
+      if (_preselectedMedication != null) {
+        _selectedMedicationId = _preselectedMedication!.id;
+      }
+      if (_preselectedDosage != null) {
+        _selectedDosageId = _preselectedDosage!.id;
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _cyclePeriodController.dispose();
+    super.dispose();
+  }
 
   Future<void> _selectTime(BuildContext context) async {
     final picked = await showTimePicker(
       context: context,
-      initialTime: _time,
+      initialTime: _selectedTime,
     );
-    if (picked != null && picked != _time && context.mounted) {
+    if (picked != null && picked != _selectedTime) {
       setState(() {
-        _time = picked;
+        _selectedTime = picked;
       });
     }
   }
 
-  void _saveSchedule(BuildContext context) async {
+  Future<void> _saveSchedule(BuildContext context) async {
     if (_selectedMedicationId == null || _selectedDosageId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a medication and dosage')),
@@ -41,44 +65,36 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
     }
 
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
-    final dosage = dataProvider.dosages.firstWhere(
-          (d) => d.id == _selectedDosageId,
-      orElse: () => Dosage(
-        id: '',
-        medicationId: '',
-        name: '',
-        method: DosageMethod.subcutaneous,
-        doseUnit: '',
-        totalDose: 0.0,
-        volume: 0.0,
-        insulinUnits: 0.0,
-      ),
-    );
-
-    if (dosage.id.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid dosage selected')),
-      );
-      return;
-    }
-
     final schedule = Schedule(
       id: const Uuid().v4(),
       medicationId: _selectedMedicationId!,
       dosageId: _selectedDosageId!,
-      dosageName: dosage.name,
-      time: _time,
-      dosageAmount: dosage.totalDose,
-      dosageUnit: dosage.doseUnit,
-      frequencyType: _frequencyType,
-      notificationTime: '${_time.hour}:${_time.minute}',
+      time: _selectedTime,
+      frequency: _frequency,
+      dosageName: dataProvider.dosages
+          .firstWhere((d) => d.id == _selectedDosageId)
+          .name,
+      dosageAmount: dataProvider.dosages
+          .firstWhere((d) => d.id == _selectedDosageId)
+          .amount,
+      dosageUnit: dataProvider.dosages
+          .firstWhere((d) => d.id == _selectedDosageId)
+          .unit,
+      cyclePeriod: _cyclePeriodController.text.isNotEmpty
+          ? int.tryParse(_cyclePeriodController.text)
+          : null,
     );
 
     try {
-      print('Saving schedule: ${schedule.dosageName}');
+      print('Saving schedule for medication: ${schedule.medicationId}');
       await dataProvider.addScheduleAsync(schedule);
+      print('Schedule saved successfully');
       if (context.mounted) {
-        Navigator.pop(context);
+        Navigator.pushReplacementNamed(
+          context,
+          '/medication_details',
+          arguments: dataProvider.medications.firstWhere((m) => m.id == _selectedMedicationId),
+        );
       }
     } catch (e) {
       print('Error saving schedule: $e');
@@ -94,9 +110,6 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
   Widget build(BuildContext context) {
     final dataProvider = Provider.of<DataProvider>(context);
     final medications = dataProvider.medications;
-    final dosages = _selectedMedicationId != null
-        ? dataProvider.getDosagesForMedication(_selectedMedicationId!)
-        : [];
 
     return Scaffold(
       backgroundColor: Colors.grey[200],
@@ -110,12 +123,9 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Schedule Details',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
@@ -127,15 +137,17 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
                   fillColor: Colors.white,
                 ),
                 items: medications
-                    .map((m) => DropdownMenuItem<String>(
-                  value: m.id,
-                  child: Text(m.name),
+                    .map((med) => DropdownMenuItem(
+                  value: med.id,
+                  child: Text(med.name),
                 ))
                     .toList(),
-                onChanged: (value) => setState(() {
-                  _selectedMedicationId = value;
-                  _selectedDosageId = null;
-                }),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedMedicationId = value;
+                    _selectedDosageId = null; // Reset dosage when medication changes
+                  });
+                },
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
@@ -146,72 +158,90 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
                   filled: true,
                   fillColor: Colors.white,
                 ),
-                items: dosages
-                    .map((d) => DropdownMenuItem<String>(
-                  value: d.id,
-                  child: Text(d.name),
+                items: dataProvider.dosages
+                    .where((dosage) => dosage.medicationId == _selectedMedicationId)
+                    .map((dosage) => DropdownMenuItem(
+                  value: dosage.id,
+                  child: Text(dosage.name),
                 ))
                     .toList(),
-                onChanged: (value) => setState(() => _selectedDosageId = value),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedDosageId = value;
+                  });
+                },
               ),
               const SizedBox(height: 16),
               ListTile(
-                title: Text('Time: ${_time.format(context)}'),
-                trailing: const Icon(Icons.access_time),
+                title: Text(
+                  'Time: ${_selectedTime.format(context)}',
+                  style: const TextStyle(fontSize: 16, color: Colors.black),
+                ),
+                trailing: const Icon(Icons.access_time, color: Color(0xFFFFC107)),
                 onTap: () => _selectTime(context),
               ),
               const SizedBox(height: 16),
-              DropdownButtonFormField<FrequencyType>(
-                value: _frequencyType,
+              DropdownButtonFormField<String>(
+                value: _frequency,
                 decoration: InputDecoration(
                   labelText: 'Frequency',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   filled: true,
                   fillColor: Colors.white,
                 ),
-                items: FrequencyType.values
-                    .map((type) => DropdownMenuItem(
-                  value: type,
-                  child: Text(type.toString().split('.').last.capitalize()),
-                ))
+                items: ['Hourly', 'Daily', 'Weekly', 'Monthly']
+                    .map((freq) => DropdownMenuItem(value: freq, child: Text(freq)))
                     .toList(),
-                onChanged: (value) => setState(() => _frequencyType = value!),
+                onChanged: (value) {
+                  setState(() {
+                    _frequency = value ?? 'Daily';
+                  });
+                },
               ),
               const SizedBox(height: 16),
-              if (_frequencyType == FrequencyType.daily || _frequencyType == FrequencyType.weekly) ...[
-                TextFormField(
-                  decoration: InputDecoration(
-                    labelText: 'Cycle Period (${_frequencyType == FrequencyType.daily ? 'days' : 'weeks'})',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    filled: true,
-                    fillColor: Colors.white,
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) => setState(() {
-                    _cyclePeriod = int.tryParse(value) ?? 1;
-                  }),
+              TextFormField(
+                controller: _cyclePeriodController,
+                decoration: InputDecoration(
+                  labelText: 'Cycle Period (optional, days)',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.white,
                 ),
-                const SizedBox(height: 16),
-              ],
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () => _saveSchedule(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFFFC107),
                   minimumSize: const Size(double.infinity, 50),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 4,
                 ),
-                child: const Text('Save Schedule', style: TextStyle(color: Colors.black)),
+                child: const Text('Save Schedule', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
         ),
       ),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.white,
+        selectedItemColor: const Color(0xFFFFC107),
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Calendar'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+        ],
+        currentIndex: 0, // Home selected
+        onTap: (index) {
+          if (index == 0) Navigator.pushReplacementNamed(context, '/home');
+          if (index == 1) Navigator.pushReplacementNamed(context, '/calendar');
+          if (index == 2) Navigator.pushReplacementNamed(context, '/history');
+          if (index == 3) Navigator.pushReplacementNamed(context, '/settings');
+        },
+      ),
     );
-  }
-}
-
-extension StringExtension on String {
-  String capitalize() {
-    return "${this[0].toUpperCase()}${substring(1)}";
   }
 }

@@ -13,6 +13,21 @@ class HomeScreen extends StatelessWidget {
     final medications = dataProvider.medications;
     final schedules = dataProvider.schedules;
 
+    Schedule? nextSchedule;
+    if (schedules.isNotEmpty) {
+      nextSchedule = schedules.reduce((a, b) {
+        final now = TimeOfDay.now();
+        final aTime = a.time;
+        final bTime = b.time;
+        final aMinutes = aTime.hour * 60 + aTime.minute;
+        final bMinutes = bTime.hour * 60 + bTime.minute;
+        final nowMinutes = now.hour * 60 + now.minute;
+        final aDiff = aMinutes >= nowMinutes ? aMinutes - nowMinutes : 1440 + aMinutes - nowMinutes;
+        final bDiff = bMinutes >= nowMinutes ? bMinutes - nowMinutes : 1440 + bMinutes - nowMinutes;
+        return aDiff < bDiff ? a : b;
+      });
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
@@ -57,86 +72,66 @@ class HomeScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Upcoming Doses',
+              'Next Scheduled Dose',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
             ),
             const SizedBox(height: 16),
-            schedules.isEmpty
-                ? const SizedBox()
-                : Expanded(
+            if (nextSchedule != null)
+              Card(
+                elevation: 6,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.all(24),
+                  title: Text(
+                    '${medications.firstWhere((m) => m.id == nextSchedule!.medicationId, orElse: () => Medication(id: '', name: 'Unknown', type: '', quantityUnit: '', quantity: 0, remainingQuantity: 0, reconstitutionVolumeUnit: '', reconstitutionVolume: 0, reconstitutionFluid: '', notes: '')).name} (${nextSchedule.dosageName})',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+                  ),
+                  subtitle: Text(
+                    'Time: ${nextSchedule.time.format(context)}\nDose: ${nextSchedule.dosageAmount.toStringAsFixed(nextSchedule.dosageAmount % 1 == 0 ? 0 : 1)} ${nextSchedule.dosageUnit}',
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ),
+              )
+            else
+              const Text(
+                'No upcoming doses scheduled.',
+                style: TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+            const SizedBox(height: 16),
+            const Text(
+              'Medications',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
               child: ListView.builder(
-                itemCount: schedules.length.clamp(0, 3),
+                itemCount: medications.length,
                 itemBuilder: (context, index) {
-                  final schedule = schedules[index];
-                  final medication = medications.firstWhere(
-                        (m) => m.id == schedule.medicationId,
-                    orElse: () => Medication(
-                      id: '',
-                      name: 'Unknown',
-                      type: '',
-                      quantityUnit: '',
-                      quantity: 0,
-                      remainingQuantity: 0,
-                      reconstitutionVolumeUnit: '',
-                      reconstitutionVolume: 0,
-                      reconstitutionFluid: '',
-                      notes: '',
-                    ),
-                  );
-                  final isFirst = index == 0;
+                  final medication = medications[index];
+                  final remaining = medication.reconstitutionVolume > 0
+                      ? '${medication.remainingQuantity.toStringAsFixed(2)}/${medication.quantity.toStringAsFixed(2)} mL'
+                      : '${medication.remainingQuantity.toStringAsFixed(2)}/${medication.quantity.toStringAsFixed(2)} ${medication.quantityUnit}';
                   return Card(
-                    elevation: isFirst ? 6 : 4,
+                    elevation: 4,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     margin: const EdgeInsets.symmetric(vertical: 8),
                     child: ListTile(
-                      contentPadding: EdgeInsets.all(isFirst ? 24 : 16),
+                      contentPadding: const EdgeInsets.all(16),
                       title: Text(
-                        '${medication.name} (${schedule.dosageName})',
-                        style: TextStyle(
-                          fontSize: isFirst ? 18 : 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
+                        medication.name,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
                       ),
                       subtitle: Text(
-                        'Time: ${schedule.time.format(context)}\nDose: ${schedule.dosageAmount.toStringAsFixed(schedule.dosageAmount % 1 == 0 ? 0 : 1)} ${schedule.dosageUnit}',
+                        'Remaining: $remaining',
                         style: const TextStyle(fontSize: 14, color: Colors.grey),
                       ),
-                      trailing: isFirst
-                          ? Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.check, color: Color(0xFFFFC107)),
-                            onPressed: () {
-                              dataProvider.takeDose(
-                                medication.id,
-                                schedule.id,
-                                schedule.dosageId,
-                              );
-                            },
-                            tooltip: 'Take Now',
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.schedule, color: Colors.grey),
-                            onPressed: () {
-                              dataProvider.postponeDose(
-                                schedule.id,
-                                '${schedule.time.hour + 1}:${schedule.time.minute}',
-                              );
-                            },
-                            tooltip: 'Postpone',
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.cancel, color: Colors.red),
-                            onPressed: () {
-                              dataProvider.cancelDose(schedule.id);
-                            },
-                            tooltip: 'Cancel',
-                          ),
-                        ],
-                      )
-                          : null,
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/medication_details',
+                          arguments: medication,
+                        );
+                      },
                     ),
                   );
                 },
@@ -151,6 +146,24 @@ class HomeScreen extends StatelessWidget {
         },
         backgroundColor: const Color(0xFFFFC107),
         child: const Icon(Icons.add, color: Colors.black),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.white,
+        selectedItemColor: const Color(0xFFFFC107),
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Calendar'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+        ],
+        currentIndex: 0,
+        onTap: (index) {
+          if (index == 0) Navigator.pushReplacementNamed(context, '/home');
+          if (index == 1) Navigator.pushReplacementNamed(context, '/calendar');
+          if (index == 2) Navigator.pushReplacementNamed(context, '/history');
+          if (index == 3) Navigator.pushReplacementNamed(context, '/settings');
+        },
       ),
     );
   }

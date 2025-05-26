@@ -105,26 +105,8 @@ class ReconstitutionWidgets extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<double>(
-              value: selectedReconstitution?['syringeSize'] ?? 0.3,
-              decoration: InputDecoration(
-                labelText: 'Syringe Size',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                filled: true,
-                fillColor: Colors.white,
-              ),
-              items: [0.3, 0.5, 1.0, 3.0, 5.0]
-                  .map((size) => DropdownMenuItem(value: size, child: Text('$size mL')))
-                  .toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  onEditReconstitution({'syringeSize': value});
-                }
-              },
-            ),
-            const SizedBox(height: 16),
             Text(
-              'Medication Quantity: $totalAmount $quantityUnit',
+              'Medication Quantity: ${totalAmount.toStringAsFixed(2)} $quantityUnit',
               style: const TextStyle(fontSize: 16, color: Colors.grey),
             ),
             const SizedBox(height: 16),
@@ -137,7 +119,7 @@ class ReconstitutionWidgets extends StatelessWidget {
               ...reconstitutionSuggestions.take(4).map((suggestion) {
                 return ListTile(
                   title: Text(
-                    'Reconstitute with ${suggestion['volume']} mL for ${suggestion['iu']} IU',
+                    '${suggestion['volume'].toStringAsFixed(2)} mL, ${suggestion['concentration'].toStringAsFixed(2)} mg/mL',
                     style: const TextStyle(color: Colors.black),
                   ),
                   onTap: () => onSuggestionSelected(suggestion),
@@ -152,7 +134,7 @@ class ReconstitutionWidgets extends StatelessWidget {
               const SizedBox(height: 8),
               ListTile(
                 title: Text(
-                  'Reconstituted with ${selectedReconstitution!['volume']} mL for ${selectedReconstitution!['iu']} IU',
+                  '${selectedReconstitution!['volume'].toStringAsFixed(2)} mL, ${selectedReconstitution!['concentration'].toStringAsFixed(2)} mg/mL',
                   style: const TextStyle(color: Color(0xFFFFC107), fontWeight: FontWeight.bold),
                 ),
                 trailing: Row(
