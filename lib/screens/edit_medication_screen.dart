@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:medtrackr/models/medication.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
-import 'package:medtrackr/models/enums/medication_type.dart';
 
 class EditMedicationScreen extends StatefulWidget {
   final Medication medication;
@@ -16,7 +15,7 @@ class EditMedicationScreen extends StatefulWidget {
 
 class _EditMedicationScreenState extends State<EditMedicationScreen> {
   final _nameController = TextEditingController();
-  MedicationType _type = MedicationType.injection;
+  String _type = 'Injection';
   String _quantityUnit = 'mcg';
   final _quantityController = TextEditingController();
   bool _isReconstituting = false;
@@ -34,10 +33,10 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
   void initState() {
     super.initState();
     _nameController.text = widget.medication.name;
-    _type = widget.medication.type; // MedicationType
+    _type = widget.medication.type;
     _quantityUnit = widget.medication.quantityUnit;
     _quantityController.text = widget.medication.quantity.toInt().toString();
-    _isReconstituting = widget.medication.reconstitutionVolumeUnit.isNotEmpty;
+    _isReconstituting = widget.medication.reconstitutionVolume > 0;
     _reconstitutionFluidController.text = widget.medication.reconstitutionFluid;
     _notesController.text = widget.medication.notes;
     _reconstitutionSuggestions = widget.medication.reconstitutionOptions;
@@ -60,9 +59,11 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
   }
 
   void _calculateReconstitutionSuggestions() {
-    final totalAmount = double.tryParse(_quantityController.text) ?? 0;
-    final targetDose = double.tryParse(_targetDoseController.text) ?? 0;
+    final totalAmount = int.tryParse(_quantityController.text) ?? 0;
+    final targetDose = int.tryParse(_targetDoseController.text) ?? 0;
+    print('Calculate: totalAmount=$totalAmount, targetDose=$targetDose, quantityUnit=$_quantityUnit, targetDoseUnit=$_targetDoseUnit');
     if (totalAmount <= 0 || targetDose <= 0) {
+      print('Invalid input: totalAmount or targetDose is zero or negative');
       setState(() {
         _reconstitutionSuggestions = [];
         _selectedReconstitution = null;
@@ -77,7 +78,7 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
     final targetMcg = _targetDoseUnit == 'mg' ? targetDose * 1000 : targetDose;
 
     setState(() {
-      _totalAmount = totalAmount;
+      _totalAmount = _quantityUnit == 'mg' ? totalAmount.toDouble() : (totalMcg / 1000).toDouble();
       _targetDose = targetMcg.toDouble();
       _medicationName = _nameController.text.isNotEmpty ? _nameController.text : 'Medication';
     });
@@ -86,15 +87,16 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
     final suggestions = <Map<String, dynamic>>[];
     for (final volume in volumes) {
       final concentration = totalMcg / volume;
-      final syringeUnits = (targetMcg / concentration) * 100; // 100 IU per mL syringe
-      if (syringeUnits >= 10 && syringeUnits <= 100) {
+      final iuPerDose = (targetMcg / concentration) * 100; // Assuming 100 IU per mL syringe
+      if (iuPerDose >= 10 && iuPerDose <= 100) {
         suggestions.add({
           'volume': volume,
-          'syringeUnits': syringeUnits,
-          'concentration': concentration,
+          'iu': iuPerDose.round(),
+          'concentration': concentration.round(),
         });
       }
     }
+    print('Suggestions generated: $suggestions');
     setState(() {
       _reconstitutionSuggestions = suggestions;
       if (_selectedReconstitution != null && !suggestions.any((s) => s['volume'] == _selectedReconstitution!['volume'])) {
@@ -105,7 +107,7 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
 
   void _editReconstitution(Map<String, dynamic> suggestion) async {
     final volumeController = TextEditingController(text: suggestion['volume'].toString());
-    final syringeUnitsController = TextEditingController(text: suggestion['syringeUnits'].toStringAsFixed(2));
+    final iuController = TextEditingController(text: suggestion['iu'].toString());
     final fluidController = TextEditingController(text: _reconstitutionFluidController.text);
 
     final updated = await showDialog<Map<String, dynamic>>(
@@ -131,9 +133,9 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
               ),
               const SizedBox(height: 8),
               TextField(
-                controller: syringeUnitsController,
+                controller: iuController,
                 decoration: InputDecoration(
-                  labelText: 'Syringe Units (IU)',
+                  labelText: 'IU per Dose',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                   focusedBorder: OutlineInputBorder(
                     borderSide: const BorderSide(color: Color(0xFFFFC107)),
@@ -164,11 +166,11 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
           ),
           TextButton(
             onPressed: () {
-              final volume = double.tryParse(volumeController.text) ?? suggestion['volume'];
-              final syringeUnits = double.tryParse(syringeUnitsController.text) ?? suggestion['syringeUnits'];
+              final volume = int.tryParse(volumeController.text) ?? suggestion['volume'];
+              final iu = int.tryParse(iuController.text) ?? suggestion['iu'];
               Navigator.pop(context, {
                 'volume': volume,
-                'syringeUnits': syringeUnits,
+                'iu': iu,
                 'concentration': suggestion['concentration'],
               });
               _reconstitutionFluidController.text = fluidController.text;
@@ -204,15 +206,12 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
       name: _nameController.text,
       type: _type,
       quantityUnit: _quantityUnit,
-      quantity: (double.tryParse(_quantityController.text) ?? 0),
-      remainingQuantity: (double.tryParse(_quantityController.text) ?? 0),
+      quantity: (int.tryParse(_quantityController.text) ?? 0).toDouble(),
+      remainingQuantity: (int.tryParse(_quantityController.text) ?? 0).toDouble(),
       reconstitutionVolumeUnit: _isReconstituting ? 'mL' : '',
       reconstitutionVolume: _isReconstituting ? (_selectedReconstitution != null ? _selectedReconstitution!['volume'].toDouble() : 0) : 0,
       reconstitutionFluid: _isReconstituting ? _reconstitutionFluidController.text : '',
       notes: _notesController.text,
-      isReconstituted: _isReconstituting,
-      targetDosage: _isReconstituting ? (double.tryParse(_targetDoseController.text) ?? 0) : null,
-      administerDosage: _isReconstituting ? (_selectedReconstitution != null ? _selectedReconstitution!['syringeUnits'].toDouble() : 0) : null,
       reconstitutionOptions: _isReconstituting ? _reconstitutionSuggestions : [],
       selectedReconstitution: _isReconstituting ? _selectedReconstitution : null,
     );
@@ -232,9 +231,9 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
           padding: const EdgeInsets.symmetric(vertical: 16.0),
           child: Text(
             'Name: ${medication.name}\n'
-                'Type: ${medication.type.toString().split('.').last}\n'
-                'Quantity: ${medication.quantity.toStringAsFixed(2)} ${medication.quantityUnit}\n'
-                '${medication.isReconstituted ? 'Reconstituted with ${medication.reconstitutionVolume.toStringAsFixed(2)} ${medication.reconstitutionVolumeUnit}\nAdminister Dosage: ${medication.administerDosage?.toStringAsFixed(2) ?? 'N/A'} IU\nFluid: ${medication.reconstitutionFluid.isNotEmpty ? medication.reconstitutionFluid : 'None'}\nTarget Dosage: ${medication.targetDosage?.toStringAsFixed(2) ?? 'N/A'} ${medication.quantityUnit}\n' : ''}'
+                'Type: ${medication.type}\n'
+                'Quantity: ${medication.quantity.toInt()} ${medication.quantityUnit}\n'
+                '${medication.reconstitutionVolume > 0 ? 'Reconstituted with ${medication.reconstitutionVolume.toInt()} mL\nIU per Dose: ${_selectedReconstitution?['iu'] ?? 0} IU\nFluid: ${medication.reconstitutionFluid.isNotEmpty ? medication.reconstitutionFluid : 'None'}\n' : ''}'
                 'Notes: ${medication.notes.isNotEmpty ? medication.notes : 'None'}',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               color: Colors.green[900],
@@ -271,7 +270,7 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
       arguments: {
         'medication': medication,
         'targetDoseMcg': _targetDose,
-        'selectedIU': _selectedReconstitution?['syringeUnits']?.toDouble() ?? 0,
+        'selectedIU': _selectedReconstitution?['iu']?.toDouble() ?? 0,
       },
     );
 
@@ -321,7 +320,7 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
                 }),
               ),
               const SizedBox(height: 16),
-              DropdownButtonFormField<MedicationType>(
+              DropdownButtonFormField<String>(
                 value: _type,
                 decoration: InputDecoration(
                   labelText: 'Type',
@@ -337,8 +336,8 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
                   filled: true,
                   fillColor: Colors.grey[50],
                 ),
-                items: MedicationType.values
-                    .map((type) => DropdownMenuItem(value: type, child: Text(type.toString().split('.').last)))
+                items: ['Injection', 'Tablet', 'Capsule', 'Other']
+                    .map((type) => DropdownMenuItem(value: type, child: Text(type)))
                     .toList(),
                 onChanged: (value) => setState(() {
                   _type = value!;
@@ -558,7 +557,7 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
                             ),
                             const TextSpan(text: ' = '),
                             TextSpan(
-                              text: '${suggestion['syringeUnits'].toStringAsFixed(2)} IU',
+                              text: '${suggestion['iu']} IU',
                               style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -618,7 +617,7 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
                             ),
                             const TextSpan(text: ' = '),
                             TextSpan(
-                              text: '${_selectedReconstitution!['syringeUnits'].toStringAsFixed(2)} IU',
+                              text: '${_selectedReconstitution!['iu']} IU',
                               style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -629,7 +628,7 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
                         softWrap: true,
                       ),
                       subtitle: Text(
-                        'For ${_totalAmount.toStringAsFixed(2)} $_quantityUnit of “$_medicationName” at ${_targetDose.toStringAsFixed(2)} $_targetDoseUnit\n'
+                        'For ${_totalAmount.toInt()} $_quantityUnit of “$_medicationName” at ${_targetDose.toInt()} mcg\n'
                             'Fluid: ${_reconstitutionFluidController.text.isNotEmpty ? _reconstitutionFluidController.text : 'None'}',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.green[900]),
                       ),
