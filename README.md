@@ -5,30 +5,45 @@ A Flutter-based medication tracking app to manage medications, dosages, schedule
 ## Features Implemented
 - **Medication Management** (May 26, 2025)
   - Add, edit, delete medications (types: Tablet, Capsule, Injection, Other).
-  - Quantity units (g, mg, mcg, mL, IU, Unit) based on type.
-  - Reconstitution for Injection/Other with fluid, IU calculations, ±0.1 mL adjustments.
-  - Navigation to `MedicationDetailsScreen` after adding medication/dosage.
-  - Edit medication by tapping card in `MedicationDetailsScreen`.
+  - Quantity units (g, mg, mcg, mL, IU, Unit) with accurate conversions.
+  - Reconstitution for Injection/Other: fluid, syringe size (0.3-5mL), four suggestions, ±0.1 mL adjustments.
+  - Helper text for stock entry (vial potency, tablet count/potency).
   - National Geographic-themed UI: yellow accents, white cards, rounded corners.
 - **Dosage Management**
-  - Add, edit, delete dosages with default names (e.g., "BPC157 Dose of 600mcg").
-  - Dynamic dose units, no trailing zeros, units displayed beside values.
-  - Subcutaneous method shown as "Subcutaneous Injection", IU/CC for reconstituted.
-  - Removed storage volume field.
+  - Add, edit, delete dosages with names like "BPC157 Dose of 600mcg".
+  - Dose in mass units (mcg), IU/CC for syringe delivery in reconstituted injections.
+  - Dynamic summary card on dosage screen.
+- **Home Screen**
+  - FAB for adding medications.
+  - "No medications added" message.
+  - Large card for next dose, two smaller cards for following doses.
 - **Navigation**
   - Fixed navigation to `MedicationDetailsScreen`.
   - Protected navigation stack with `WillPopScope`.
 - **Build Fixes**
-  - Commit `42337984b04a1649c3229cd13d64832540a598a2`: Fixed navigation, added features.
-  - Commit `e74e621a05e653bd8d730056e2519cf07164dd5c`: Added `Dosage` model, `doseUnits`.
-  - Commit `0a51ccb38b274a19219cc576c682d097291d12c6`: Fixed type cast error, enhanced UI, fixed reconstitution bugs.
+  - Commit `42337984b04a1649c3229cd13d64832540a598a2`: Fixed navigation.
+  - Commit `e74e621a05e653bd8d730056e2519cf07164dd5c`: Added `Dosage`, `doseUnits`.
+  - Commit `0a51ccb38b274a19219cc576c682d097291d12c6`: Enhanced UI, fixed reconstitution.
+  - Commit [Insert New Commit Hash]: Added home screen features, refined reconstitution, fixed dosage units.
+
+## Workflow Preservation
+To maintain the current development workflow with Grok:
+1. Provide the latest commit hash from the GitHub repository.
+2. Share detailed feedback on UI/UX, functionality, and bugs, including console logs or errors.
+3. Include any missing files (e.g., `data_provider.dart`) if referenced.
+4. Specify desired changes with examples (e.g., styling, medical terminology).
+5. Grok will:
+  - Analyze the commit and feedback.
+  - Provide updated code with explanations.
+  - Include commit instructions (stage, commit, push).
+  - Update README with progress and workflow notes.
+  - Request test results and next priorities.
 
 ## Planned Features
-- **Schedules**: Add/edit/delete schedules with frequency, cycles, notifications.
-- **Home Screen Cards**: Next dosage with "Take Now", "Postpone", "Cancel".
-- **Calendar Screen**: Calendar view using `table_calendar`.
-- **History**: Track taken/canceled/postponed dosages with CSV export.
-- **Settings**: Light/dark/system themes, notifications.
+- **Schedules**: Add/edit/delete with frequency, cycles, notifications.
+- **Calendar Screen**: View using `table_calendar`.
+- **History**: Track dosages with CSV export.
+- **Settings**: Themes, notifications.
 
 ## Build Instructions
 1. Clone: `git clone https://github.com/kinemspa/MedTrackr.git`
