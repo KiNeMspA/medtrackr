@@ -244,6 +244,16 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+              const SizedBox(height: 8),
+              Text(
+                _type == 'Injection'
+                    ? 'Enter the potency of the vial (e.g., total IU or mcg in the vial).'
+                    : _type == 'Tablet' || _type == 'Capsule'
+                    ? 'Enter the potency per tablet/capsule (e.g., mcg per tablet) and the total number of tablets/capsules.'
+                    : 'Enter the total quantity of the medication.',
+                style: const TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+              const SizedBox(height: 16),
               const SizedBox(height: 16),
               MedicationFormFields(
                 nameController: _nameController,

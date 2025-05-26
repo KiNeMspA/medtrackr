@@ -71,71 +71,108 @@ class ReconstitutionWidgets extends StatelessWidget {
               onChanged: (value) => onFluidChanged(),
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: targetDoseController,
-              decoration: InputDecoration(
-                labelText: 'Target Dose',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                filled: true,
-                fillColor: Colors.white,
-                suffixText: targetDoseUnit,
-              ),
-              keyboardType: TextInputType.number,
-              onChanged: (value) => onTargetDoseChanged(),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: targetDoseController,
+                    decoration: InputDecoration(
+                      labelText: 'Target Dose',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    keyboardType: TextInputType.number,
+                    onChanged: (value) => onTargetDoseChanged(),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                SizedBox(
+                  width: 100,
+                  child: DropdownButtonFormField<String>(
+                    value: targetDoseUnit,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    items: ['g', 'mg', 'mcg', 'mL', 'IU', 'Unit']
+                        .map((unit) => DropdownMenuItem(value: unit, child: Text(unit)))
+                        .toList(),
+                    onChanged: onTargetDoseUnitChanged,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: targetDoseUnit,
+            DropdownButtonFormField<double>(
+              value: selectedReconstitution?['syringeSize'] ?? 0.3,
               decoration: InputDecoration(
-                labelText: 'Target Dose Unit',
+                labelText: 'Syringe Size',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 filled: true,
                 fillColor: Colors.white,
               ),
-              items: ['g', 'mg', 'mcg', 'mL', 'IU', 'Unit']
-                  .map((unit) => DropdownMenuItem(value: unit, child: Text(unit)))
+              items: [0.3, 0.5, 1.0, 3.0, 5.0]
+                  .map((size) => DropdownMenuItem(value: size, child: Text('$size mL')))
                   .toList(),
-              onChanged: onTargetDoseUnitChanged,
+              onChanged: (value) {
+                if (value != null) {
+                  onEditReconstitution({'syringeSize': value});
+                }
+              },
             ),
             const SizedBox(height: 16),
-            if (reconstitutionSuggestions.isNotEmpty) ...[
+            Text(
+              'Medication Quantity: $totalAmount $quantityUnit',
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+            const SizedBox(height: 16),
+            if (reconstitutionSuggestions.isNotEmpty && selectedReconstitution == null) ...[
               const Text(
                 'Suggested Reconstitutions',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
               ),
               const SizedBox(height: 8),
-              ...reconstitutionSuggestions.map((suggestion) {
-                final isSelected = suggestion == selectedReconstitution;
+              ...reconstitutionSuggestions.take(4).map((suggestion) {
                 return ListTile(
                   title: Text(
                     'Reconstitute with ${suggestion['volume']} mL for ${suggestion['iu']} IU',
-                    style: TextStyle(
-                      color: isSelected ? const Color(0xFFFFC107) : Colors.black,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    ),
+                    style: const TextStyle(color: Colors.black),
                   ),
-                  trailing: isSelected
-                      ? Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Color(0xFFFFC107)),
-                        onPressed: () => onEditReconstitution(suggestion),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.add, color: Color(0xFFFFC107)),
-                        onPressed: () => onAdjustVolume(0.1),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.remove, color: Color(0xFFFFC107)),
-                        onPressed: () => onAdjustVolume(-0.1),
-                      ),
-                    ],
-                  )
-                      : null,
                   onTap: () => onSuggestionSelected(suggestion),
                 );
               }),
+            ],
+            if (selectedReconstitution != null) ...[
+              const Text(
+                'Selected Reconstitution',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                title: Text(
+                  'Reconstituted with ${selectedReconstitution!['volume']} mL for ${selectedReconstitution!['iu']} IU',
+                  style: const TextStyle(color: Color(0xFFFFC107), fontWeight: FontWeight.bold),
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit, color: Color(0xFFFFC107)),
+                      onPressed: () => onEditReconstitution(selectedReconstitution!),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.add, color: Color(0xFFFFC107)),
+                      onPressed: () => onAdjustVolume(0.1),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.remove, color: Color(0xFFFFC107)),
+                      onPressed: () => onAdjustVolume(-0.1),
+                    ),
+                  ],
+                ),
+              ),
             ],
             if (reconstitutionError != null)
               Padding(
@@ -158,87 +195,6 @@ class ReconstitutionWidgets extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class ReconstitutionEditDialog extends StatelessWidget {
-  final Map<String, dynamic> suggestion;
-  final String fluid;
-
-  const ReconstitutionEditDialog({super.key, required this.suggestion, required this.fluid});
-
-  @override
-  Widget build(BuildContext context) {
-    final volumeController = TextEditingController(text: suggestion['volume'].toString());
-    final iuController = TextEditingController(text: suggestion['iu'].toString());
-    final fluidController = TextEditingController(text: fluid);
-
-    return AlertDialog(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      title: const Text(
-        'Edit Reconstitution',
-        style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextFormField(
-            controller: volumeController,
-            decoration: InputDecoration(
-              labelText: 'Volume (mL)',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              filled: true,
-              fillColor: Colors.white,
-            ),
-            keyboardType: TextInputType.number,
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: iuController,
-            decoration: InputDecoration(
-              labelText: 'IU',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              filled: true,
-              fillColor: Colors.white,
-            ),
-            keyboardType: TextInputType.number,
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: fluidController,
-            decoration: InputDecoration(
-              labelText: 'Fluid',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              filled: true,
-              fillColor: Colors.white,
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text(
-            'Cancel',
-            style: TextStyle(color: Color(0xFFFFC107)),
-          ),
-        ),
-        TextButton(
-          onPressed: () {
-            Navigator.pop(context, {
-              'volume': double.tryParse(volumeController.text) ?? suggestion['volume'],
-              'iu': double.tryParse(iuController.text) ?? suggestion['iu'],
-              'fluid': fluidController.text,
-            });
-          },
-          child: const Text(
-            'Save',
-            style: TextStyle(color: Colors.black),
-          ),
-        ),
-      ],
     );
   }
 }

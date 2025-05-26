@@ -42,6 +42,16 @@ class MedTrackrApp extends StatelessWidget {
           bodyLarge: TextStyle(fontFamily: 'Roboto', fontSize: 18, color: Colors.black),
           titleLarge: TextStyle(fontFamily: 'Roboto', fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
         ),
+        inputDecorationTheme: const InputDecorationTheme(
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Color(0xFFFFC107)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.grey),
+          ),
+          filled: true,
+          fillColor: Colors.white,
+        ),
         useMaterial3: true,
       ),
       home: const MainScreen(),

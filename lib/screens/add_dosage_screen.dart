@@ -29,7 +29,7 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
   final _nameController = TextEditingController();
   final _doseController = TextEditingController();
   final _insulinUnitsController = TextEditingController();
-  String _doseUnit = 'IU';
+  String _doseUnit = 'mcg';
   DosageMethod _method = DosageMethod.subcutaneous;
   bool _isReconstituted = false;
 
@@ -37,7 +37,7 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
   void initState() {
     super.initState();
     _isReconstituted = widget.medication.reconstitutionVolume > 0;
-    _doseUnit = _isReconstituted ? 'IU' : widget.medication.quantityUnit;
+    _doseUnit = _isReconstituted ? widget.medication.quantityUnit : widget.medication.quantityUnit;
     if (widget.dosage != null) {
       _nameController.text = widget.dosage!.name;
       _doseController.text = widget.dosage!.totalDose.toStringAsFixed(widget.dosage!.totalDose % 1 == 0 ? 0 : 1);
@@ -82,7 +82,7 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
       method: _method,
       doseUnit: _doseUnit,
       totalDose: double.tryParse(_doseController.text) ?? 0,
-      volume: 0, // Removed volume
+      volume: 0,
       insulinUnits: _insulinUnitsController.text.isNotEmpty ? double.tryParse(_insulinUnitsController.text) ?? 0 : (widget.selectedIU ?? 0),
       takenTime: null,
     );
@@ -113,7 +113,7 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
   @override
   Widget build(BuildContext context) {
     final doseUnits = _isReconstituted
-        ? ['IU']
+        ? [widget.medication.quantityUnit]
         : ['g', 'mg', 'mcg', 'mL', 'IU', 'Unit'];
 
     return Scaffold(
@@ -131,13 +131,43 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
               DosageFormFields(
                 nameController: _nameController,
                 doseController: _doseController,
-                volumeController: null, // Removed volume
+                volumeController: null,
                 insulinUnitsController: _insulinUnitsController,
                 doseUnit: _doseUnit,
                 doseUnits: doseUnits,
                 method: _method,
                 onDoseUnitChanged: (value) => setState(() => _doseUnit = value!),
                 onMethodChanged: (value) => setState(() => _method = value!),
+              ),
+              const SizedBox(height: 16),
+              Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                color: Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Dosage Summary',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+                      ),
+                      const SizedBox(height: 8),
+                      Text('Medication: ${widget.medication.name}', style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                      Text('Dose: ${_doseController.text.isEmpty ? '0' : _doseController.text} $_doseUnit', style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                      Text(
+                        'Method: ${_method == DosageMethod.subcutaneous ? 'Subcutaneous Injection' : _method.toString().split('.').last}',
+                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                      if (_isReconstituted)
+                        Text(
+                          'Insulin Units: ${_insulinUnitsController.text.isEmpty ? '0' : _insulinUnitsController.text} IU (${(double.tryParse(_insulinUnitsController.text) ?? 0) / 100} CC)',
+                          style: const TextStyle(fontSize: 14, color: Colors.grey),
+                        ),
+                    ],
+                  ),
+                ),
               ),
               if (_isReconstituted) ...[
                 const SizedBox(height: 8),
