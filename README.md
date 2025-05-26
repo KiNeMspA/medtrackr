@@ -55,7 +55,10 @@ To update this section:
   - Fixed `notificationTime` handling in `notification_service.dart` and `data_provider.dart`.
   - Initial setup for medication input and schedule generation.
   - Fixed errors in DosageMethod enum, null safety, missing parameters, and type mismatches in dosage and schedule screens.
-  - Latest commit hash: 158216041ab3d87e0c3eb7b8a62da55023a4fad1
+  - Latest commit hash: `158216041ab3d87e0c3eb7b8a62da55023a4fad1`
+  - Initial setup for medication input and schedule generation.
+  - Fixed errors in DosageMethod enum, null safety, missing parameters, and type mismatches in dosage and schedule screens.
+  - Latest commit hash: `4524241d0b48148781c78b4962298ec2f387ec46`
 
 ## Workflow Preservation
 To maintain the current development workflow with Grok:
