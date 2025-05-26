@@ -3,6 +3,7 @@ import 'package:medtrackr/models/dosage.dart';
 import 'package:medtrackr/models/medication.dart';
 import 'package:medtrackr/models/schedule.dart';
 import 'package:medtrackr/models/dosage_method.dart';
+import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 class NotificationService {
@@ -13,7 +14,7 @@ class NotificationService {
       flutterLocalNotificationsPlugin ?? FlutterLocalNotificationsPlugin();
 
   Future<void> init() async {
-    tz.initializeTimeZones();
+    tz_data.initializeTimeZones();
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
     const settings = InitializationSettings(android: android);
     await _flutterLocalNotificationsPlugin.initialize(settings);
@@ -69,7 +70,6 @@ class NotificationService {
           ),
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: schedule.frequencyType == FrequencyType.daily
             ? DateTimeComponents.time
             : DateTimeComponents.dayOfWeekAndTime,
