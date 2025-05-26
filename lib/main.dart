@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:medtrackr/constants/constants.dart';
 import 'package:medtrackr/models/medication.dart';
 import 'package:medtrackr/providers/data_provider.dart';
 import 'package:medtrackr/screens/home_screen.dart';
@@ -21,10 +22,32 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => DataProvider(),
       child: MaterialApp(
-        title: 'MedTrackr',
+        title: AppConstants.appName,
         theme: ThemeData(
           primarySwatch: Colors.blue,
           scaffoldBackgroundColor: Colors.grey[200],
+          inputDecorationTheme: InputDecorationTheme(
+            enabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: AppConstants.kLightGrey, width: 1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: AppConstants.primaryColor, width: 1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: AppConstants.kLightGrey, width: 1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: AppConstants.primaryColor, width: 1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            labelStyle: TextStyle(color: Colors.grey[600]),
+            suffixStyle: TextStyle(color: Colors.grey[600]),
+          ),
         ),
         initialRoute: '/home',
         routes: {
