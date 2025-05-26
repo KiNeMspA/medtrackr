@@ -7,6 +7,7 @@ import 'package:medtrackr/screens/add_dosage_screen.dart';
 import 'package:medtrackr/screens/add_schedule_screen.dart';
 import 'package:medtrackr/screens/medication_details_screen.dart';
 import 'package:medtrackr/models/medication.dart';
+import 'package:medtrackr/models/dosage.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
 import 'package:medtrackr/services/notification_service.dart';
