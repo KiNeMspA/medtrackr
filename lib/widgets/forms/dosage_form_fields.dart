@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:medtrackr/models/dosage_method.dart';
+import 'package:medtrackr/models/enums/dosage_method.dart';
 
 class DosageFormFields extends StatelessWidget {
   final TextEditingController nameController;

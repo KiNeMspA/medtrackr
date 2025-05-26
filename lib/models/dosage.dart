@@ -1,5 +1,5 @@
-import 'package:flutter/foundation.dart';
-import 'package:medtrackr/models/dosage_method.dart';
+import 'package:flutter/material.dart';
+import 'package:medtrackr/models/enums/dosage_method.dart';
 
 class Dosage {
   final String id;
@@ -10,6 +10,7 @@ class Dosage {
   final double totalDose;
   final double volume;
   final double insulinUnits;
+  final TimeOfDay time;
   final DateTime? takenTime;
 
   Dosage({
@@ -21,6 +22,7 @@ class Dosage {
     required this.totalDose,
     required this.volume,
     required this.insulinUnits,
+    required this.time,
     this.takenTime,
   });
 
@@ -33,6 +35,7 @@ class Dosage {
     'totalDose': totalDose,
     'volume': volume,
     'insulinUnits': insulinUnits,
+    'time': '${time.hour}:${time.minute}',
     'takenTime': takenTime?.toIso8601String(),
   };
 
@@ -42,13 +45,19 @@ class Dosage {
     name: json['name'] ?? 'Default Dose',
     method: DosageMethod.values.firstWhere(
           (e) => e.toString().split('.').last == json['method'],
-      orElse: () => DosageMethod.topical,
+      orElse: () => DosageMethod.unspecified,
     ),
     doseUnit: json['doseUnit'],
     totalDose: json['totalDose'],
     volume: json['volume'] ?? 0.0,
     insulinUnits: json['insulinUnits'] ?? 0.0,
-    takenTime: json['takenTime'] != null ? DateTime.parse(json['takenTime']) : null,
+    time: TimeOfDay(
+      hour: int.parse(json['time'].split(':')[0]),
+      minute: int.parse(json['time'].split(':')[1]),
+    ),
+    takenTime: json['takenTime'] != null
+        ? DateTime.parse(json['takenTime'])
+        : null,
   );
 
   Dosage copyWith({
@@ -60,6 +69,7 @@ class Dosage {
     double? totalDose,
     double? volume,
     double? insulinUnits,
+    TimeOfDay? time,
     DateTime? takenTime,
   }) =>
       Dosage(
@@ -71,6 +81,7 @@ class Dosage {
         totalDose: totalDose ?? this.totalDose,
         volume: volume ?? this.volume,
         insulinUnits: insulinUnits ?? this.insulinUnits,
+        time: time ?? this.time,
         takenTime: takenTime ?? this.takenTime,
       );
 }

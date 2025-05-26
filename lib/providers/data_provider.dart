@@ -6,7 +6,7 @@ import 'package:medtrackr/models/dosage.dart';
 import 'package:medtrackr/models/schedule.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:medtrackr/services/notification_service.dart';
-import 'package:medtrackr/models/dosage_method.dart';
+import 'package:medtrackr/models/enums/dosage_method.dart';
 
 class DataProvider with ChangeNotifier {
   final List<Medication> _medications = [];
@@ -267,13 +267,13 @@ class DataProvider with ChangeNotifier {
         dosageAmount: 0.0,
         dosageUnit: '',
         frequencyType: FrequencyType.daily,
-        notificationTime: '',
+        notificationTime: null,
       ),
     );
     if (schedule.id.isNotEmpty) {
       updateScheduleAsync(
         scheduleId,
-        schedule.copyWith(notificationTime: newTime),
+        schedule.copyWith(notificationTime: int.tryParse(newTime)),
       );
     }
   }

@@ -80,12 +80,12 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
             (e) => e.toString().split('.').last == _frequency.toLowerCase(),
         orElse: () => FrequencyType.daily,
       ),
-      dosageName: dataProvider.dosages.firstWhere((d) => d.id == _selectedDosageId).dosageName,
-      dosageAmount: dataProvider.dosages.firstWhere((d) => d.id == _selectedDosageId).dosageAmount,
-      dosageUnit: dataProvider.dosages.firstWhere((d) => d.id == _selectedDosageId).unit,
+      name: dataProvider.dosages.firstWhere((d) => d.id == _selectedDosageId).name,
+      amount: dataProvider.dosages.firstWhere((d) => d.id == _selectedDosageId).amount,
+      dosageUnit: dataProvider.dosages.firstWhere((d) => d.id == _selectedDosageId).dosageUnit,
       notificationTime: _cyclePeriodController.text.isNotEmpty
-          ? _cyclePeriodController.text
-          : '',
+          ? int.tryParse(_cyclePeriodController.text)
+          : null,
     );
 
     try {

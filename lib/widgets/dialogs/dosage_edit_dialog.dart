@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:medtrackr/models/dosage.dart';
-import 'package:medtrackr/widgets/dosage_form_fields.dart';
-import 'package:medtrackr/models/dosage_method.dart';
+import 'package:medtrackr/widgets/forms/dosage_form_fields.dart';
+import 'package:medtrackr/models/enums/dosage_method.dart';
 
 class DosageEditDialog extends StatefulWidget {
   final Dosage dosage;

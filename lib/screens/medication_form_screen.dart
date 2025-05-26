@@ -3,9 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:medtrackr/models/medication.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
-import 'package:medtrackr/utils/reconstitution_calculator.dart';
-import 'package:medtrackr/widgets/medication_form_fields.dart';
-import 'package:medtrackr/widgets/reconstitution_widgets.dart';
+import 'package:medtrackr/utils/calculators/reconstitution_calculator.dart';
+import 'package:medtrackr/widgets/forms/medication_form_fields.dart';
+import 'package:medtrackr/widgets/reconstitution/reconstitution_widgets.dart';
 import 'package:uuid/uuid.dart';
 
 class MedicationFormScreen extends StatefulWidget {
