@@ -27,7 +27,7 @@ class DataProvider with ChangeNotifier {
       final dosages = getDosagesForMedication(medication.id);
 
       if (schedule != null) {
-        final timeParts = schedule.notificationTime.split(':');
+        final notificationTime = schedule.notificationTime?.toString() ?? '';
         final hour = int.parse(timeParts[0]);
         final minute = int.parse(timeParts[1]);
 

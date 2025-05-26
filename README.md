@@ -3,6 +3,12 @@
 A Flutter-based medication tracking app to manage medications, dosages, schedules, and history.
 
 ## Features Implemented
+To update this section:
+- Add new features or build fixes under the relevant category (e.g., Medication Management, Build Fixes).
+- Include the date (e.g., May 26, 2025), time (e.g., 04:30 PM AEST), and commit hash.
+- Commit changes with `git add README.md`, `git commit -m "Updated README with changes"`, and `git push origin main`.
+- Retrieve the commit hash with `git log -1 --pretty=%H` and share it in the next chat.
+
 - **Medication Management** (May 26, 2025)
   - Add, edit, delete medications (Tablet, Capsule, Injection, Other).
   - Quantity units (g, mg, mcg, mL, IU, Unit) with accurate conversions.
@@ -39,6 +45,10 @@ A Flutter-based medication tracking app to manage medications, dosages, schedule
   - Commit `96ac5411efb7b0986842f089765275b443caf76c`: Fixed reconstitution, added schedule creation.
   - Commit `35f206cae73add2a5b0d94624db602a337c08b45`: Fixed reconstitution math, syringe pop-up.
   - Commit `f87b75af7b96ffae8726e39b540a91489ec94b5c`: Removed duplicate syringe dropdown, added schedule and UI enhancements.
+  - Commit `c75b6817a25d24c1e0813a6b52dd2e0cfb31d253` (May 26, 2025, 04:30 PM AEST):
+    - Fixed `selectedIU` in `main.dart`, `amount` and `dosageUnit` in `add_dosage_screen.dart`.
+    - Corrected `dosageUnit`, `frequencyType`, and `notificationTime` in `add_schedule_screen.dart`.
+    - Updated `notificationTime` to `int?` in `schedule.dart` and fixed type mismatches in `data_provider.dart` and `notification_service.dart`.
 
 ## Workflow Preservation
 To maintain the current development workflow with Grok:

@@ -27,7 +27,7 @@ class Schedule {
     required this.dosageAmount,
     required this.dosageUnit,
     required this.frequencyType,
-    required this.notificationTime,
+    this.notificationTime,
   });
 
   Schedule copyWith({
@@ -39,7 +39,7 @@ class Schedule {
     double? dosageAmount,
     String? dosageUnit,
     FrequencyType? frequencyType,
-    String? notificationTime,
+    int? notificationTime,
   }) {
     return Schedule(
       id: id ?? this.id,

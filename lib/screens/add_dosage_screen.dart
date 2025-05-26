@@ -24,20 +24,12 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    if (args != null) {
-      _medication = args['medication'] as Medication?;
-      _dosage = args['dosage'] as Dosage?;
-      if (_dosage != null) {
-        _nameController.text = _dosage!.name;
-        _amountController.text = _dosage!.amount.toStringAsFixed(2);
-        _unit = _dosage!.dosageUnit;
-      } else {
-        final targetDoseMcg = args['targetDoseMcg'] as double?;
-        if (targetDoseMcg != null) {
-          _amountController.text = targetDoseMcg.toStringAsFixed(2);
-        }
-      }
+    _medication = widget.medication;
+    _dosage = widget.dosage;
+    if (_dosage != null) {
+      _nameController.text = _dosage!.dosageName;
+      _amountController.text = _dosage!.dosageAmount.toStringAsFixed(2);
+      _unit = _dosage!.unit;
     }
   }
 
@@ -59,9 +51,11 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
     final dosage = Dosage(
       id: const Uuid().v4(),
       medicationId: _medication!.id,
-      name: _nameController.text,
-      amount: double.tryParse(_amountController.text) ?? 0,
+      dosageName: _nameController.text,
+      dosageAmount: double.tryParse(_amountController.text) ?? 0,
       unit: _unit,
+      dosageMethod: 'unspecified', // Adjust based on your app's logic
+      time: TimeOfDay.now(), // Adjust based on your app's logic
     );
 
     final dataProvider = Provider.of<DataProvider>(context, listen: false);

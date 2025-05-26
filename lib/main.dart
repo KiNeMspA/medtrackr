@@ -64,8 +64,6 @@ class MedTrackrApp extends StatelessWidget {
           return AddDosageScreen(
             medication: args['medication'] as Medication,
             dosage: args['dosage'] as Dosage?,
-            medication: args['medication'] as Medication,
-            selectedIU: args['selectedIU'] != null ? (args['selectedIU'] as num).toDouble() : null,
           );
         },
         '/add_schedule': (context) => const AddScheduleScreen(),
