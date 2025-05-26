@@ -36,17 +36,16 @@ class MedTrackrApp extends StatelessWidget {
         primaryColor: const Color(0xFFFFC107),
         scaffoldBackgroundColor: Colors.grey[200],
         textTheme: const TextTheme(
-          headlineMedium: TextStyle(
-              fontFamily: 'Roboto', fontWeight: FontWeight.bold, color: Colors.black),
+          headlineMedium: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.bold, color: Colors.black),
           bodyMedium: TextStyle(fontFamily: 'Roboto', color: Colors.grey),
           bodyLarge: TextStyle(fontFamily: 'Roboto', fontSize: 18, color: Colors.black),
-          titleLarge: TextStyle(
-              fontFamily: 'Roboto', fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
+          titleLarge: TextStyle(fontFamily: 'Roboto', fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
         ),
         useMaterial3: true,
       ),
       home: const MainScreen(),
       routes: {
+        '/': (context) => const HomeScreen(),
         '/medication_form': (context) => MedicationFormScreen(
           medication: ModalRoute.of(context)!.settings.arguments as Medication?,
         ),
@@ -54,6 +53,7 @@ class MedTrackrApp extends StatelessWidget {
           final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
           return AddDosageScreen(
             medication: args['medication'] as Medication,
+            dosage: args['dosage'] as Dosage?,
             targetDoseMcg: args['targetDoseMcg'] as double?,
             selectedIU: args['selectedIU'] as double?,
           );
@@ -77,13 +77,6 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _screens = [
-    HomeScreen(),
-    MedicationFormScreen(),
-    HistoryScreen(),
-    SettingsScreen(),
-  ];
-
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -92,21 +85,37 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.add_circle), label: 'Add'),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: const Color(0xFFFFC107),
-        unselectedItemColor: Colors.grey,
-        backgroundColor: Colors.white,
-        elevation: 8,
-        onTap: _onItemTapped,
+    return WillPopScope(
+      onWillPop: () async {
+        if (_selectedIndex != 0) {
+          setState(() {
+            _selectedIndex = 0;
+          });
+          return false;
+        }
+        return true;
+      },
+      child: Scaffold(
+        body: [
+          const HomeScreen(),
+          const MedicationFormScreen(),
+          const HistoryScreen(),
+          const SettingsScreen(),
+        ][_selectedIndex],
+        bottomNavigationBar: BottomNavigationBar(
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+            BottomNavigationBarItem(icon: Icon(Icons.add_circle), label: 'Add'),
+            BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+            BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+          ],
+          currentIndex: _selectedIndex,
+          selectedItemColor: const Color(0xFFFFC107),
+          unselectedItemColor: Colors.grey,
+          backgroundColor: Colors.white,
+          elevation: 8,
+          onTap: _onItemTapped,
+        ),
       ),
     );
   }

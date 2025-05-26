@@ -57,8 +57,8 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
   void dispose() {
     _nameController.dispose();
     _quantityController.dispose();
-    _targetDoseController.dispose();
     _reconstitutionFluidController.dispose();
+    _targetDoseController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -166,24 +166,43 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
     if (confirmed != true) return;
 
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
-    if (widget.medication == null) {
-      await dataProvider.addMedicationAsync(medication);
-    } else {
-      await dataProvider.updateMedicationAsync(medication.id, medication);
-    }
+    try {
+      print('Saving medication: ${medication.name}');
+      if (widget.medication == null) {
+        await dataProvider.addMedicationAsync(medication);
+      } else {
+        await dataProvider.updateMedicationAsync(medication.id, medication);
+      }
 
-    final dosageResult = await Navigator.pushNamed(
-      context,
-      '/add_dosage',
-      arguments: {
-        'medication': medication,
-        'targetDoseMcg': _targetDose,
-        'selectedIU': _selectedReconstitution?['iu']?.toDouble() ?? 0,
-      },
-    );
+      if (!context.mounted) return;
+      print('Navigating to AddDosageScreen');
+      final dosageResult = await Navigator.pushNamed(
+        context,
+        '/add_dosage',
+        arguments: {
+          'medication': medication,
+          'targetDoseMcg': _targetDose,
+          'selectedIU': _selectedReconstitution?['iu']?.toDouble() ?? 0,
+        },
+      );
+      print('Returned from AddDosageScreen with result: $dosageResult');
 
-    if (context.mounted && dosageResult != null) {
-      Navigator.pop(context);
+      if (context.mounted && dosageResult != null) {
+        print('Navigating to MedicationDetailsScreen');
+        await Future.delayed(const Duration(milliseconds: 200));
+        Navigator.pushNamed(
+          context,
+          '/medication_details',
+          arguments: medication,
+        );
+      }
+    } catch (e) {
+      print('Error saving medication: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving medication: $e')),
+        );
+      }
     }
   }
 
@@ -192,7 +211,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
-        title: Text(widget.medication == null ? 'Add Medication' : 'Edit Medication'),
+        title: Text(widget.medication == null ? 'Add Medication Stock' : 'Edit Medication'),
         backgroundColor: const Color(0xFFFFC107),
       ),
       body: Padding(
@@ -211,7 +230,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                 quantityController: _quantityController,
                 quantityUnit: _quantityUnit,
                 type: _type,
-                notesController: _notesController, // Add notes
+                notesController: _notesController,
                 onQuantityChanged: _calculateReconstitutionSuggestions,
                 onNameChanged: (value) => setState(() {
                   _medicationName = value?.isNotEmpty == true ? value! : 'Medication';
@@ -219,65 +238,92 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                 }),
                 onTypeChanged: (value) => setState(() {
                   _type = value ?? 'Tablet';
+                  _quantityUnit = {
+                    'Tablet': 'mcg',
+                    'Capsule': 'mcg',
+                    'Injection': 'IU',
+                    'Other': 'mcg',
+                    'Liquid': 'mL',
+                  }[value]!;
+                  _isReconstituting = false; // Reset for non-Injection/Other
                 }),
                 onQuantityUnitChanged: (value) => setState(() {
                   _quantityUnit = value ?? 'mcg';
                   _calculateReconstitutionSuggestions();
                 }),
               ),
-              const SizedBox(height: 24),
-              ReconstitutionWidgets(
-                isReconstituting: _isReconstituting,
-                reconstitutionFluidController: _reconstitutionFluidController,
-                targetDoseController: _targetDoseController,
-                targetDoseUnit: _targetDoseUnit,
-                reconstitutionSuggestions: _reconstitutionSuggestions,
-                selectedReconstitution: _selectedReconstitution,
-                totalAmount: _totalAmount,
-                targetDose: _targetDose,
-                medicationName: _medicationName,
-                quantityUnit: _quantityUnit, // Add this line
-                onReconstitutingChanged: (value) => setState(() {
-                  _isReconstituting = value;
-                  if (!value) {
-                    _reconstitutionSuggestions = [];
-                    _selectedReconstitution = null;
-                    _totalAmount = 0;
-                    _targetDose = 0;
-                    _medicationName = _nameController.text.isNotEmpty ? _nameController.text : 'Medication';
-                    _reconstitutionFluidController.text = '';
-                  }
-                  _calculateReconstitutionSuggestions();
-                }),
-                onFluidChanged: _calculateReconstitutionSuggestions,
-                onTargetDoseChanged: _calculateReconstitutionSuggestions,
-                onTargetDoseUnitChanged: (value) => setState(() {
-                  _targetDoseUnit = value!;
-                  _calculateReconstitutionSuggestions();
-                }),
-                onSuggestionSelected: (suggestion) => setState(() {
-                  _selectedReconstitution = suggestion;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Selected ${suggestion['volume']} mL reconstitution')),
-                  );
-                }),
-                onEditReconstitution: (suggestion) async {
-                  final updated = await showDialog<Map<String, dynamic>>(
-                    context: context,
-                    builder: (context) => ReconstitutionEditDialog(
-                      suggestion: suggestion,
-                      fluid: _reconstitutionFluidController.text,
-                    ),
-                  );
-                  if (updated != null) {
-                    setState(() {
-                      _selectedReconstitution = updated;
-                      _reconstitutionFluidController.text = updated['fluid'] ?? _reconstitutionFluidController.text;
-                    });
-                  }
-                },
-                onClearReconstitution: () => setState(() => _selectedReconstitution = null),
-              ),
+              if (_type == 'Injection' || _type == 'Other') ...[
+                const SizedBox(height: 24),
+                SwitchListTile(
+                  title: const Text('Reconstitute Medication'),
+                  value: _isReconstituting,
+                  onChanged: (value) => setState(() {
+                    _isReconstituting = value;
+                    if (!value) {
+                      _reconstitutionSuggestions = [];
+                      _selectedReconstitution = null;
+                      _totalAmount = 0;
+                      _targetDose = 0;
+                      _reconstitutionFluidController.text = '';
+                    }
+                    _calculateReconstitutionSuggestions();
+                  }),
+                ),
+              ],
+              if (_isReconstituting) ...[
+                ReconstitutionWidgets(
+                  isReconstituting: _isReconstituting,
+                  reconstitutionFluidController: _reconstitutionFluidController,
+                  targetDoseController: _targetDoseController,
+                  targetDoseUnit: _targetDoseUnit,
+                  reconstitutionSuggestions: _reconstitutionSuggestions,
+                  selectedReconstitution: _selectedReconstitution,
+                  totalAmount: _totalAmount,
+                  targetDose: _targetDose,
+                  medicationName: _medicationName,
+                  quantityUnit: _quantityUnit,
+                  onReconstitutingChanged: (value) => setState(() {
+                    _isReconstituting = value;
+                    if (!value) {
+                      _reconstitutionSuggestions = [];
+                      _selectedReconstitution = null;
+                      _totalAmount = 0;
+                      _targetDose = 0;
+                      _medicationName = _nameController.text.isNotEmpty ? _nameController.text : 'Medication';
+                      _reconstitutionFluidController.text = '';
+                    }
+                    _calculateReconstitutionSuggestions();
+                  }),
+                  onFluidChanged: _calculateReconstitutionSuggestions,
+                  onTargetDoseChanged: _calculateReconstitutionSuggestions,
+                  onTargetDoseUnitChanged: (value) => setState(() {
+                    _targetDoseUnit = value!;
+                    _calculateReconstitutionSuggestions();
+                  }),
+                  onSuggestionSelected: (suggestion) => setState(() {
+                    _selectedReconstitution = suggestion;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Selected ${suggestion['volume']} mL reconstitution')),
+                    );
+                  }),
+                  onEditReconstitution: (suggestion) async {
+                    final updated = await showDialog<Map<String, dynamic>>(
+                      context: context,
+                      builder: (context) => ReconstitutionEditDialog(
+                        suggestion: suggestion,
+                        fluid: _reconstitutionFluidController.text,
+                      ),
+                    );
+                    if (updated != null) {
+                      setState(() {
+                        _selectedReconstitution = updated;
+                        _reconstitutionFluidController.text = updated['fluid'] ?? _reconstitutionFluidController.text;
+                      });
+                    }
+                  },
+                  onClearReconstitution: () => setState(() => _selectedReconstitution = null),
+                ),
+              ],
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () => _saveMedication(context),
