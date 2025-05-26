@@ -46,13 +46,16 @@ To update this section:
   - Commit `35f206cae73add2a5b0d94624db602a337c08b45`: Fixed reconstitution math, syringe pop-up.
   - Commit `f87b75af7b96ffae8726e39b540a91489ec94b5c`: Removed duplicate syringe dropdown, added schedule and UI enhancements.
   - Commit `c75b6817a25d24c1e0813a6b52dd2e0cfb31d253` (May 26, 2025, 04:30 PM AEST):
-    - Fixed `selectedIU` in `main.dart`, `amount` and `dosageUnit` in `add_dosage_screen.dart`.
-    - Corrected `dosageUnit`, `frequencyType`, and `notificationTime` in `add_schedule_screen.dart`.
-    - Updated `notificationTime` to `int?` in `schedule.dart` and fixed type mismatches in `data_provider.dart` and `notification_service.dart`.
+  - Fixed `selectedIU` in `main.dart`, `amount` and `dosageUnit` in `add_dosage_screen.dart`.
+  - Corrected `dosageUnit`, `frequencyType`, and `notificationTime` in `add_schedule_screen.dart`.
+  - Updated `notificationTime` to `int?` in `schedule.dart` and fixed type mismatches in `data_provider.dart` and `notification_service.dart`.
   - Commit `f74b6601948f0062a0ee54b47de2bad9b9ba8a89` (May 26, 2025, 04:25 PM AEST):
-    - Fixed `selectedIU` in `main.dart`.
-    - Corrected `Dosage` fields (`dosageAmount`, `unit`) in `add_dosage_screen.dart` and `add_schedule_screen.dart`.
-    - Fixed `notificationTime` handling in `notification_service.dart` and `data_provider.dart`.
+  - Fixed `selectedIU` in `main.dart`.
+  - Corrected `Dosage` fields (`dosageAmount`, `unit`) in `add_dosage_screen.dart` and `add_schedule_screen.dart`.
+  - Fixed `notificationTime` handling in `notification_service.dart` and `data_provider.dart`.
+  - Initial setup for medication input and schedule generation.
+  - Fixed errors in DosageMethod enum, null safety, missing parameters, and type mismatches in dosage and schedule screens.
+  - Latest commit hash: 158216041ab3d87e0c3eb7b8a62da55023a4fad1
 
 ## Workflow Preservation
 To maintain the current development workflow with Grok:
