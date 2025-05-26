@@ -54,10 +54,16 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
     super.dispose();
   }
 
-  void _saveDosage(BuildContext context) {
+  void _saveDosage(BuildContext context) async {
     if (_nameController.text.isEmpty || _doseController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill all required fields')),
+      );
+      return;
+    }
+    if (widget.medication.id.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid medication ID')),
       );
       return;
     }
@@ -73,8 +79,21 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
       insulinUnits: _insulinUnitsController.text.isNotEmpty ? double.tryParse(_insulinUnitsController.text) ?? 0 : (widget.selectedIU ?? 0),
     );
 
-    Provider.of<DataProvider>(context, listen: false).addDosage(dosage);
-    Navigator.pop(context, dosage); // Return dosage to parent screen
+    try {
+      print('Saving dosage: $dosage');
+      await Provider.of<DataProvider>(context, listen: false).addDosageAsync(dosage);
+      print('Navigating back');
+      if (context.mounted) {
+        Navigator.pop(context, dosage);
+      }
+    } catch (e) {
+      print('Error saving dosage: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving dosage: $e')),
+        );
+      }
+    }
   }
 
   @override

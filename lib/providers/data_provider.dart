@@ -131,6 +131,10 @@ class DataProvider with ChangeNotifier {
   }
 
   void addDosage(Dosage dosage) {
+    addDosageAsync(dosage); // Call async version
+  }
+
+  Future<void> addDosageAsync(Dosage dosage) async {
     _dosages.add(dosage);
     if (dosage.takenTime != null) {
       final medication = _medications.firstWhere(
@@ -157,8 +161,26 @@ class DataProvider with ChangeNotifier {
         );
       }
     }
-    _saveData();
+    await _saveData();
     notifyListeners();
+  }
+
+  Future<void> addMedicationAsync(Medication medication) async {
+    if (_medications.any((m) => m.name.toLowerCase() == medication.name.toLowerCase())) {
+      return;
+    }
+    _medications.add(medication);
+    await _saveData();
+    notifyListeners();
+  }
+
+  Future<void> updateMedicationAsync(String id, Medication updatedMedication) async {
+    final index = _medications.indexWhere((m) => m.id == id);
+    if (index != -1) {
+      _medications[index] = updatedMedication;
+      await _saveData();
+      notifyListeners();
+    }
   }
 
   void takeDose(String medicationId, String scheduleId, String dosageId) {
@@ -279,3 +301,4 @@ class DataProvider with ChangeNotifier {
     }
   }
 }
+

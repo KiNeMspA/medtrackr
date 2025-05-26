@@ -167,12 +167,12 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
 
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
     if (widget.medication == null) {
-      dataProvider.addMedication(medication);
+      await dataProvider.addMedicationAsync(medication);
     } else {
-      dataProvider.updateMedication(medication.id, medication);
+      await dataProvider.updateMedicationAsync(medication.id, medication);
     }
 
-    await Navigator.pushNamed(
+    final dosageResult = await Navigator.pushNamed(
       context,
       '/add_dosage',
       arguments: {
@@ -182,7 +182,9 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
       },
     );
 
-    Navigator.pop(context);
+    if (context.mounted && dosageResult != null) {
+      Navigator.pop(context);
+    }
   }
 
   @override
