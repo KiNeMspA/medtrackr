@@ -4,37 +4,36 @@ A Flutter-based medication tracking app to manage medications, dosages, schedule
 
 ## Features Implemented
 - **Medication Management** (May 26, 2025)
-  - Add, edit, delete medications with types: Tablet, Capsule, Injection, Other.
-  - Quantity units (g, mg, mcg, mL, IU, Unit) based on medication type.
-  - Reconstitution for Injection/Other with fluid and IU calculations.
+  - Add, edit, delete medications (types: Tablet, Capsule, Injection, Other).
+  - Quantity units (g, mg, mcg, mL, IU, Unit) based on type.
+  - Reconstitution for Injection/Other with fluid, IU calculations, ±0.1 mL adjustments.
   - Navigation to `MedicationDetailsScreen` after adding medication/dosage.
-  - Type-specific icons in `MedicationDetailsScreen`.
+  - Edit medication by tapping card in `MedicationDetailsScreen`.
+  - National Geographic-themed UI: yellow accents, white cards, rounded corners.
 - **Dosage Management**
-  - Add, edit, delete dosages with default names (e.g., "Dose of X IU" for reconstituted).
-  - Dynamic dose units (g, mg, mcg, mL, IU, Unit) based on medication type/reconstitution.
-  - Display target dose and IU per mL for reconstituted medications.
+  - Add, edit, delete dosages with default names (e.g., "BPC157 Dose of 600mcg").
+  - Dynamic dose units, no trailing zeros, units displayed beside values.
+  - Subcutaneous method shown as "Subcutaneous Injection", IU/CC for reconstituted.
+  - Removed storage volume field.
 - **Navigation**
-  - Fixed navigation to `MedicationDetailsScreen` after dosage save.
-  - Protected navigation stack with `WillPopScope` in `MainScreen`.
-- **Build Fixes** (May 26, 2025)
-  - Added `Dosage` model and import in `main.dart`.
-  - Updated `DosageFormFields` to include `doseUnits` parameter.
+  - Fixed navigation to `MedicationDetailsScreen`.
+  - Protected navigation stack with `WillPopScope`.
+- **Build Fixes**
+  - Commit `42337984b04a1649c3229cd13d64832540a598a2`: Fixed navigation, added features.
+  - Commit `e74e621a05e653bd8d730056e2519cf07164dd5c`: Added `Dosage` model, `doseUnits`.
+  - Commit `0a51ccb38b274a19219cc576c682d097291d12c6`: Fixed type cast error, enhanced UI, fixed reconstitution bugs.
 
 ## Planned Features
-- **Schedules**: Add/edit/delete schedules with frequency (hourly, daily, weekly, monthly), cycle periods, notifications.
-- **Home Screen Cards**: Next dosage with "Take Now", "Postpone", "Cancel" buttons; upcoming dosages.
-- **Calendar Screen**: Calendar view for scheduled dosages using `table_calendar`.
+- **Schedules**: Add/edit/delete schedules with frequency, cycles, notifications.
+- **Home Screen Cards**: Next dosage with "Take Now", "Postpone", "Cancel".
+- **Calendar Screen**: Calendar view using `table_calendar`.
 - **History**: Track taken/canceled/postponed dosages with CSV export.
-- **Settings**: Light/dark/system themes, notification settings.
+- **Settings**: Light/dark/system themes, notifications.
 
 ## Build Instructions
 1. Clone: `git clone https://github.com/kinemspa/MedTrackr.git`
 2. Install dependencies: `flutter pub get`
 3. Run: `flutter run`
-
-## Recent Changes
-- Commit `42337984b04a1649c3229cd13d64832540a598a2`: Fixed navigation to `MedicationDetailsScreen`, enhanced medication/dosage features.
-- Commit [Insert New Commit Hash]: Fixed build errors by adding `Dosage` model and `doseUnits` to `DosageFormFields`.
 
 ## Development Environment
 - Flutter: Latest stable version
