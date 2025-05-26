@@ -4,12 +4,11 @@ class MedicationFormFields extends StatelessWidget {
   final TextEditingController nameController;
   final TextEditingController quantityController;
   final String quantityUnit;
-  final String type;
+  final String type; // Read-only type
+  final TextEditingController notesController;
   final VoidCallback onQuantityChanged;
   final ValueChanged<String?> onNameChanged;
-  final ValueChanged<String?> onTypeChanged;
   final ValueChanged<String?> onQuantityUnitChanged;
-  final TextEditingController notesController;
 
   const MedicationFormFields({
     super.key,
@@ -17,16 +16,14 @@ class MedicationFormFields extends StatelessWidget {
     required this.quantityController,
     required this.quantityUnit,
     required this.type,
+    required this.notesController,
     required this.onQuantityChanged,
     required this.onNameChanged,
-    required this.onTypeChanged,
     required this.onQuantityUnitChanged,
-    required this.notesController,
   });
 
   @override
   Widget build(BuildContext context) {
-    final medicationTypes = ['Tablet', 'Capsule', 'Injection', 'Other'];
     final quantityUnits = {
       'Tablet': ['g', 'mg', 'mcg'],
       'Capsule': ['g', 'mg', 'mcg'],
@@ -43,18 +40,6 @@ class MedicationFormFields extends StatelessWidget {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           ),
           onChanged: onNameChanged,
-        ),
-        const SizedBox(height: 16),
-        DropdownButtonFormField<String>(
-          value: medicationTypes.contains(type) ? type : medicationTypes.first,
-          decoration: InputDecoration(
-            labelText: 'Medication Type',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-          items: medicationTypes
-              .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-              .toList(),
-          onChanged: onTypeChanged,
         ),
         const SizedBox(height: 16),
         Row(

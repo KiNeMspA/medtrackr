@@ -3,5 +3,5 @@ enum DosageMethod {
   intravenous,
   oral,
   intramuscular,
-  topical,
+  topical, unspecified,
 }

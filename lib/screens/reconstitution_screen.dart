@@ -53,30 +53,39 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
 
   void _calculateReconstitutionSuggestions() {
     final volume = double.tryParse(_fluidAmountController.text) ?? 1.0;
-    final targetDose = double.tryParse(_targetDoseController.text) ?? 0.0;
-    final pMg = widget.medication.quantityUnit == 'mg'
-        ? widget.medication.quantity
-        : widget.medication.quantity / 1000; // Convert to mg
-    final dMg = _targetDoseUnit == 'mg' ? targetDose : targetDose / 1000; // Convert to mg
-    final concentration = volume > 0 ? pMg / volume : 0.0; // C = pMg / V
-    final doseVolume = concentration > 0 ? dMg / concentration : 0.0; // V_d = dMg / C
-    final syringeUnits = doseVolume * 100; // U = V_d * 100
+    final calculator = ReconstitutionCalculator(
+      quantityController: TextEditingController(text: widget.medication.quantity.toString()),
+      targetDoseController: _targetDoseController,
+      quantityUnit: widget.medication.quantityUnit,
+      targetDoseUnit: _targetDoseUnit,
+      medicationName: widget.medication.name,
+      syringeSize: _syringeSize,
+      fixedVolume: volume,
+    );
+    final result = calculator.calculate();
+    final concentration = result['selectedReconstitution'] != null
+        ? (result['selectedReconstitution']['concentration'] as double?) ?? 0.0
+        : 0.0;
+    final syringeUnits = result['selectedReconstitution'] != null
+        ? (result['selectedReconstitution']['syringeUnits'] as double?) ?? 0.0
+        : 0.0;
 
     setState(() {
-      _targetDose = targetDose;
-      _selectedReconstitution = {
-        'volume': volume,
-        'concentration': concentration,
-        'syringeUnits': syringeUnits,
-        'doseVolume': doseVolume,
-        'syringeSize': _syringeSize,
-      };
-      _reconstitutionSuggestions = [_selectedReconstitution!];
-      _reconstitutionError = concentration < 0.1
-          ? 'Warning: Concentration is ${_formatNumber(concentration)} mg/mL, too low. Increase fluid amount.'
-          : concentration > 10
-          ? 'Warning: Concentration is ${_formatNumber(concentration)} mg/mL, too high. Decrease fluid amount.'
-          : null;
+      _targetDose = double.tryParse(_targetDoseController.text) ?? 0.0;
+      _reconstitutionSuggestions = (result['suggestions'] as List<dynamic>?)
+          ?.cast<Map<String, dynamic>>() ??
+          [];
+      _selectedReconstitution = result['selectedReconstitution'] as Map<String, dynamic>?;
+      _reconstitutionError = result['error'] as String? ??
+          (syringeUnits < 5
+              ? 'Warning: IU (${_formatNumber(syringeUnits)}) is too low. Increase fluid amount.'
+              : syringeUnits > 100 * _syringeSize
+              ? 'Warning: IU (${_formatNumber(syringeUnits)}) exceeds syringe capacity (${_formatNumber(100 * _syringeSize)} IU). Decrease fluid amount.'
+              : concentration < 0.1
+              ? 'Warning: Concentration is ${_formatNumber(concentration)} mg/mL, too low. Increase fluid amount.'
+              : concentration > 10
+              ? 'Warning: Concentration is ${_formatNumber(concentration)} mg/mL, too high. Decrease fluid amount.'
+              : null);
     });
   }
 
@@ -139,8 +148,7 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
                 const TextSpan(
                     text: 'Target Dose: ',
                     style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                TextSpan(
-                    text: '${_formatNumber(_targetDose * (_targetDoseUnit == 'mg' ? 1 : 1000))} $_targetDoseUnit'),
+                TextSpan(text: '${_formatNumber(_targetDose)} $_targetDoseUnit'),
               ],
             ),
           ),
@@ -317,9 +325,18 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
               if (_selectedReconstitution != null) ...[
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(
-                    'Formula: Units = (Target Dose (mg) / Concentration (mg/mL)) * 100',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Formula: Units = (Target Dose (mg) / Concentration (mg/mL)) * 100',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      ),
+                      Text(
+                        'Calculation: ${_formatNumber(_targetDose * (_targetDoseUnit == 'mg' ? 1 : 1/1000))} mg / ${_formatNumber(_selectedReconstitution!['concentration'])} mg/mL * 100 = ${_formatNumber(_selectedReconstitution!['syringeUnits'])} IU',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      ),
+                    ],
                   ),
                 ),
                 Container(
@@ -334,10 +351,6 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
                     text: TextSpan(
                       style: const TextStyle(color: Colors.black, fontSize: 16, height: 1.8),
                       children: [
-                        const TextSpan(
-                            text: 'Concentration: ',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                        TextSpan(text: '${_formatNumber(_selectedReconstitution!['concentration'])} mg/mL\n'),
                         const TextSpan(text: 'Administer '),
                         TextSpan(
                           text: _formatNumber(_selectedReconstitution!['syringeUnits']),
@@ -356,7 +369,7 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
                             style: TextStyle(fontWeight: FontWeight.bold)),
                         const TextSpan(text: '\nfor a dosage of '),
                         TextSpan(
-                          text: _formatNumber(_targetDose * (_targetDoseUnit == 'mg' ? 1 : 1000)),
+                          text: _formatNumber(_targetDose),
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         TextSpan(text: ' $_targetDoseUnit\n'),
@@ -382,6 +395,11 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
                         TextSpan(
                           text: _reconstitutionFluidController.text,
                           style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const TextSpan(text: '\nConcentration: '),
+                        TextSpan(
+                          text: '${_formatNumber(_selectedReconstitution!['concentration'])} mg/mL',
+                          style: const TextStyle(color: Colors.grey),
                         ),
                       ],
                     ),

@@ -1,11 +1,5 @@
 import 'package:flutter/material.dart';
-
-enum FrequencyType {
-  hourly,
-  daily,
-  weekly,
-  monthly,
-}
+import 'package:medtrackr/models/enums/frequency_type.dart';
 
 class Schedule {
   final String id;

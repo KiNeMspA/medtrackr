@@ -1,3 +1,4 @@
+import 'package:medtrackr/models/enums/frequency_type.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/models/medication.dart';
@@ -75,14 +76,14 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
       id: const Uuid().v4(),
       medicationId: _selectedMedicationId!,
       dosageId: _selectedDosageId!,
+      dosageName: dataProvider.dosages.firstWhere((d) => d.id == _selectedDosageId).name,
+      dosageAmount: dataProvider.dosages.firstWhere((d) => d.id == _selectedDosageId).totalDose,
+      dosageUnit: dataProvider.dosages.firstWhere((d) => d.id == _selectedDosageId).doseUnit,
       time: _selectedTime,
       frequencyType: FrequencyType.values.firstWhere(
             (e) => e.toString().split('.').last == _frequency.toLowerCase(),
         orElse: () => FrequencyType.daily,
       ),
-      name: dataProvider.dosages.firstWhere((d) => d.id == _selectedDosageId).name,
-      amount: dataProvider.dosages.firstWhere((d) => d.id == _selectedDosageId).amount,
-      dosageUnit: dataProvider.dosages.firstWhere((d) => d.id == _selectedDosageId).dosageUnit,
       notificationTime: _cyclePeriodController.text.isNotEmpty
           ? int.tryParse(_cyclePeriodController.text)
           : null,

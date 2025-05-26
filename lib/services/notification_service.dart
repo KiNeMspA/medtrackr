@@ -1,3 +1,5 @@
+import 'package:medtrackr/models/enums/frequency_type.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:medtrackr/models/dosage.dart';
 import 'package:medtrackr/models/medication.dart';
@@ -49,6 +51,7 @@ class NotificationService {
           totalDose: 0.0,
           volume: 0.0,
           insulinUnits: 0.0,
+          time: TimeOfDay.now(),
         ),
       );
 

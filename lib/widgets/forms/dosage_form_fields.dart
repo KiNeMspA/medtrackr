@@ -37,30 +37,51 @@ class DosageFormFields extends StatelessWidget {
             filled: true,
             fillColor: Colors.white,
           ),
+          validator: (value) => value!.isEmpty ? 'Please enter a name' : null,
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: doseController,
+                decoration: InputDecoration(
+                  labelText: 'Dose Amount',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) => value!.isEmpty ? 'Please enter a dose' : null,
+              ),
+            ),
+            const SizedBox(width: 16),
+            SizedBox(
+              width: 120,
+              child: DropdownButtonFormField<String>(
+                value: doseUnits.contains(doseUnit) ? doseUnit : doseUnits[0],
+                decoration: InputDecoration(
+                  labelText: 'Unit',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+                items: doseUnits.map((unit) => DropdownMenuItem(value: unit, child: Text(unit))).toList(),
+                onChanged: onDoseUnitChanged,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         TextFormField(
-          controller: doseController,
+          controller: volumeController,
           decoration: InputDecoration(
-            labelText: 'Dose',
+            labelText: 'Volume (mL)',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,
             fillColor: Colors.white,
-            suffixText: doseUnit,
           ),
           keyboardType: TextInputType.number,
-        ),
-        const SizedBox(height: 16),
-        DropdownButtonFormField<String>(
-          value: doseUnits.contains(doseUnit) ? doseUnit : doseUnits.first,
-          decoration: InputDecoration(
-            labelText: 'Dose Unit',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            filled: true,
-            fillColor: Colors.white,
-          ),
-          items: doseUnits.map((unit) => DropdownMenuItem(value: unit, child: Text(unit))).toList(),
-          onChanged: onDoseUnitChanged,
         ),
         const SizedBox(height: 16),
         TextFormField(

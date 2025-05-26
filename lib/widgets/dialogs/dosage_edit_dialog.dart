@@ -53,6 +53,7 @@ class _DosageEditDialogState extends State<DosageEditDialog> {
           volumeController: _volumeController,
           insulinUnitsController: _insulinUnitsController,
           doseUnit: _doseUnit,
+          doseUnits: ['g', 'mg', 'mcg', 'mL', 'IU', 'Unit'],
           method: _method,
           onDoseUnitChanged: (value) => setState(() => _doseUnit = value!),
           onMethodChanged: (value) => setState(() => _method = value!),
