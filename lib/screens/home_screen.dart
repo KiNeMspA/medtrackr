@@ -18,6 +18,15 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('MedTrackr', style: TextStyle(color: Colors.black)),
         backgroundColor: const Color(0xFFFFC107),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.schedule, color: Colors.black),
+            onPressed: () {
+              Navigator.pushNamed(context, '/add_schedule');
+            },
+            tooltip: 'Add Schedule',
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -90,7 +99,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ),
                       subtitle: Text(
-                        'Time: ${schedule.time.format(context)}\nDose: ${schedule.dosageAmount} ${schedule.dosageUnit}',
+                        'Time: ${schedule.time.format(context)}\nDose: ${schedule.dosageAmount.toStringAsFixed(schedule.dosageAmount % 1 == 0 ? 0 : 1)} ${schedule.dosageUnit}',
                         style: const TextStyle(fontSize: 14, color: Colors.grey),
                       ),
                       trailing: isFirst
@@ -100,20 +109,30 @@ class HomeScreen extends StatelessWidget {
                           IconButton(
                             icon: const Icon(Icons.check, color: Color(0xFFFFC107)),
                             onPressed: () {
-                              // Implement "Take Now"
+                              dataProvider.takeDose(
+                                medication.id,
+                                schedule.id,
+                                schedule.dosageId,
+                              );
                             },
+                            tooltip: 'Take Now',
                           ),
                           IconButton(
                             icon: const Icon(Icons.schedule, color: Colors.grey),
                             onPressed: () {
-                              // Implement "Postpone"
+                              dataProvider.postponeDose(
+                                schedule.id,
+                                '${schedule.time.hour + 1}:${schedule.time.minute}',
+                              );
                             },
+                            tooltip: 'Postpone',
                           ),
                           IconButton(
                             icon: const Icon(Icons.cancel, color: Colors.red),
                             onPressed: () {
-                              // Implement "Cancel"
+                              dataProvider.cancelDose(schedule.id);
                             },
+                            tooltip: 'Cancel',
                           ),
                         ],
                       )

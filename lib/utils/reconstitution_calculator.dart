@@ -15,43 +15,63 @@ class ReconstitutionCalculator {
     required this.medicationName,
   });
 
-  ({List<Map<String, dynamic>> suggestions, Map<String, dynamic>? selectedReconstitution, double totalAmount, double targetDose, String medicationName}) calculate() {
-    final totalAmount = int.tryParse(quantityController.text) ?? 0;
-    final targetDose = int.tryParse(targetDoseController.text) ?? 0;
-
-    if (totalAmount <= 0 || targetDose <= 0 || quantityController.text.isEmpty || targetDoseController.text.isEmpty) {
-      return (
-      suggestions: [],
-      selectedReconstitution: null,
-      totalAmount: 0,
-      targetDose: 0,
-      medicationName: medicationName.isNotEmpty ? medicationName : 'Medication'
-      );
+  double _convertToIU(String unit, double value) {
+    switch (unit) {
+      case 'g':
+        return value * 1e9; // Convert g to IU (assuming 1 IU = 1 mcg for simplicity)
+      case 'mg':
+        return value * 1e6; // Convert mg to IU
+      case 'mcg':
+        return value * 1e3; // Convert mcg to IU
+      case 'IU':
+        return value; // No conversion needed
+      case 'Unit':
+        return value; // Assume 1 Unit = 1 IU
+      default:
+        return value;
     }
+  }
 
-    final totalMcg = quantityUnit == 'mg' ? totalAmount * 1000.0 : totalAmount.toDouble();
-    final targetMcg = targetDoseUnit == 'mg' ? targetDose * 1000.0 : targetDose.toDouble();
+  Map<String, dynamic> calculate() {
+    final quantity = double.tryParse(quantityController.text) ?? 0.0;
+    final targetDose = double.tryParse(targetDoseController.text) ?? 0.0;
 
+    // Convert quantities to IU for consistent calculation
+    final quantityIU = _convertToIU(quantityUnit, quantity);
+    final targetDoseIU = _convertToIU(targetDoseUnit, targetDose);
+
+    // Generate reconstitution suggestions (0.3mL to 5mL syringe sizes)
     final suggestions = <Map<String, dynamic>>[];
-    const volumes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-    for (final volume in volumes) {
-      final concentration = totalMcg / volume;
-      final iuPerDose = (targetMcg / concentration) * 100;
-      if (iuPerDose >= 10 && iuPerDose <= 100 && iuPerDose.isFinite) {
-        suggestions.add({
-          'volume': volume,
-          'iu': iuPerDose.round(),
-          'concentration': concentration.round(),
-        });
+    final syringeSizes = [0.3, 0.5, 1.0, 2.0, 5.0];
+    for (var volume in syringeSizes) {
+      if (quantityIU > 0 && volume > 0) {
+        final iuPerML = quantityIU / volume;
+        if (iuPerML >= 1) {
+          suggestions.add({
+            'volume': volume,
+            'iu': quantityIU,
+            'iuPerML': iuPerML,
+          });
+        }
       }
     }
 
-    return (
-    suggestions: suggestions,
-    selectedReconstitution: suggestions.isNotEmpty ? suggestions.first : null,
-    totalAmount: totalMcg / 1000.0,
-    targetDose: targetMcg,
-    medicationName: medicationName.isNotEmpty ? medicationName : 'Medication',
-    );
+    // Select the suggestion closest to target dose, if any
+    Map<String, dynamic>? selectedReconstitution;
+    if (suggestions.isNotEmpty) {
+      selectedReconstitution = suggestions.reduce((a, b) {
+        final aDiff = (a['iuPerML'] - (targetDoseIU / a['volume'])).abs();
+        final bDiff = (b['iuPerML'] - (targetDoseIU / b['volume'])).abs();
+        return aDiff < bDiff ? a : b;
+      });
+    }
+
+    return {
+      'suggestions': suggestions.take(4).toList(),
+      'selectedReconstitution': selectedReconstitution,
+      'totalAmount': quantityIU,
+      'targetDose': targetDoseIU,
+      'medicationName': medicationName.isNotEmpty ? medicationName : 'Medication',
+    };
   }
 }
