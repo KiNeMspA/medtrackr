@@ -30,8 +30,8 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
       _dosage = args['dosage'] as Dosage?;
       if (_dosage != null) {
         _nameController.text = _dosage!.name;
-        _amountController.text = _dosage!.dosageAmount.toStringAsFixed(2);
-        _unit = _dosage!.unit;
+        _amountController.text = _dosage!.amount.toStringAsFixed(2);
+        _unit = _dosage!.dosageUnit;
       } else {
         final targetDoseMcg = args['targetDoseMcg'] as double?;
         if (targetDoseMcg != null) {

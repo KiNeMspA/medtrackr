@@ -16,7 +16,7 @@ class Schedule {
   final double dosageAmount;
   final String dosageUnit;
   final FrequencyType frequencyType;
-  final String notificationTime;
+  final int? notificationTime;
 
   Schedule({
     required this.id,
@@ -63,7 +63,7 @@ class Schedule {
     'dosageAmount': dosageAmount,
     'dosageUnit': dosageUnit,
     'frequencyType': frequencyType.toString(),
-    'notificationTime': notificationTime,
+    'notificationTime': notificationTime?.toString(),
   };
 
   factory Schedule.fromJson(Map<String, dynamic> json) {
@@ -83,7 +83,7 @@ class Schedule {
             (e) => e.toString() == json['frequencyType'],
         orElse: () => FrequencyType.daily,
       ),
-      notificationTime: json['notificationTime'],
+      notificationTime: json['notificationTime'] != null ? int.tryParse(json['notificationTime']) : null,
     );
   }
 }

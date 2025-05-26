@@ -6,6 +6,12 @@ import 'package:medtrackr/models/dosage.dart';
 import 'package:medtrackr/providers/data_provider.dart';
 import 'package:uuid/uuid.dart';
 
+extension StringExtension on String {
+  String capitalize() {
+    return "${this[0].toUpperCase()}${substring(1)}";
+  }
+}
+
 class AddScheduleScreen extends StatefulWidget {
   const AddScheduleScreen({super.key});
 
@@ -70,7 +76,10 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
       medicationId: _selectedMedicationId!,
       dosageId: _selectedDosageId!,
       time: _selectedTime,
-      frequencyType: _frequency,
+      frequencyType: FrequencyType.values.firstWhere(
+            (e) => e.toString().split('.').last == _frequency.toLowerCase(),
+        orElse: () => FrequencyType.daily,
+      ),
       dosageName: dataProvider.dosages
           .firstWhere((d) => d.id == _selectedDosageId)
           .name,
@@ -79,10 +88,10 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
           .amount,
       dosageUnit: dataProvider.dosages
           .firstWhere((d) => d.id == _selectedDosageId)
-          .unit,
+          ..dosageUnit,
       notificationTime: _cyclePeriodController.text.isNotEmpty
-          ? int.tryParse(_cyclePeriodController.text)
-          : null,
+          ? _cyclePeriodController.text
+          : '',
     );
 
     try {
@@ -189,8 +198,8 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
                   filled: true,
                   fillColor: Colors.white,
                 ),
-                items: ['Hourly', 'Daily', 'Weekly', 'Monthly']
-                    .map((freq) => DropdownMenuItem(value: freq, child: Text(freq)))
+                items: ['hourly', 'daily', 'weekly', 'monthly']
+                    .map((freq) => DropdownMenuItem(value: freq, child: Text(freq.capitalize())))
                     .toList(),
                 onChanged: (value) {
                   setState(() {

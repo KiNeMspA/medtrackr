@@ -64,7 +64,7 @@ class MedTrackrApp extends StatelessWidget {
           return AddDosageScreen(
             medication: args['medication'] as Medication,
             dosage: args['dosage'] as Dosage?,
-            targetDoseMcg: args['targetDoseMcg'] != null ? (args['targetDoseMcg'] as num).toDouble() : null,
+            medication: args['medication'] as Medication,
             selectedIU: args['selectedIU'] != null ? (args['selectedIU'] as num).toDouble() : null,
           );
         },
