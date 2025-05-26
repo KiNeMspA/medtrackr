@@ -9,7 +9,7 @@ import 'package:medtrackr/screens/medication_details_screen.dart';
 import 'package:medtrackr/models/medication.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
-import 'package:medtrackr/providers/notification_service.dart';
+import 'package:medtrackr/services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

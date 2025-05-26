@@ -11,6 +11,7 @@ class ReconstitutionWidgets extends StatelessWidget {
   final double totalAmount;
   final double targetDose;
   final String medicationName;
+  final String quantityUnit;
   final ValueChanged<bool> onReconstitutingChanged;
   final VoidCallback onFluidChanged;
   final VoidCallback onTargetDoseChanged;
@@ -30,6 +31,7 @@ class ReconstitutionWidgets extends StatelessWidget {
     required this.totalAmount,
     required this.targetDose,
     required this.medicationName,
+    required this.quantityUnit, // Add this
     required this.onReconstitutingChanged,
     required this.onFluidChanged,
     required this.onTargetDoseChanged,
@@ -38,7 +40,6 @@ class ReconstitutionWidgets extends StatelessWidget {
     required this.onEditReconstitution,
     required this.onClearReconstitution,
   });
-
   @override
   Widget build(BuildContext context) {
     return Column(

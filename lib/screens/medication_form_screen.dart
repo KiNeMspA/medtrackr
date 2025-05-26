@@ -19,14 +19,14 @@ class MedicationFormScreen extends StatefulWidget {
 
 class _MedicationFormScreenState extends State<MedicationFormScreen> {
   final _nameController = TextEditingController();
-  String _type = 'Injection';
-  String _quantityUnit = 'mcg';
   final _quantityController = TextEditingController();
-  bool _isReconstituting = false;
-  final _targetDoseController = TextEditingController();
-  String _targetDoseUnit = 'mcg';
   final _reconstitutionFluidController = TextEditingController();
+  final _targetDoseController = TextEditingController();
   final _notesController = TextEditingController();
+  String _type = 'Tablet';
+  String _quantityUnit = 'mcg';
+  String _targetDoseUnit = 'mcg';
+  bool _isReconstituting = false;
   List<Map<String, dynamic>> _reconstitutionSuggestions = [];
   Map<String, dynamic>? _selectedReconstitution;
   double _totalAmount = 0;
@@ -206,21 +206,20 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
               const SizedBox(height: 16),
               MedicationFormFields(
                 nameController: _nameController,
-                type: _type,
-                quantityUnit: _quantityUnit,
                 quantityController: _quantityController,
-                notesController: _notesController,
-                onTypeChanged: (value) => setState(() {
-                  _type = value!;
+                quantityUnit: _quantityUnit,
+                type: _type,
+                notesController: _notesController, // Add notes
+                onQuantityChanged: _calculateReconstitutionSuggestions,
+                onNameChanged: (value) => setState(() {
+                  _medicationName = value?.isNotEmpty == true ? value! : 'Medication';
                   _calculateReconstitutionSuggestions();
+                }),
+                onTypeChanged: (value) => setState(() {
+                  _type = value ?? 'Tablet';
                 }),
                 onQuantityUnitChanged: (value) => setState(() {
-                  _quantityUnit = value!;
-                  _calculateReconstitutionSuggestions();
-                }),
-                onQuantityChanged: (_) => _calculateReconstitutionSuggestions(),
-                onNameChanged: (value) => setState(() {
-                  _medicationName = value.isNotEmpty ? value : 'Medication';
+                  _quantityUnit = value ?? 'mcg';
                   _calculateReconstitutionSuggestions();
                 }),
               ),
@@ -235,6 +234,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                 totalAmount: _totalAmount,
                 targetDose: _targetDose,
                 medicationName: _medicationName,
+                quantityUnit: _quantityUnit, // Add this line
                 onReconstitutingChanged: (value) => setState(() {
                   _isReconstituting = value;
                   if (!value) {
@@ -247,8 +247,8 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                   }
                   _calculateReconstitutionSuggestions();
                 }),
-                onFluidChanged: (_) => _calculateReconstitutionSuggestions(),
-                onTargetDoseChanged: (_) => _calculateReconstitutionSuggestions(),
+                onFluidChanged: _calculateReconstitutionSuggestions,
+                onTargetDoseChanged: _calculateReconstitutionSuggestions,
                 onTargetDoseUnitChanged: (value) => setState(() {
                   _targetDoseUnit = value!;
                   _calculateReconstitutionSuggestions();

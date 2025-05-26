@@ -5,6 +5,9 @@ import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:medtrackr/widgets/dosage_form_fields.dart';
+import 'package:medtrackr/models/dosage_method.dart';
+
+
 
 class AddDosageScreen extends StatefulWidget {
   final Medication medication;
@@ -24,8 +27,10 @@ class AddDosageScreen extends StatefulWidget {
 
 class _AddDosageScreenState extends State<AddDosageScreen> {
   final _nameController = TextEditingController();
-  String _doseUnit = 'IU';
   final _doseController = TextEditingController();
+  final _volumeController = TextEditingController();
+  final _insulinUnitsController = TextEditingController();
+  String _doseUnit = 'IU';
   DosageMethod _method = DosageMethod.subcutaneous;
 
   @override
@@ -33,7 +38,10 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
     super.initState();
     _nameController.text = '${widget.medication.name} Dose';
     if (widget.selectedIU != null) {
-      _doseController.text = widget.selectedIU!.toString();
+      _insulinUnitsController.text = widget.selectedIU!.toString();
+    }
+    if (widget.targetDoseMcg != null) {
+      _doseController.text = widget.targetDoseMcg!.toString();
     }
   }
 
@@ -41,6 +49,8 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
   void dispose() {
     _nameController.dispose();
     _doseController.dispose();
+    _volumeController.dispose();
+    _insulinUnitsController.dispose();
     super.dispose();
   }
 
@@ -59,12 +69,12 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
       method: _method,
       doseUnit: _doseUnit,
       totalDose: double.tryParse(_doseController.text) ?? 0,
-      volume: 0.0,
-      insulinUnits: double.tryParse(_doseController.text) ?? 0,
+      volume: _volumeController.text.isNotEmpty ? double.tryParse(_volumeController.text) ?? 0 : 0,
+      insulinUnits: _insulinUnitsController.text.isNotEmpty ? double.tryParse(_insulinUnitsController.text) ?? 0 : (widget.selectedIU ?? 0),
     );
 
     Provider.of<DataProvider>(context, listen: false).addDosage(dosage);
-    Navigator.pop(context, dosage);
+    Navigator.pop(context, dosage); // Return dosage to parent screen
   }
 
   @override
@@ -83,6 +93,8 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
             DosageFormFields(
               nameController: _nameController,
               doseController: _doseController,
+              volumeController: _volumeController,
+              insulinUnitsController: _insulinUnitsController,
               doseUnit: _doseUnit,
               method: _method,
               onDoseUnitChanged: (value) => setState(() => _doseUnit = value!),

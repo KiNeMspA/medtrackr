@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:medtrackr/models/dosage.dart';
 import 'package:medtrackr/widgets/dosage_form_fields.dart';
+import 'package:medtrackr/models/dosage_method.dart';
 
 class DosageEditDialog extends StatefulWidget {
   final Dosage dosage;
@@ -14,16 +15,20 @@ class DosageEditDialog extends StatefulWidget {
 
 class _DosageEditDialogState extends State<DosageEditDialog> {
   late TextEditingController _nameController;
-  late String _doseUnit;
   late TextEditingController _doseController;
+  late TextEditingController _volumeController;
+  late TextEditingController _insulinUnitsController;
+  late String _doseUnit;
   late DosageMethod _method;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.dosage.name);
-    _doseUnit = widget.dosage.doseUnit;
     _doseController = TextEditingController(text: widget.dosage.totalDose.toString());
+    _volumeController = TextEditingController(text: widget.dosage.volume.toString());
+    _insulinUnitsController = TextEditingController(text: widget.dosage.insulinUnits.toString());
+    _doseUnit = widget.dosage.doseUnit;
     _method = widget.dosage.method;
   }
 
@@ -31,6 +36,8 @@ class _DosageEditDialogState extends State<DosageEditDialog> {
   void dispose() {
     _nameController.dispose();
     _doseController.dispose();
+    _volumeController.dispose();
+    _insulinUnitsController.dispose();
     super.dispose();
   }
 
@@ -43,6 +50,8 @@ class _DosageEditDialogState extends State<DosageEditDialog> {
         child: DosageFormFields(
           nameController: _nameController,
           doseController: _doseController,
+          volumeController: _volumeController,
+          insulinUnitsController: _insulinUnitsController,
           doseUnit: _doseUnit,
           method: _method,
           onDoseUnitChanged: (value) => setState(() => _doseUnit = value!),
@@ -60,8 +69,8 @@ class _DosageEditDialogState extends State<DosageEditDialog> {
               name: _nameController.text,
               doseUnit: _doseUnit,
               totalDose: double.tryParse(_doseController.text) ?? widget.dosage.totalDose,
-              insulinUnits:
-              double.tryParse(_doseController.text) ?? widget.dosage.insulinUnits,
+              volume: double.tryParse(_volumeController.text) ?? widget.dosage.volume,
+              insulinUnits: double.tryParse(_insulinUnitsController.text) ?? widget.dosage.insulinUnits,
               method: _method,
             );
             widget.onSave(updatedDosage);

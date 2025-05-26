@@ -5,8 +5,11 @@ import 'package:medtrackr/models/medication.dart';
 import 'package:medtrackr/models/dosage.dart';
 import 'package:medtrackr/models/schedule.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:medtrackr/providers/notification_service.dart';
+import 'package:medtrackr/services/notification_service.dart';
 import 'package:medtrackr/providers/storage_service.dart';
+import 'package:medtrackr/models/dosage_method.dart';
+
+
 
 class DataProvider with ChangeNotifier {
   List<Medication> _medications = [];
@@ -25,7 +28,7 @@ class DataProvider with ChangeNotifier {
     for (final medication in _medications) {
       final schedule = getScheduleForMedication(medication.id);
       final dosages = getDosagesForMedication(medication.id);
-Z
+
       if (schedule != null) {
         final timeParts = schedule.notificationTime.split(':');
         final hour = int.parse(timeParts[0]);
@@ -243,23 +246,36 @@ Z
     return _dosages.where((d) => d.medicationId == medicationId).toList();
   }
 
-  final StorageService _storageService;
-
-  DataProvider({NotificationService? notificationService, StorageService? storageService})
-      : _notificationService = notificationService ?? NotificationService(),
-        _storageService = storageService ?? StorageService() {
-    _loadData();
-  }
-
   Future<void> _saveData() async {
-    await _storageService.saveData(_medications, _schedules, _dosages);
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/medtrackr_data.json');
+    final data = {
+      'medications': _medications.map((m) => m.toJson()).toList(),
+      'schedules': _schedules.map((s) => s.toJson()).toList(),
+      'dosages': _dosages.map((d) => d.toJson()).toList(),
+    };
+    await file.writeAsString(json.encode(data));
   }
 
   Future<void> _loadData() async {
-    final data = await _storageService.loadData();
-    _medications = data['medications'] ?? [];
-    _schedules = data['schedules'] ?? [];
-    _dosages = data['dosages'] ?? [];
-    notifyListeners();
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/medtrackr_data.json');
+      if (await file.exists()) {
+        final data = json.decode(await file.readAsString());
+        _medications = (data['medications'] as List)
+            .map((m) => Medication.fromJson(m as Map<String, dynamic>))
+            .toList();
+        _schedules = (data['schedules'] as List)
+            .map((s) => Schedule.fromJson(s as Map<String, dynamic>))
+            .toList();
+        _dosages = (data['dosages'] as List)
+            .map((d) => Dosage.fromJson(d as Map<String, dynamic>))
+            .toList();
+        notifyListeners();
+      }
+    } catch (e) {
+      print('Error loading data: $e');
+    }
   }
 }

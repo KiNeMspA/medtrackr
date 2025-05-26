@@ -1,7 +1,5 @@
-// lib/models/dosage.dart
 import 'package:flutter/foundation.dart';
-
-enum DosageMethod { subcutaneous, intramuscular, oral, topical, other }
+import 'package:medtrackr/models/dosage_method.dart';
 
 class Dosage {
   final String id;
@@ -44,7 +42,7 @@ class Dosage {
     name: json['name'] ?? 'Default Dose',
     method: DosageMethod.values.firstWhere(
           (e) => e.toString().split('.').last == json['method'],
-      orElse: () => DosageMethod.other,
+      orElse: () => DosageMethod.topical,
     ),
     doseUnit: json['doseUnit'],
     totalDose: json['totalDose'],
