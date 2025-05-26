@@ -52,9 +52,8 @@ class NotificationService {
         ),
       );
 
-      final notificationTime = schedule.notificationTime?.toString() ?? '';
-      final hour = int.parse(timeParts[0]);
-      final minute = int.parse(timeParts[1]);
+      final hour = schedule.time.hour;
+      final minute = schedule.time.minute;
 
       await _flutterLocalNotificationsPlugin.zonedSchedule(
         schedule.id.hashCode,

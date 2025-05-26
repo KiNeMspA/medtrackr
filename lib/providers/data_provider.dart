@@ -28,8 +28,8 @@ class DataProvider with ChangeNotifier {
 
       if (schedule != null) {
         final notificationTime = schedule.notificationTime?.toString() ?? '';
-        final hour = int.parse(timeParts[0]);
-        final minute = int.parse(timeParts[1]);
+        final hour = schedule.time.hour;
+        final minute = schedule.time.minute;
 
         final scheduleTime = DateTime(now.year, now.month, now.day, hour, minute);
         final nextTime = scheduleTime.isBefore(now)

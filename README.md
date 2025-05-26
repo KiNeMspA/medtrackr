@@ -49,6 +49,10 @@ To update this section:
     - Fixed `selectedIU` in `main.dart`, `amount` and `dosageUnit` in `add_dosage_screen.dart`.
     - Corrected `dosageUnit`, `frequencyType`, and `notificationTime` in `add_schedule_screen.dart`.
     - Updated `notificationTime` to `int?` in `schedule.dart` and fixed type mismatches in `data_provider.dart` and `notification_service.dart`.
+  - Commit `f74b6601948f0062a0ee54b47de2bad9b9ba8a89` (May 26, 2025, 04:25 PM AEST):
+    - Fixed `selectedIU` in `main.dart`.
+    - Corrected `Dosage` fields (`dosageAmount`, `unit`) in `add_dosage_screen.dart` and `add_schedule_screen.dart`.
+    - Fixed `notificationTime` handling in `notification_service.dart` and `data_provider.dart`.
 
 ## Workflow Preservation
 To maintain the current development workflow with Grok:
