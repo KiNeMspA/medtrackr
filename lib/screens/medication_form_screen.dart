@@ -7,6 +7,7 @@ import 'package:medtrackr/providers/data_provider.dart';
 import 'package:medtrackr/widgets/forms/medication_form_fields.dart';
 import 'package:uuid/uuid.dart';
 import 'package:medtrackr/widgets/navigation/app_bottom_navigation_bar.dart';
+import 'package:medtrackr/models/enums/medication_type.dart';
 
 class MedicationFormScreen extends StatefulWidget {
   final Medication? medication;
@@ -21,7 +22,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
   final _nameController = TextEditingController();
   final _quantityController = TextEditingController();
   final _notesController = TextEditingController();
-  String? _type; // Start with null
+  MedicationType? _type; // Start with null
   String _quantityUnit = 'mg';
 
   @override
@@ -29,7 +30,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
     super.initState();
     if (widget.medication != null) {
       _nameController.text = widget.medication!.name;
-      _type = widget.medication!.type;
+      _type = widget.medication!.type; // MedicationType
       _quantityUnit = widget.medication!.quantityUnit;
       _quantityController.text = widget.medication!.quantity.toStringAsFixed(2);
       _notesController.text = widget.medication!.notes;
@@ -58,7 +59,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
             Medication(
               id: const Uuid().v4(),
               name: '',
-              type: '',
+              type: MedicationType.tablet,
               quantityUnit: '',
               quantity: 0,
               remainingQuantity: 0,
@@ -66,10 +67,15 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
               reconstitutionVolume: 0,
               reconstitutionFluid: '',
               notes: '',
+              isReconstituted: false,
+              targetDosage: null,
+              administerDosage: null,
+              reconstitutionOptions: [],
+              selectedReconstitution: null,
             ))
         .copyWith(
       name: _nameController.text,
-      type: _type!,
+      type: _type,
       quantityUnit: _quantityUnit,
       quantity: double.tryParse(_quantityController.text) ?? 0,
       remainingQuantity: double.tryParse(_quantityController.text) ?? 0,
@@ -77,6 +83,9 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
       reconstitutionVolume: 0,
       reconstitutionFluid: '',
       notes: _notesController.text,
+      isReconstituted: false,
+      targetDosage: null,
+      administerDosage: null,
       reconstitutionOptions: [],
       selectedReconstitution: null,
     );
@@ -116,7 +125,9 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       title: Text(
-        widget.medication == null ? 'Confirm New Medication' : 'Confirm Medication Changes',
+        widget.medication == null
+            ? 'Confirm New Medication'
+            : 'Confirm Medication Changes',
         style: const TextStyle(
           color: Colors.black,
           fontWeight: FontWeight.bold,
@@ -128,16 +139,33 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
         padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
         child: RichText(
           text: TextSpan(
-            style: const TextStyle(color: Colors.grey, fontSize: 16, height: 1.8),
+            style:
+                const TextStyle(color: Colors.grey, fontSize: 16, height: 1.8),
             children: [
-              const TextSpan(text: 'Name: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+              const TextSpan(
+                  text: 'Name: ',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.black)),
               TextSpan(text: '${medication.name}\n'),
-              const TextSpan(text: 'Type: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+              const TextSpan(
+                  text: 'Type: ',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.black)),
               TextSpan(text: '${medication.type}\n'),
-              const TextSpan(text: 'Quantity: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-              TextSpan(text: '${medication.quantity.toStringAsFixed(2)} ${medication.quantityUnit}\n'),
-              const TextSpan(text: 'Notes: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-              TextSpan(text: medication.notes.isNotEmpty ? medication.notes : 'None'),
+              const TextSpan(
+                  text: 'Quantity: ',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.black)),
+              TextSpan(
+                  text:
+                      '${medication.quantity.toStringAsFixed(2)} ${medication.quantityUnit}\n'),
+              const TextSpan(
+                  text: 'Notes: ',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.black)),
+              TextSpan(
+                  text:
+                      medication.notes.isNotEmpty ? medication.notes : 'None'),
             ],
           ),
         ),
@@ -150,7 +178,10 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
               onPressed: () => Navigator.pop(context, false),
               child: const Text(
                 'Cancel',
-                style: TextStyle(color: AppConstants.primaryColor, fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(
+                    color: AppConstants.primaryColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16),
               ),
             ),
             const SizedBox(width: 16),
@@ -158,11 +189,15 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppConstants.primaryColor,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
               ),
               child: const Text(
                 'Confirm',
-                style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16),
               ),
             ),
           ],
@@ -195,7 +230,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                     ),
               ),
               const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
+              DropdownButtonFormField<MedicationType>(
                 value: _type,
                 decoration: InputDecoration(
                   labelText: 'Medicine Type',
@@ -205,18 +240,19 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                   fillColor: Colors.white,
                 ),
                 hint: const Text('Select Type'),
-                items: ['Tablet', 'Capsule', 'Injection', 'Other']
-                    .map((type) =>
-                        DropdownMenuItem(value: type, child: Text(type)))
+                items: MedicationType.values
+                    .map((type) => DropdownMenuItem(
+                        value: type,
+                        child: Text(type.toString().split('.').last)))
                     .toList(),
                 onChanged: (value) => setState(() {
                   _type = value;
                   _quantityUnit = {
-                    'Tablet': 'mg',
-                    'Capsule': 'mg',
-                    'Injection': 'mg',
-                    'Other': 'mg',
-                  }[value]!;
+                        MedicationType.tablet: 'mg',
+                        MedicationType.capsule: 'mg',
+                        MedicationType.injection: 'mg',
+                      }[value] ??
+                      'mg';
                 }),
                 validator: (value) =>
                     value == null ? 'Please select a type' : null,
@@ -227,7 +263,8 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                   nameController: _nameController,
                   quantityController: _quantityController,
                   quantityUnit: _quantityUnit,
-                  type: _type!, // Pass read-only type
+                  type: _type!,
+                  // Pass read-only type
                   notesController: _notesController,
                   onQuantityChanged: () {},
                   onNameChanged: (value) => setState(() {}),
