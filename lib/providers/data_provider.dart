@@ -6,15 +6,12 @@ import 'package:medtrackr/models/dosage.dart';
 import 'package:medtrackr/models/schedule.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:medtrackr/services/notification_service.dart';
-import 'package:medtrackr/providers/storage_service.dart';
 import 'package:medtrackr/models/dosage_method.dart';
 
-
-
 class DataProvider with ChangeNotifier {
-  List<Medication> _medications = [];
-  List<Schedule> _schedules = [];
-  List<Dosage> _dosages = [];
+  final List<Medication> _medications = [];
+  final List<Schedule> _schedules = [];
+  final List<Dosage> _dosages = [];
   final NotificationService _notificationService;
 
   List<Medication> get medications => _medications;
@@ -32,15 +29,11 @@ class DataProvider with ChangeNotifier {
       if (schedule != null) {
         final timeParts = schedule.notificationTime.split(':');
         final hour = int.parse(timeParts[0]);
-        final minute = int.parse(timeParts[1].split(' ')[0]);
-        final isPM = timeParts[1].contains('PM');
-        final adjustedHour =
-        isPM && hour != 12 ? hour + 12 : (hour == 12 && !isPM ? 0 : hour);
+        final minute = int.parse(timeParts[1]);
 
-        final scheduleTime =
-        DateTime(now.year, now.month, now.day, adjustedHour, minute);
+        final scheduleTime = DateTime(now.year, now.month, now.day, hour, minute);
         final nextTime = scheduleTime.isBefore(now)
-            ? scheduleTime.add(const Duration(days: 1))
+            ? scheduleTime.add(Duration(days: schedule.frequencyType == FrequencyType.daily ? 1 : 7))
             : scheduleTime;
 
         upcoming.add({
@@ -69,8 +62,7 @@ class DataProvider with ChangeNotifier {
   }
 
   void addMedication(Medication medication) {
-    if (_medications
-        .any((m) => m.name.toLowerCase() == medication.name.toLowerCase())) {
+    if (_medications.any((m) => m.name.toLowerCase() == medication.name.toLowerCase())) {
       return;
     }
     _medications.add(medication);
@@ -123,15 +115,14 @@ class DataProvider with ChangeNotifier {
     if (index != -1) {
       _schedules[index] = updatedSchedule;
       _notificationService.cancelNotification(id.hashCode);
-      _notificationService.scheduleNotification(
-          updatedSchedule, _medications, _dosages);
+      _notificationService.scheduleNotification(updatedSchedule, _medications, _dosages);
       _saveData();
       notifyListeners();
     }
   }
 
   void addDosage(Dosage dosage) {
-    addDosageAsync(dosage); // Call async version
+    addDosageAsync(dosage);
   }
 
   Future<void> addDosageAsync(Dosage dosage) async {
@@ -153,7 +144,7 @@ class DataProvider with ChangeNotifier {
         ),
       );
       if (medication.id.isNotEmpty) {
-        updateMedication(
+        await updateMedicationAsync(
           medication.id,
           medication.copyWith(
             remainingQuantity: medication.remainingQuantity - dosage.totalDose,
@@ -163,6 +154,40 @@ class DataProvider with ChangeNotifier {
     }
     await _saveData();
     notifyListeners();
+  }
+
+  Future<void> updateDosageAsync(String id, Dosage updatedDosage) async {
+    final index = _dosages.indexWhere((d) => d.id == id);
+    if (index != -1) {
+      _dosages[index] = updatedDosage;
+      if (updatedDosage.takenTime != null) {
+        final medication = _medications.firstWhere(
+              (m) => m.id == updatedDosage.medicationId,
+          orElse: () => Medication(
+            id: '',
+            name: '',
+            type: '',
+            quantityUnit: '',
+            quantity: 0.0,
+            remainingQuantity: 0.0,
+            reconstitutionVolumeUnit: '',
+            reconstitutionVolume: 0.0,
+            reconstitutionFluid: '',
+            notes: '',
+          ),
+        );
+        if (medication.id.isNotEmpty) {
+          await updateMedicationAsync(
+            medication.id,
+            medication.copyWith(
+              remainingQuantity: medication.remainingQuantity - updatedDosage.totalDose,
+            ),
+          );
+        }
+      }
+      await _saveData();
+      notifyListeners();
+    }
   }
 
   Future<void> addMedicationAsync(Medication medication) async {
@@ -214,14 +239,14 @@ class DataProvider with ChangeNotifier {
         ),
       );
       if (medication.id.isNotEmpty) {
-        updateMedication(
+        updateMedicationAsync(
           medication.id,
           medication.copyWith(
             remainingQuantity: medication.remainingQuantity - dosage.totalDose,
           ),
         );
       }
-      addDosage(dosage.copyWith(takenTime: DateTime.now()));
+      addDosageAsync(dosage.copyWith(takenTime: DateTime.now()));
     }
     deleteSchedule(scheduleId);
   }
@@ -237,12 +262,16 @@ class DataProvider with ChangeNotifier {
         id: '',
         medicationId: '',
         dosageId: '',
-        notificationTime: '',
+        dosageName: '',
+        time: TimeOfDay.now(),
+        dosageAmount: 0.0,
+        dosageUnit: '',
         frequencyType: FrequencyType.daily,
+        notificationTime: '',
       ),
     );
     if (schedule.id.isNotEmpty) {
-      updateSchedule(
+      updateScheduleAsync(
         scheduleId,
         schedule.copyWith(notificationTime: newTime),
       );
@@ -250,18 +279,11 @@ class DataProvider with ChangeNotifier {
   }
 
   Schedule? getScheduleForMedication(String medicationId) {
-    return _schedules.firstWhere(
-          (s) => s.medicationId == medicationId,
-      orElse: () => Schedule(
-        id: '',
-        medicationId: '',
-        dosageId: '',
-        notificationTime: '',
-        frequencyType: FrequencyType.daily,
-      ),
-    ).id.isNotEmpty
-        ? _schedules.firstWhere((s) => s.medicationId == medicationId)
-        : null;
+    try {
+      return _schedules.firstWhere((s) => s.medicationId == medicationId);
+    } catch (e) {
+      return null;
+    }
   }
 
   List<Dosage> getDosagesForMedication(String medicationId) {
@@ -285,15 +307,9 @@ class DataProvider with ChangeNotifier {
       final file = File('${directory.path}/medtrackr_data.json');
       if (await file.exists()) {
         final data = json.decode(await file.readAsString());
-        _medications = (data['medications'] as List)
-            .map((m) => Medication.fromJson(m as Map<String, dynamic>))
-            .toList();
-        _schedules = (data['schedules'] as List)
-            .map((s) => Schedule.fromJson(s as Map<String, dynamic>))
-            .toList();
-        _dosages = (data['dosages'] as List)
-            .map((d) => Dosage.fromJson(d as Map<String, dynamic>))
-            .toList();
+        _medications = (data['medications'] as List).map((m) => Medication.fromJson(m)).toList();
+        _schedules = (data['schedules'] as List).map((s) => Schedule.fromJson(s)).toList();
+        _dosages = (data['dosages'] as List).map((d) => Dosage.fromJson(d)).toList();
         notifyListeners();
       }
     } catch (e) {
@@ -301,4 +317,3 @@ class DataProvider with ChangeNotifier {
     }
   }
 }
-
