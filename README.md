@@ -72,7 +72,16 @@ To update this section:
   - Fixed errors in undefined identifiers, missing parameters, type mismatches, and ambiguous imports.
   - Removed duplicate FrequencyType enum from schedule.dart and added missing imports.
   - Resolved warnings for unused variables and dead code.
-  - Latest commit hash: c9ae2f5105b8962dff688a98ae7048bfe38c584f
+  - Latest commit hash: `c9ae2f5105b8962dff688a98ae7048bfe38c584f`
+  - Initial setup for medication input and schedule generation.
+  - Fixed duplicate bottom navigation bar on HomeScreen.
+  - Added AppBottomNavigationBar in `lib/widgets/navigation`.
+  - Updated AddMedicationScreen to start with Medicine Type selection.
+  - Moved reconstitution calculator to ReconstitutionScreen for Injection/Other types.
+  - Fixed AddDosageScreen crash and updated UI (default name, dose unit placement).
+  - Enhanced MedicationDetailsScreen with Add Schedule and Reconstitute buttons.
+  - Improved confirmation dialogs with bolded text and styling.
+  - Latest commit hash: `7cb8624efea1847ffb466829cddd6526f195c6bd`
 
 ## Workflow Preservation
 To maintain the current development workflow with Grok:
