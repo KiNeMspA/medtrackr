@@ -53,30 +53,34 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
 
   void _calculateReconstitutionSuggestions() {
     final volume = double.tryParse(_fluidAmountController.text) ?? 1.0;
-    final targetDose = double.tryParse(_targetDoseController.text) ?? 0.0;
-    final pMg = widget.medication.quantityUnit == 'mg'
-        ? widget.medication.quantity
-        : widget.medication.quantity / 1000; // Convert to mg
-    final dMg = _targetDoseUnit == 'mg' ? targetDose : targetDose / 1000; // Convert to mg
-    final concentration = volume > 0 ? pMg / volume : 0.0; // C = pMg / V
-    final doseVolume = concentration > 0 ? dMg / concentration : 0.0; // V_d = dMg / C
-    final syringeUnits = doseVolume * 100; // U = V_d * 100
+    final calculator = ReconstitutionCalculator(
+      quantityController: TextEditingController(text: widget.medication.quantity.toString()),
+      targetDoseController: _targetDoseController,
+      quantityUnit: widget.medication.quantityUnit,
+      targetDoseUnit: _targetDoseUnit,
+      medicationName: widget.medication.name,
+      syringeSize: _syringeSize,
+    );
+    final result = calculator.calculate();
+    final concentration = result['selectedReconstitution'] != null
+        ? (result['selectedReconstitution']['concentration'] as double?) ?? 0.0
+        : 0.0;
 
     setState(() {
-      _targetDose = targetDose;
-      _selectedReconstitution = {
-        'volume': volume,
-        'concentration': concentration,
-        'syringeUnits': syringeUnits,
-        'doseVolume': doseVolume,
-        'syringeSize': _syringeSize,
-      };
-      _reconstitutionSuggestions = [_selectedReconstitution!];
-      _reconstitutionError = concentration < 0.1
-          ? 'Warning: Concentration is ${_formatNumber(concentration)} mg/mL, too low. Increase fluid amount.'
-          : concentration > 10
-          ? 'Warning: Concentration is ${_formatNumber(concentration)} mg/mL, too high. Decrease fluid amount.'
-          : null;
+      _reconstitutionSuggestions = (result['suggestions'] as List<dynamic>?)
+          ?.cast<Map<String, dynamic>>() ??
+          [];
+      _selectedReconstitution = result['selectedReconstitution'] as Map<String, dynamic>?;
+      if (_selectedReconstitution != null) {
+        _selectedReconstitution!['volume'] = volume; // Sync volume
+      }
+      _targetDose = (result['targetDose'] as double?) ?? 0.0;
+      _reconstitutionError = result['error'] as String? ??
+          (concentration < 0.1
+              ? 'Warning: Concentration is ${_formatNumber(concentration)} mg/mL, too low. Increase fluid amount.'
+              : concentration > 10
+              ? 'Warning: Concentration is ${_formatNumber(concentration)} mg/mL, too high. Decrease fluid amount.'
+              : null);
     });
   }
 
@@ -308,6 +312,8 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
                   if (value != null) {
                     setState(() {
                       _syringeSize = value;
+                      _selectedReconstitution = null;
+                      _reconstitutionSuggestions = [];
                       _calculateReconstitutionSuggestions();
                     });
                   }
@@ -343,46 +349,36 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
                           text: _formatNumber(_selectedReconstitution!['syringeUnits']),
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        const TextSpan(
-                            text: ' IU',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                        const TextSpan(text: ' on a '),
+                        const TextSpan(text: ' IU on a '),
                         TextSpan(
                           text: _formatNumber(_syringeSize),
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        const TextSpan(
-                            text: ' mL Syringe',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                        const TextSpan(text: '\nfor a dosage of '),
+                        const TextSpan(text: ' mL Syringe\n'),
+                        const TextSpan(text: 'for a dosage of '),
                         TextSpan(
                           text: _formatNumber(_targetDose * (_targetDoseUnit == 'mg' ? 1 : 1000)),
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         TextSpan(text: ' $_targetDoseUnit\n'),
-                        const TextSpan(text: 'by reconstituting '),
-                        TextSpan(
-                          text: _formatNumber(widget.medication.quantity),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const TextSpan(text: ' mg of '),
+                        const TextSpan(text: 'by Reconstituting '),
                         TextSpan(
                           text: widget.medication.name,
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        const TextSpan(text: '\nwith '),
+                        const TextSpan(text: ' '),
+                        TextSpan(
+                          text: _formatNumber(widget.medication.quantity),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const TextSpan(text: ' mg\n'),
+                        const TextSpan(text: 'with '),
                         TextSpan(
                           text: _formatNumber(_selectedReconstitution!['volume']),
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        const TextSpan(
-                            text: ' mL',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                        const TextSpan(text: ' of '),
-                        TextSpan(
-                          text: _reconstitutionFluidController.text,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
+                        const TextSpan(text: ' mL of '),
+                        TextSpan(text: _reconstitutionFluidController.text),
                       ],
                     ),
                   ),
