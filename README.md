@@ -90,7 +90,42 @@ To update this section:
   - Consolidated add/edit medication screens, added enums, made MedicationCard tappable, moved reconstitution option to button in MedicationDetailsScreen (May 27, 2025, 1:05 PM AEST, commit <new_commit_hash>).
   - Consolidated add/edit medication screens, added enums, made MedicationCard tappable, moved reconstitution to MedicationDetailsScreen button, added styled help message, bolded confirmation dialog labels, centered dialog buttons, set injection default to mg, made MedicationDetailsScreen cards full-width with bold headers, renamed to Medication Overview, added stock message and dosage/reconstitution buttons, enhanced MedicationCard with reconstitution summary and stylized fields (May 27, 2025, 1:21 PM AEST, commit <new_commit_hash>).
   - Consolidated add/edit medication screens, added enums, made MedicationCard tappable, moved reconstitution to MedicationDetailsScreen button, added styled help message, bolded confirmation dialog labels, centered dialog buttons, set injection default to mg, made MedicationDetailsScreen cards full-width with bold headers, renamed to Medication Overview, added stock message and dosage/reconstitution buttons, enhanced MedicationCard with reconstitution summary, DosageMethod display, and stylized fields, fixed DosageMethod and dropdown issues, reverted to direct file operations in DataProvider (May 27, 2025, 1:37 PM AEST, commit <new_commit_hash>).
+  - Fixed undefined concentration variable in reconstitution_screen.dart (commit: <commit_hash>)
+  - Commit `<commit_hash>` (May 27, 2025, 04:21 PM AEST):
+  - Fixed reconstitution_screen.dart: used TargetDoseUnit enum.
+  - Updated medication_card.dart: removed redundant quantity, added next dose.
+  - Updated home_screen.dart: replaced ListTile with MedicationCard.
+  - Updated medication_details_screen.dart: added back to home navigation.
+  - Updated main.dart: set cursor to amber, fixed typo in inputDecorationTheme.
+  - Added add_dosage_screen.dart: form-based add/edit dosage with map arguments.
+  - **Dosage Management** (May 27, 2025, 04:21 PM AEST, commit `<commit_hash>`):
+  - Form-based dosage add/edit with validation, map-based arguments.
+  - - Commit `<commit_hash>` (May 27, 2025, 05:00 PM AEST):
+  - Updated reconstitution_screen.dart: revised summary text, highlighted Fluid Amount and IU in dialog.
+  - Updated home_screen.dart: used CompactMedicationCard, replaced BottomNavigationBar with AppBottomNavigationBar.
+  - Updated medication_details_screen.dart: moved medication name to MedicationCard, fixed back button navigation.
+  - Updated medication_card.dart: improved styling (gradient, spacing), added name and recent dosages.
+  - Updated add_dosage_screen.dart: added dosage name, reconstitution defaults, syringe size for injections.
+  - Added compact_medication_card.dart: compact card for HomeScreen.
 
+## Features Implemented
+- **Dosage Management** (May 27, 2025, 05:00 PM AEST, commit `<commit_hash>`):
+  - Added dosage name field with dynamic defaults.
+  - Used reconstitution values as defaults in AddDosageScreen.
+  - Included syringe size selection for injection methods.
+  - Displayed recent dosages in MedicationCard on MedicationDetailsScreen.
+- **UI Enhancements** (May 27, 2025, 05:00 PM AEST, commit `<commit_hash>`):
+  - Created CompactMedicationCard for HomeScreen.
+  - Improved MedicationCard styling.
+  - Moved medication name into MedicationCard.
+- - Commit `<commit_hash>` (May 27, 2025, 05:58 PM AEST):
+- Fixed build errors in `dosage_form_screen.dart`:
+  - Removed invalid `importPlaylist` directive.
+  - Ensured import directives are at the top.
+  - Added null check for `recon['syringeSize']` to resolve null safety issue.
+  - ### Fixes (2025-05-27)
+- Fixed non-ASCII character error in `dosage_form_screen.dart` by correcting `_tabletCountController` reference.
+- Moved `isReconstituted` to class level in `_DosageFormScreenState` to resolve undefined getter error.
 
 ## Workflow Preservation
 To maintain the current development workflow with Grok:

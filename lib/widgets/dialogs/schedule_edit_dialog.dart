@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:medtrackr/models/enums/enums.dart';
 import 'package:medtrackr/models/schedule.dart';
 import 'package:medtrackr/models/enums/frequency_type.dart';
 

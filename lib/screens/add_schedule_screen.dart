@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:medtrackr/constants/constants.dart';
+import 'package:medtrackr/models/enums/enums.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/models/medication.dart';
 import 'package:medtrackr/models/schedule.dart';
 import 'package:medtrackr/models/dosage.dart';
 import 'package:medtrackr/providers/data_provider.dart';
+import 'package:medtrackr/widgets/navigation/app_bottom_navigation_bar.dart';
 import 'package:uuid/uuid.dart';
-import 'package:medtrackr/models/enums/frequency_type.dart';
+
 
 extension StringExtension on String {
   String capitalize() {
@@ -113,10 +116,10 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
     final medications = dataProvider.medications;
 
     return Scaffold(
-      backgroundColor: Colors.grey[200],
+      backgroundColor: AppConstants.backgroundColor,
       appBar: AppBar(
         title: const Text('Add Schedule'),
-        backgroundColor: const Color(0xFFFFC107),
+        backgroundColor: AppConstants.primaryColor,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -124,18 +127,15 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Schedule Details',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
+                style: AppConstants.cardTitleStyle.copyWith(fontSize: 24),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _selectedMedicationId,
-                decoration: InputDecoration(
+                decoration: AppConstants.formFieldDecoration.copyWith(
                   labelText: 'Medication',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  filled: true,
-                  fillColor: Colors.white,
                 ),
                 items: medications
                     .map<DropdownMenuItem<String>>((med) => DropdownMenuItem(
@@ -153,11 +153,8 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _selectedDosageId,
-                decoration: InputDecoration(
+                decoration: AppConstants.formFieldDecoration.copyWith(
                   labelText: 'Dosage',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  filled: true,
-                  fillColor: Colors.white,
                 ),
                 items: dataProvider.dosages
                     .where((dosage) => dosage.medicationId == _selectedMedicationId)
@@ -176,19 +173,16 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
               ListTile(
                 title: Text(
                   'Time: ${_selectedTime.format(context)}',
-                  style: const TextStyle(fontSize: 16, color: Colors.black),
+                  style: AppConstants.cardBodyStyle,
                 ),
-                trailing: const Icon(Icons.access_time, color: Color(0xFFFFC107)),
+                trailing: Icon(Icons.access_time, color: AppConstants.primaryColor),
                 onTap: () => _selectTime(context),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _frequency,
-                decoration: InputDecoration(
+                decoration: AppConstants.formFieldDecoration.copyWith(
                   labelText: 'Frequency',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  filled: true,
-                  fillColor: Colors.white,
                 ),
                 items: ['hourly', 'daily', 'weekly', 'monthly']
                     .map<DropdownMenuItem<String>>((freq) => DropdownMenuItem(
@@ -205,38 +199,24 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _cyclePeriodController,
-                decoration: InputDecoration(
+                decoration: AppConstants.formFieldDecoration.copyWith(
                   labelText: 'Cycle Period (optional, days)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  filled: true,
-                  fillColor: Colors.white,
                 ),
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () => _saveSchedule(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFFC107),
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              Center(
+                child: ElevatedButton(
+                  onPressed: () => _saveSchedule(context),
+                  style: AppConstants.actionButtonStyle,
+                  child: const Text('Save Schedule'),
                 ),
-                child: const Text('Save Schedule', style: TextStyle(color: Colors.black)),
               ),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xFFFFC107),
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Calendar'),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
-        ],
+      bottomNavigationBar: AppBottomNavigationBar(
         currentIndex: 0,
         onTap: (index) {
           if (index == 0) Navigator.pushReplacementNamed(context, '/home');

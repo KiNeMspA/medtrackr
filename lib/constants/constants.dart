@@ -6,6 +6,7 @@ class AppConstants {
   static const Color kLightGrey = Color(0xFFCCCCCC);
   static const Color secondaryColor = Colors.blue; // For info message
   static const Color cancelColor = Colors.grey; // For cancel button
+  static const Color backgroundColor = Colors.white;
 
   static final cardDecoration = BoxDecoration(
     color: Colors.white,

@@ -1,5 +1,4 @@
-import 'package:medtrackr/models/enums/medication_type.dart';
-import 'package:medtrackr/models/enums/quantity_unit.dart';
+import 'package:medtrackr/models/enums/enums.dart';
 
 class Medication {
   final String id;

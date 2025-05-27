@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:medtrackr/constants/constants.dart';
+import 'package:medtrackr/models/enums/enums.dart';
 import 'package:medtrackr/models/medication.dart';
 import 'package:medtrackr/models/schedule.dart';
-import 'package:medtrackr/models/enums/medication_type.dart';
-import 'package:medtrackr/models/enums/quantity_unit.dart';
-import 'package:medtrackr/widgets/cards/medication_card.dart';
+import 'package:medtrackr/widgets/cards/compact_medication_card.dart';
+import 'package:medtrackr/widgets/navigation/app_bottom_navigation_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
-import 'package:medtrackr/constants/constants.dart';
+
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -37,9 +38,9 @@ class HomeScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey[200],
+      backgroundColor: AppConstants.backgroundColor,
       appBar: AppBar(
-        title: const Text('MedTrackr', style: TextStyle(color: Colors.black)),
+        title: const Text('MedTrackr'),
         backgroundColor: AppConstants.primaryColor,
         actions: [
           IconButton(
@@ -116,7 +117,7 @@ class HomeScreen extends StatelessWidget {
                   final medication = medications[index];
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: MedicationCard(medication: medication),
+                    child: CompactMedicationCard(medication: medication),
                   );
                 },
               ),
@@ -131,16 +132,7 @@ class HomeScreen extends StatelessWidget {
         backgroundColor: AppConstants.primaryColor,
         child: const Icon(Icons.add, color: Colors.black),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.white,
-        selectedItemColor: AppConstants.primaryColor,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Calendar'),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
-        ],
+      bottomNavigationBar: AppBottomNavigationBar(
         currentIndex: 0,
         onTap: (index) {
           if (index == 0) Navigator.pushReplacementNamed(context, '/home');

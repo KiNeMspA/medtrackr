@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:medtrackr/constants/constants.dart';
-import 'package:medtrackr/models/enums/medication_type.dart';
-import 'package:medtrackr/models/enums/quantity_unit.dart';
+import 'package:medtrackr/models/enums/enums.dart';
 import 'package:medtrackr/models/medication.dart';
-import 'package:medtrackr/widgets/forms/medication_form_fields.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
+import 'package:medtrackr/widgets/navigation/app_bottom_navigation_bar.dart';
+import 'package:medtrackr/widgets/forms/medication_form_fields.dart';
 
 class MedicationFormScreen extends StatefulWidget {
   final Medication? medication;
@@ -21,6 +20,8 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _quantityController;
+  late TextEditingController _tabletCountController;
+  late TextEditingController _volumeController;
   late TextEditingController _notesController;
   MedicationType _type = MedicationType.injection;
   QuantityUnit _quantityUnit = QuantityUnit.mg;
@@ -30,10 +31,22 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
     super.initState();
     _nameController = TextEditingController(text: widget.medication?.name ?? '');
     _quantityController = TextEditingController(
-        text: widget.medication != null
-            ? (widget.medication!.quantity % 1 == 0
+        text: widget.medication != null &&
+            widget.medication!.type == MedicationType.injection &&
+            widget.medication!.quantityUnit != QuantityUnit.mL
+            ? widget.medication!.quantity.toStringAsFixed(2)
+            : '');
+    _tabletCountController = TextEditingController(
+        text: widget.medication != null &&
+            (widget.medication!.type == MedicationType.tablet ||
+                widget.medication!.type == MedicationType.capsule)
             ? widget.medication!.quantity.toInt().toString()
-            : widget.medication!.quantity.toStringAsFixed(2))
+            : '');
+    _volumeController = TextEditingController(
+        text: widget.medication != null &&
+            widget.medication!.type == MedicationType.injection &&
+            widget.medication!.quantityUnit == QuantityUnit.mL
+            ? widget.medication!.quantity.toStringAsFixed(2)
             : '');
     _notesController = TextEditingController(text: widget.medication?.notes ?? '');
     if (widget.medication != null) {
@@ -46,6 +59,8 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
   void dispose() {
     _nameController.dispose();
     _quantityController.dispose();
+    _tabletCountController.dispose();
+    _volumeController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -58,13 +73,73 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
       return;
     }
 
+    final isTabletOrCapsule =
+        _type == MedicationType.tablet || _type == MedicationType.capsule;
+    final isInjection = _type == MedicationType.injection;
+    double quantity = isTabletOrCapsule
+        ? double.tryParse(_tabletCountController.text) ?? 0.0
+        : _quantityUnit == QuantityUnit.mL
+        ? double.tryParse(_volumeController.text) ?? 0.0
+        : double.tryParse(_quantityController.text) ?? 0.0;
+    QuantityUnit unit = isTabletOrCapsule ? QuantityUnit.tablets : _quantityUnit;
+
+    if (isInjection && unit != QuantityUnit.mL && widget.medication?.reconstitutionVolume == 0) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text('Set Volume or Reconstitute'),
+          content: const Text(
+              'Non-reconstituted injections require a volume in mL. Enter a volume or reconstitute the medication.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Enter Volume'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: AppConstants.dialogButtonStyle,
+              child: const Text('Reconstitute'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed == true) {
+        final medication = Medication(
+          id: widget.medication?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+          name: _nameController.text,
+          type: _type,
+          quantityUnit: unit,
+          quantity: quantity,
+          remainingQuantity: quantity,
+          reconstitutionVolumeUnit: '',
+          reconstitutionVolume: 0.0,
+          reconstitutionFluid: '',
+          notes: _notesController.text,
+          reconstitutionOptions: [],
+          selectedReconstitution: null,
+        );
+        Navigator.pushNamed(context, '/reconstitute', arguments: medication);
+        return;
+      } else {
+        unit = QuantityUnit.mL;
+        quantity = double.tryParse(_volumeController.text) ?? 0.0;
+        if (quantity <= 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please enter a valid volume')),
+          );
+          return;
+        }
+      }
+    }
+
     final medication = Medication(
       id: widget.medication?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
       name: _nameController.text,
       type: _type,
-      quantityUnit: _quantityUnit,
-      quantity: double.tryParse(_quantityController.text) ?? 0.0,
-      remainingQuantity: double.tryParse(_quantityController.text) ?? 0.0,
+      quantityUnit: unit,
+      quantity: quantity,
+      remainingQuantity: quantity,
       reconstitutionVolumeUnit: '',
       reconstitutionVolume: 0.0,
       reconstitutionFluid: '',
@@ -80,7 +155,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
         title: const Text(
           'Confirm Medication',
           style: TextStyle(
-            color: Colors.black,
+            color: Colors.black54,
             fontWeight: FontWeight.bold,
             fontSize: 22,
           ),
@@ -168,7 +243,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[200],
+      backgroundColor: AppConstants.backgroundColor,
       appBar: AppBar(
         title: Text(widget.medication == null ? 'Add Medication' : 'Edit Medication'),
         backgroundColor: AppConstants.primaryColor,
@@ -179,30 +254,23 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
           key: _formKey,
           child: SingleChildScrollView(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Medication Details',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
                 MedicationFormFields(
                   nameController: _nameController,
                   quantityController: _quantityController,
+                  tabletCountController: _tabletCountController,
+                  volumeController: _volumeController,
+                  notesController: _notesController,
                   quantityUnit: _quantityUnit,
                   type: _type,
-                  notesController: _notesController,
                   onNameChanged: (value) {},
                   onTypeChanged: (value) {
                     if (value != null) {
                       setState(() {
                         _type = value;
-                        if (_type == MedicationType.injection) {
-                          _quantityUnit = QuantityUnit.mg;
-                        }
+                        _quantityUnit = value == MedicationType.tablet || value == MedicationType.capsule
+                            ? QuantityUnit.tablets
+                            : QuantityUnit.mg;
                       });
                     }
                   },
@@ -227,18 +295,26 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                   ),
                 ],
                 const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () => _saveMedication(context),
-                  style: AppConstants.actionButtonStyle,
-                  child: const Text(
-                    'Add Medication',
-                    style: TextStyle(color: Colors.black),
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () => _saveMedication(context),
+                    style: AppConstants.actionButtonStyle,
+                    child: const Text('Save Medication'),
                   ),
                 ),
               ],
             ),
           ),
         ),
+      ),
+      bottomNavigationBar: AppBottomNavigationBar(
+        currentIndex: 0,
+        onTap: (index) {
+          if (index == 0) Navigator.pushReplacementNamed(context, '/home');
+          if (index == 1) Navigator.pushReplacementNamed(context, '/calendar');
+          if (index == 2) Navigator.pushReplacementNamed(context, '/history');
+          if (index == 3) Navigator.pushReplacementNamed(context, '/settings');
+        },
       ),
     );
   }

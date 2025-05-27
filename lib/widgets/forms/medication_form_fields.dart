@@ -7,9 +7,11 @@ import 'package:medtrackr/models/enums/quantity_unit.dart';
 class MedicationFormFields extends StatelessWidget {
   final TextEditingController nameController;
   final TextEditingController quantityController;
+  final TextEditingController tabletCountController;
+  final TextEditingController volumeController;
+  final TextEditingController notesController;
   final QuantityUnit quantityUnit;
   final MedicationType type;
-  final TextEditingController notesController;
   final ValueChanged<String?> onNameChanged;
   final ValueChanged<MedicationType?> onTypeChanged;
   final ValueChanged<QuantityUnit?> onQuantityUnitChanged;
@@ -19,9 +21,11 @@ class MedicationFormFields extends StatelessWidget {
     super.key,
     required this.nameController,
     required this.quantityController,
+    required this.tabletCountController,
+    required this.volumeController,
+    required this.notesController,
     required this.quantityUnit,
     required this.type,
-    required this.notesController,
     required this.onNameChanged,
     required this.onTypeChanged,
     required this.onQuantityUnitChanged,
@@ -31,8 +35,8 @@ class MedicationFormFields extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final quantityUnits = {
-      MedicationType.tablet: [QuantityUnit.g, QuantityUnit.mg, QuantityUnit.mcg],
-      MedicationType.capsule: [QuantityUnit.g, QuantityUnit.mg, QuantityUnit.mcg],
+      MedicationType.tablet: [QuantityUnit.tablets],
+      MedicationType.capsule: [QuantityUnit.tablets],
       MedicationType.injection: [
         QuantityUnit.g,
         QuantityUnit.mg,
@@ -72,39 +76,81 @@ class MedicationFormFields extends StatelessWidget {
               .map((type) => DropdownMenuItem(value: type, child: Text(type.displayName)))
               .toList(),
           onChanged: onTypeChanged,
+          validator: (value) => value == null ? 'Please select a type' : null,
         ),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: TextFormField(
-                controller: quantityController,
-                decoration: AppConstants.formFieldDecoration.copyWith(
-                  labelText: type == MedicationType.tablet || type == MedicationType.capsule
-                      ? 'Total Units *'
-                      : 'Quantity *',
-                ),
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                validator: (value) => value!.isEmpty ? 'Required' : null,
-                onChanged: (value) => onQuantityChanged(),
-              ),
+        if (type == MedicationType.tablet || type == MedicationType.capsule) ...[
+          TextFormField(
+            controller: tabletCountController,
+            decoration: AppConstants.formFieldDecoration.copyWith(
+              labelText: 'Total Units (Tablets/Capsules) *',
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: DropdownButtonFormField<QuantityUnit>(
-                value: quantityUnits.contains(quantityUnit) ? quantityUnit : quantityUnits.first,
-                decoration: AppConstants.formFieldDecoration.copyWith(
-                  labelText: 'Unit',
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            validator: (value) {
+              if (value == null || value.isEmpty) return 'Please enter total units';
+              if (double.tryParse(value) == null || double.parse(value)! <= 0) {
+                return 'Please enter a valid positive number';
+              }
+              return null;
+            },
+            onChanged: (value) => onQuantityChanged(),
+          ),
+        ] else ...[
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: quantityController,
+                  decoration: AppConstants.formFieldDecoration.copyWith(
+                    labelText: 'Quantity *',
+                  ),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return 'Please enter a quantity';
+                    if (double.tryParse(value) == null || double.parse(value)! <= 0) {
+                      return 'Please enter a valid positive number';
+                    }
+                    return null;
+                  },
+                  onChanged: (value) => onQuantityChanged(),
                 ),
-                items: quantityUnits
-                    .map((unit) => DropdownMenuItem(value: unit, child: Text(unit.displayName)))
-                    .toList(),
-                onChanged: onQuantityUnitChanged,
               ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: DropdownButtonFormField<QuantityUnit>(
+                  value: quantityUnits.contains(quantityUnit) ? quantityUnit : quantityUnits.first,
+                  decoration: AppConstants.formFieldDecoration.copyWith(
+                    labelText: 'Unit',
+                  ),
+                  items: quantityUnits
+                      .map((unit) => DropdownMenuItem(value: unit, child: Text(unit.displayName)))
+                      .toList(),
+                  onChanged: onQuantityUnitChanged,
+                  validator: (value) => value == null ? 'Please select a unit' : null,
+                ),
+              ),
+            ],
+          ),
+          if (quantityUnit == QuantityUnit.mL && type == MedicationType.injection) ...[
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: volumeController,
+              decoration: AppConstants.formFieldDecoration.copyWith(
+                labelText: 'Total Volume (mL) *',
+              ),
+              keyboardType: TextInputType.number,
+              validator: (value) {
+                if (value == null || value.isEmpty) return 'Please enter a volume';
+                if (double.tryParse(value) == null || double.parse(value)! <= 0) {
+                  return 'Please enter a valid positive number';
+                }
+                return null;
+              },
+              onChanged: (value) => onQuantityChanged(),
             ),
           ],
-        ),
+        ],
         const SizedBox(height: 16),
         TextFormField(
           controller: notesController,

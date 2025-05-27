@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:medtrackr/models/enums/dosage_method.dart';
+import 'package:medtrackr/models/enums/enums.dart';
 
 class Dosage {
   final String id;

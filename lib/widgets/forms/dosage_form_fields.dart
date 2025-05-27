@@ -1,116 +1,154 @@
 import 'package:flutter/material.dart';
-import 'package:medtrackr/models/enums/dosage_method.dart';
+import 'package:medtrackr/constants/constants.dart';
+import 'package:medtrackr/models/enums/enums.dart';
 
 class DosageFormFields extends StatelessWidget {
   final TextEditingController nameController;
-  final TextEditingController doseController;
-  final TextEditingController? volumeController;
-  final TextEditingController insulinUnitsController;
+  final TextEditingController amountController;
+  final TextEditingController tabletCountController;
   final String doseUnit;
-  final List<String> doseUnits;
   final DosageMethod method;
+  final SyringeSize? syringeSize;
+  final bool isInjection;
+  final bool isTabletOrCapsule;
+  final bool isReconstituted;
   final ValueChanged<String?> onDoseUnitChanged;
   final ValueChanged<DosageMethod?> onMethodChanged;
+  final ValueChanged<SyringeSize?> onSyringeSizeChanged;
 
   const DosageFormFields({
     super.key,
     required this.nameController,
-    required this.doseController,
-    this.volumeController,
-    required this.insulinUnitsController,
+    required this.amountController,
+    required this.tabletCountController,
     required this.doseUnit,
-    required this.doseUnits,
     required this.method,
+    required this.syringeSize,
+    required this.isInjection,
+    required this.isTabletOrCapsule,
+    required this.isReconstituted,
     required this.onDoseUnitChanged,
     required this.onMethodChanged,
+    required this.onSyringeSizeChanged,
   });
 
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextFormField(
           controller: nameController,
-          decoration: InputDecoration(
+          decoration: AppConstants.formFieldDecoration.copyWith(
             labelText: 'Dosage Name',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            filled: true,
-            fillColor: Colors.white,
           ),
-          validator: (value) => value!.isEmpty ? 'Please enter a name' : null,
+          validator: (value) =>
+          value == null || value.isEmpty ? 'Please enter a name' : null,
         ),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: TextFormField(
-                controller: doseController,
-                decoration: InputDecoration(
-                  labelText: 'Dose Amount',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  filled: true,
-                  fillColor: Colors.white,
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) => value!.isEmpty ? 'Please enter a dose' : null,
-              ),
+        if (isTabletOrCapsule) ...[
+          TextFormField(
+            controller: tabletCountController,
+            decoration: AppConstants.formFieldDecoration.copyWith(
+              labelText: 'Number of Tablets/Capsules',
             ),
-            const SizedBox(width: 16),
-            SizedBox(
-              width: 120,
-              child: DropdownButtonFormField<String>(
-                value: doseUnits.contains(doseUnit) ? doseUnit : doseUnits[0],
-                decoration: InputDecoration(
-                  labelText: 'Unit',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  filled: true,
-                  fillColor: Colors.white,
-                ),
-                items: doseUnits.map((unit) => DropdownMenuItem(value: unit, child: Text(unit))).toList(),
-                onChanged: onDoseUnitChanged,
-              ),
+            keyboardType: TextInputType.number,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter the number of tablets';
+              }
+              if (double.tryParse(value) == null || double.tryParse(value)! <= 0) {
+                return 'Please enter a valid positive number';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            value: doseUnit,
+            decoration: AppConstants.formFieldDecoration.copyWith(
+              labelText: 'Dose per Tablet',
             ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: volumeController,
-          decoration: InputDecoration(
-            labelText: 'Volume (mL)',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            filled: true,
-            fillColor: Colors.white,
+            items: ['mg', 'mcg']
+                .map((unit) => DropdownMenuItem(value: unit, child: Text(unit)))
+                .toList(),
+            onChanged: onDoseUnitChanged,
+            validator: (value) => value == null ? 'Please select a unit' : null,
           ),
-          keyboardType: TextInputType.number,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: insulinUnitsController,
-          decoration: InputDecoration(
-            labelText: 'Insulin Units (IU/CC)',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            filled: true,
-            fillColor: Colors.white,
+        ] else ...[
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: amountController,
+                  decoration: AppConstants.formFieldDecoration.copyWith(
+                    labelText: 'Dosage Amount',
+                  ),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter an amount';
+                    }
+                    if (double.tryParse(value) == null || double.parse(value)! <= 0) {
+                      return 'Please enter a valid positive number';
+                    }
+                    return null;
+                  },
+                  enabled: !isReconstituted,
+                ),
+              ),
+              const SizedBox(width: 16),
+              SizedBox(
+                width: 120,
+                child: DropdownButtonFormField<String>(
+                  value: doseUnit,
+                  decoration: AppConstants.formFieldDecoration.copyWith(
+                    labelText: 'Unit',
+                  ),
+                  items: ['g', 'mg', 'mcg', 'mL', 'IU', 'Unit']
+                      .map((unit) => DropdownMenuItem(value: unit, child: Text(unit)))
+                      .toList(),
+                  onChanged: isReconstituted ? null : onDoseUnitChanged,
+                  validator: (value) => value == null ? 'Please select a unit' : null,
+                ),
+              ),
+            ],
           ),
-          keyboardType: TextInputType.number,
-        ),
+        ],
         const SizedBox(height: 16),
         DropdownButtonFormField<DosageMethod>(
           value: method,
-          decoration: InputDecoration(
-            labelText: 'Method',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            filled: true,
-            fillColor: Colors.white,
+          decoration: AppConstants.formFieldDecoration.copyWith(
+            labelText: 'Dosage Method',
           ),
           items: DosageMethod.values
-              .map((m) => DropdownMenuItem(
-            value: m,
-            child: Text(m == DosageMethod.subcutaneous ? 'Subcutaneous Injection' : m.toString().split('.').last),
+              .map((method) => DropdownMenuItem(
+            value: method,
+            child: Text(method.displayName),
           ))
               .toList(),
           onChanged: onMethodChanged,
+          validator: (value) => value == null ? 'Please select a method' : null,
         ),
+        if (isInjection &&
+            [DosageMethod.subcutaneous, DosageMethod.intramuscular, DosageMethod.intravenous]
+                .contains(method)) ...[
+          const SizedBox(height: 16),
+          DropdownButtonFormField<SyringeSize>(
+            value: syringeSize,
+            decoration: AppConstants.formFieldDecoration.copyWith(
+              labelText: 'Syringe Size',
+            ),
+            items: SyringeSize.values
+                .map((size) => DropdownMenuItem(
+              value: size,
+              child: Text(size.displayName),
+            ))
+                .toList(),
+            onChanged: onSyringeSizeChanged,
+            validator: (value) => value == null ? 'Please select a syringe size' : null,
+          ),
+        ],
       ],
     );
   }

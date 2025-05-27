@@ -1,13 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:medtrackr/models/enums/enums.dart';
 import 'package:medtrackr/models/dosage.dart';
 import 'package:medtrackr/widgets/forms/dosage_form_fields.dart';
-import 'package:medtrackr/models/enums/dosage_method.dart';
+
 
 class DosageEditDialog extends StatefulWidget {
   final Dosage dosage;
   final Function(Dosage) onSave;
+  final bool isInjection;
+  final bool isTabletOrCapsule;
+  final bool isReconstituted;
 
-  const DosageEditDialog({super.key, required this.dosage, required this.onSave});
+  const DosageEditDialog({
+    super.key,
+    required this.dosage,
+    required this.onSave,
+    required this.isInjection,
+    required this.isTabletOrCapsule,
+    required this.isReconstituted,
+  });
 
   @override
   _DosageEditDialogState createState() => _DosageEditDialogState();
@@ -16,28 +27,28 @@ class DosageEditDialog extends StatefulWidget {
 class _DosageEditDialogState extends State<DosageEditDialog> {
   late TextEditingController _nameController;
   late TextEditingController _doseController;
-  late TextEditingController _volumeController;
-  late TextEditingController _insulinUnitsController;
+  late TextEditingController _tabletCountController;
   late String _doseUnit;
   late DosageMethod _method;
+  late SyringeSize? _syringeSize;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.dosage.name);
     _doseController = TextEditingController(text: widget.dosage.totalDose.toString());
-    _volumeController = TextEditingController(text: widget.dosage.volume.toString());
-    _insulinUnitsController = TextEditingController(text: widget.dosage.insulinUnits.toString());
+    _tabletCountController = TextEditingController(
+        text: widget.isTabletOrCapsule ? widget.dosage.totalDose.toInt().toString() : '');
     _doseUnit = widget.dosage.doseUnit;
     _method = widget.dosage.method;
+    _syringeSize = widget.dosage.syringeSize;
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _doseController.dispose();
-    _volumeController.dispose();
-    _insulinUnitsController.dispose();
+    _tabletCountController.dispose();
     super.dispose();
   }
 
@@ -49,14 +60,17 @@ class _DosageEditDialogState extends State<DosageEditDialog> {
       content: SingleChildScrollView(
         child: DosageFormFields(
           nameController: _nameController,
-          doseController: _doseController,
-          volumeController: _volumeController,
-          insulinUnitsController: _insulinUnitsController,
+          amountController: _doseController,
+          tabletCountController: _tabletCountController,
           doseUnit: _doseUnit,
-          doseUnits: ['g', 'mg', 'mcg', 'mL', 'IU', 'Unit'],
           method: _method,
+          syringeSize: _syringeSize,
+          isInjection: widget.isInjection,
+          isTabletOrCapsule: widget.isTabletOrCapsule,
+          isReconstituted: widget.isReconstituted,
           onDoseUnitChanged: (value) => setState(() => _doseUnit = value!),
           onMethodChanged: (value) => setState(() => _method = value!),
+          onSyringeSizeChanged: (value) => setState(() => _syringeSize = value),
         ),
       ),
       actions: [
@@ -66,13 +80,23 @@ class _DosageEditDialogState extends State<DosageEditDialog> {
         ),
         TextButton(
           onPressed: () {
+            final amount = widget.isTabletOrCapsule
+                ? double.tryParse(_tabletCountController.text) ?? widget.dosage.totalDose
+                : double.tryParse(_doseController.text) ?? widget.dosage.totalDose;
             final updatedDosage = widget.dosage.copyWith(
               name: _nameController.text,
               doseUnit: _doseUnit,
-              totalDose: double.tryParse(_doseController.text) ?? widget.dosage.totalDose,
-              volume: double.tryParse(_volumeController.text) ?? widget.dosage.volume,
-              insulinUnits: double.tryParse(_insulinUnitsController.text) ?? widget.dosage.insulinUnits,
+              totalDose: amount,
+              volume: widget.isInjection
+                  ? (widget.isReconstituted && widget.dosage.selectedReconstitution != null
+                  ? amount / (widget.dosage.selectedReconstitution!['concentration']?.toDouble() ?? 1.0)
+                  : amount)
+                  : 0.0,
+              insulinUnits: widget.isReconstituted && widget.dosage.selectedReconstitution != null
+                  ? (widget.dosage.selectedReconstitution!['syringeUnits'] as num?)?.toDouble() ?? 0.0
+                  : 0.0,
               method: _method,
+              syringeSize: _syringeSize,
             );
             widget.onSave(updatedDosage);
             Navigator.pop(context);

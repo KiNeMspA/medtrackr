@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:medtrackr/models/enums/frequency_type.dart';
+import 'package:medtrackr/models/enums/enums.dart';
 
 class Schedule {
   final String id;

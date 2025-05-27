@@ -1,5 +1,6 @@
 // lib/history_screen.dart
 import 'package:flutter/material.dart';
+import 'package:medtrackr/models/enums/enums.dart';
 
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key});

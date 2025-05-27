@@ -4,7 +4,8 @@ enum QuantityUnit {
   mcg('mcg'),
   mL('mL'),
   iu('IU'),
-  unit('Unit');
+  unit('Unit'),
+  tablets('Tablets'); // Added for tablet/capsule counts
 
   final String displayName;
 

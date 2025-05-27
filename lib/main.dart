@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:medtrackr/constants/constants.dart';
 import 'package:medtrackr/models/medication.dart';
+import 'package:medtrackr/models/dosage.dart';
 import 'package:medtrackr/providers/data_provider.dart';
 import 'package:medtrackr/screens/home_screen.dart';
 import 'package:medtrackr/screens/medication_form_screen.dart';
-import 'package:medtrackr/screens/add_dosage_screen.dart';
+import 'package:medtrackr/screens/dosage_form_screen.dart';
 import 'package:medtrackr/screens/add_schedule_screen.dart';
 import 'package:medtrackr/screens/medication_details_screen.dart';
 import 'package:medtrackr/screens/reconstitution_screen.dart';
@@ -59,9 +60,18 @@ class MyApp extends StatelessWidget {
           '/medication_form': (context) => MedicationFormScreen(
             medication: ModalRoute.of(context)!.settings.arguments as Medication?,
           ),
-          '/add_dosage': (context) => AddDosageScreen(
-            medication: ModalRoute.of(context)!.settings.arguments as Medication,
-          ),
+          '/dosage_form': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments;
+            if (args is Medication) {
+              return DosageFormScreen(medication: args);
+            } else if (args is Map<String, dynamic>) {
+              return DosageFormScreen(
+                medication: args['medication'] as Medication,
+                dosage: args['dosage'] as Dosage?,
+              );
+            }
+            return const HomeScreen(); // Fallback
+          },
           '/add_schedule': (context) => const AddScheduleScreen(),
           '/medication_details': (context) {
             final args = ModalRoute.of(context)!.settings.arguments;
