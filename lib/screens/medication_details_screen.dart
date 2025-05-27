@@ -21,6 +21,7 @@ class MedicationDetailsScreen extends StatelessWidget {
       );
     }
 
+    print('Medication type: ${medication.type}');
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -32,24 +33,16 @@ class MedicationDetailsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            MedicationCard(medication: medication),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
+            GestureDetector(
+              onTap: () {
                 Navigator.pushNamed(
                   context,
-                  '/add_dosage',
+                  '/medication_form',
                   arguments: medication,
                 );
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppConstants.primaryColor,
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 4,
-              ),
-              child: const Text('Add Dosage', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-            ),
+              child: MedicationCard(medication: medication),
+            )
             const SizedBox(height: 16),
             if (medication.type == 'Injection' || medication.type == 'Other')
               ElevatedButton(
@@ -73,6 +66,23 @@ class MedicationDetailsScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.pushNamed(
                   context,
+                  '/add_dosage',
+                  arguments: medication,
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppConstants.primaryColor,
+                minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 4,
+              ),
+              child: const Text('Add Dosage', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(
+                  context,
                   '/add_schedule',
                   arguments: {'medication': medication},
                 );
@@ -86,7 +96,7 @@ class MedicationDetailsScreen extends StatelessWidget {
               child: const Text('Add Schedule', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
             ),
           ],
-        ),
+        )
       ),
       bottomNavigationBar: AppBottomNavigationBar(
         currentIndex: 0,

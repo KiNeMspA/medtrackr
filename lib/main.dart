@@ -52,12 +52,16 @@ class MyApp extends StatelessWidget {
         initialRoute: '/home',
         routes: {
           '/home': (context) => const HomeScreen(),
-          '/medication_form': (context) => const MedicationFormScreen(),
+          '/medication_form': (context) => MedicationFormScreen(
+            medication: ModalRoute.of(context)!.settings.arguments as Medication?,
+          ),
           '/add_dosage': (context) => AddDosageScreen(
-            medication: ModalRoute.of(context)!.settings.arguments as Medication,
+            medication: (ModalRoute.of(context)!.settings.arguments as Map)['medication'] as Medication,
           ),
           '/add_schedule': (context) => const AddScheduleScreen(),
-          '/medication_details': (context) => const MedicationDetailsScreen(),
+          '/medication_details': (context) => MedicationDetailsScreen(
+            medication: ModalRoute.of(context)!.settings.arguments as Medication,
+          ),
           '/reconstitute': (context) => ReconstitutionScreen(
             medication: ModalRoute.of(context)!.settings.arguments as Medication,
           ),
@@ -65,7 +69,7 @@ class MyApp extends StatelessWidget {
           '/history': (context) => const Placeholder(),
           '/settings': (context) => const Placeholder(),
         },
-      ),
+      )
     );
   }
 }
