@@ -342,11 +342,7 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
                 Container(
                   constraints: const BoxConstraints(minWidth: double.infinity),
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: AppConstants.primaryColor, width: 2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  decoration: AppConstants.cardDecoration,
                   child: RichText(
                     text: TextSpan(
                       style: const TextStyle(color: Colors.black, fontSize: 16, height: 1.8),
@@ -401,7 +397,7 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
                       ],
                     ),
                   ),
-                ),
+                )
               ],
               if (_reconstitutionError != null)
                 Padding(
