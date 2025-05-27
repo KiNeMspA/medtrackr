@@ -96,10 +96,10 @@ To update this section:
   - **Fixes** (May 28, 2025)
     - Added missing `_showAddDosageDialog` method to `MedicationDetailsScreen` to handle injection dosage prompts.
     - Commit: `228d31d1e53ee17a1846230af7d9f14e4940c4e1` (May 28, 2025, 12:36 AM AEST)
-    - - **Fixes** (May 28, 2025)
   - Removed `_getSelectedUnit` from `MedicationDetailsScreen` and used `dosePerTabletUnit`/`dosePerCapsuleUnit`.
   - Restored Reconstitution button for injections on `MedicationDetailsScreen`.
-  - Commit: <new_commit_hash> (May 28, 2025, 12:53 AM AEST)
+  - Commit: `5e24bc62e7e174f1459c05597b96d30046b26467` (May 28, 2025, 12:53 AM AEST)
+  - 
 ## Workflow Preservation
 To maintain development workflow with Grok:
 1. Provide latest commit hash from https://github.com/kinemspa/MedTrackr.

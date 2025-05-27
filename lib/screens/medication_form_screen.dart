@@ -6,6 +6,7 @@ import 'package:medtrackr/utils/helpers/format_helper.dart';
 import 'package:medtrackr/models/medication.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
+import 'package:medtrackr/widgets/dialogs/confirm_medication_dialog.dart';
 import 'package:medtrackr/widgets/navigation/app_bottom_navigation_bar.dart';
 import 'package:medtrackr/widgets/forms/medication_form_fields.dart';
 
@@ -116,79 +117,12 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppConstants.backgroundColor,
-        title: const Text('Confirm Medication'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              RichText(
-                text: TextSpan(
-                  style: const TextStyle(color: Colors.black, fontSize: 14, height: 1.8),
-                  children: [
-                    const TextSpan(
-                      text: 'Name: ',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    TextSpan(text: medication.name),
-                    const TextSpan(
-                      text: '\nType: ',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    TextSpan(text: medication.type.displayName),
-                    const TextSpan(
-                      text: '\nQuantity: ',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    TextSpan(
-                        text: '${_formatNumber(medication.quantity)} ${medication.quantityUnit.displayName}'),
-                    if (isTabletOrCapsule && medication.dosePerTablet != null && _type == MedicationType.tablet) ...[
-                      const TextSpan(
-                        text: '\nDose per Tablet: ',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      TextSpan(text: '${_formatNumber(medication.dosePerTablet!)} ${medication.dosePerTabletUnit?.displayName ?? "mg"}'),
-                    ],
-                    if (isTabletOrCapsule && medication.dosePerCapsule != null && _type == MedicationType.capsule) ...[
-                      const TextSpan(
-                        text: '\nDose per Capsule: ',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      TextSpan(text: '${_formatNumber(medication.dosePerCapsule!)} ${medication.dosePerCapsuleUnit?.displayName ?? "mg"}'),
-                    ],
-                    const TextSpan(
-                      text: '\nNotes: ',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    TextSpan(text: medication.notes.isNotEmpty ? medication.notes : 'None'),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(
-                color: AppConstants.primaryColor,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: AppConstants.dialogButtonStyle,
-            child: const Text('Confirm'),
-          ),
-        ],
+      builder: (context) => ConfirmMedicationDialog(
+        medication: medication,
+        isTabletOrCapsule: isTabletOrCapsule,
+        type: _type,
+        onConfirm: () => Navigator.pop(context, true),
+        onCancel: () => Navigator.pop(context, false),
       ),
     );
 

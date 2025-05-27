@@ -8,6 +8,7 @@ import 'package:medtrackr/models/enums/enums.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
 import 'package:medtrackr/widgets/navigation/app_bottom_navigation_bar.dart';
+import 'package:medtrackr/widgets/buttons/animated_action_button.dart';
 
 class MedicationDetailsScreen extends StatelessWidget {
   final Medication medication;
@@ -52,10 +53,23 @@ class MedicationDetailsScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppConstants.backgroundColor,
-        title: const Text('Add Dosage'),
-        content: const Text(
-          'Please set a volume (mL) or reconstitute the medication before adding a dosage.',
+        backgroundColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: EdgeInsets.zero,
+        content: Container(
+          decoration: Themes.informationDialogDecoration,
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Add Dosage', style: Themes.informationTitleStyle),
+              const SizedBox(height: 16),
+              const Text(
+                'Please set a volume (mL) or reconstitute the medication before adding a dosage.',
+                style: TextStyle(color: Colors.black87, fontSize: 14),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -84,10 +98,23 @@ class MedicationDetailsScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppConstants.backgroundColor,
-        title: const Text('No Dosage Available'),
-        content: const Text(
-          'You must create at least one dosage before adding a schedule.',
+        backgroundColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: EdgeInsets.zero,
+        content: Container(
+          decoration: Themes.informationDialogDecoration,
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('No Dosage Available', style: Themes.informationTitleStyle),
+              const SizedBox(height: 16),
+              const Text(
+                'You must create at least one dosage before adding a schedule.',
+                style: TextStyle(color: Colors.black87, fontSize: 14),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -106,12 +133,6 @@ class MedicationDetailsScreen extends StatelessWidget {
         ],
       ),
     );
-    String _getSelectedUnit() {
-      // Assuming quantityUnit reflects the selected unit for tablets/capsules
-      return medication.quantityUnit == QuantityUnit.tablets
-          ? 'mg'
-          : medication.quantityUnit.displayName;
-    }
   }
 
   @override
@@ -127,24 +148,14 @@ class MedicationDetailsScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(medication.name),
         backgroundColor: AppConstants.primaryColor,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () => Navigator.pushNamed(context, '/medication_form',
-                arguments: medication),
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: () => _deleteMedication(context),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         child: ConstrainedBox(
           constraints: BoxConstraints(
             minHeight: MediaQuery.of(context).size.height -
                 kToolbarHeight -
-                kBottomNavigationBarHeight,
+                kBottomNavigationBarHeight -
+                60, // Adjust for action bar
           ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -192,87 +203,87 @@ class MedicationDetailsScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  'Dosages',
-                  style: AppConstants.cardTitleStyle.copyWith(fontSize: 20),
-                ),
-                dosages.isEmpty
-                    ? const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8.0),
-                        child: Text(
-                          'No dosages added.',
-                          style: AppConstants.secondaryTextStyle,
-                        ),
-                      )
-                    : Column(
-                        children: dosages.map((dosage) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4.0),
-                            child: Card(
-                              elevation: 6,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
-                              child: ListTile(
-                                title: Text(dosage.name,
-                                    style: AppConstants.cardTitleStyle),
-                                subtitle: Text(
-                                    '${formatNumber(dosage.totalDose)} ${dosage.doseUnit} (${dosage.method.displayName})',
-                                    style: AppConstants.cardBodyStyle),
-                                onTap: () => Navigator.pushNamed(
-                                    context, '/dosage_form', arguments: {
-                                  'medication': medication,
-                                  'dosage': dosage
-                                }),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                GridView.count(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12.0,
+                  mainAxisSpacing: 12.0,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  childAspectRatio: 2.5,
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   children: [
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.pushNamed(context, '/dosage_form', arguments: medication),
-                          style: AppConstants.actionButtonStyle,
-                          child: const Text('Add Dosage'),
-                        ),
+                    AnimatedActionButton(
+                      label: 'Add Dosage',
+                      icon: Icons.add_circle,
+                      onPressed: () => Navigator.pushNamed(context, '/dosage_form', arguments: medication),
+                    ),
+                    AnimatedActionButton(
+                      label: 'Add Schedule',
+                      icon: Icons.schedule,
+                      onPressed: () => dosages.isEmpty
+                          ? _showNoDosageDialog(context)
+                          : Navigator.pushNamed(context, '/add_schedule', arguments: medication),
+                    ),
+                    AnimatedActionButton(
+                      label: 'Refill',
+                      icon: Icons.refresh,
+                      onPressed: () => Navigator.pushNamed(context, '/medication_form', arguments: medication),
+                    ),
+                    if (medication.type == MedicationType.injection)
+                      AnimatedActionButton(
+                        label: 'Reconstitute',
+                        icon: Icons.science,
+                        onPressed: () => Navigator.pushNamed(context, '/reconstitute', arguments: medication),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8.0,
+                  runSpacing: 8.0,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 120,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pushNamed(
+                            context, '/dosage_form',
+                            arguments: medication),
+                        style: AppConstants.actionButtonStyle,
+                        child: const Text('Add Dosage'),
                       ),
                     ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                        child: ElevatedButton(
-                          onPressed: dosages.isEmpty
-                              ? () => _showNoDosageDialog(context)
-                              : () => Navigator.pushNamed(context, '/add_schedule', arguments: medication),
-                          style: AppConstants.actionButtonStyle,
-                          child: const Text('Add Schedule'),
-                        ),
+                    SizedBox(
+                      width: 120,
+                      child: ElevatedButton(
+                        onPressed: dosages.isEmpty
+                            ? () => _showNoDosageDialog(context)
+                            : () => Navigator.pushNamed(
+                                context, '/add_schedule',
+                                arguments: medication),
+                        style: AppConstants.actionButtonStyle,
+                        child: const Text('Add Schedule'),
                       ),
                     ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.pushNamed(context, '/medication_form', arguments: medication),
-                          style: AppConstants.actionButtonStyle,
-                          child: const Text('Refill'),
-                        ),
+                    SizedBox(
+                      width: 120,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pushNamed(
+                            context, '/medication_form',
+                            arguments: medication),
+                        style: AppConstants.actionButtonStyle,
+                        child: const Text('Refill'),
                       ),
                     ),
                     if (medication.type == MedicationType.injection)
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                          child: ElevatedButton(
-                            onPressed: () => Navigator.pushNamed(context, '/reconstitute', arguments: medication),
-                            style: AppConstants.actionButtonStyle,
-                            child: const Text('Reconstitute'),
-                          ),
+                      SizedBox(
+                        width: 120,
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pushNamed(
+                              context, '/reconstitute',
+                              arguments: medication),
+                          style: AppConstants.actionButtonStyle,
+                          child: const Text('Reconstitute'),
                         ),
                       ),
                   ],
@@ -282,18 +293,17 @@ class MedicationDetailsScreen extends StatelessWidget {
           ),
         ),
       ),
-      floatingActionButton: canAddDosage
-          ? FloatingActionButton(
-              onPressed: () => Navigator.pushNamed(context, '/dosage_form',
-                  arguments: medication),
-              backgroundColor: AppConstants.primaryColor,
-              child: const Icon(Icons.add, color: Colors.black),
-            )
-          : FloatingActionButton(
-              onPressed: () => _showAddDosageDialog(context),
-              backgroundColor: AppConstants.primaryColor,
-              child: const Icon(Icons.info, color: Colors.black),
-            ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: canAddDosage
+            ? () => Navigator.pushNamed(context, '/dosage_form',
+                arguments: medication)
+            : () => _showAddDosageDialog(context),
+        backgroundColor: AppConstants.primaryColor,
+        tooltip: canAddDosage
+            ? 'Add a new dosage'
+            : 'Set volume or reconstitute to add dosage',
+        child: Icon(canAddDosage ? Icons.add : Icons.info, color: Colors.black),
+      ),
       bottomNavigationBar: AppBottomNavigationBar(
         currentIndex: 0,
         onTap: (index) {
