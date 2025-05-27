@@ -8,6 +8,7 @@ class ReconstitutionCalculator {
   final String targetDoseUnit; // mg or mcg
   final String medicationName;
   final double syringeSize; // Syringe Size (S, mL)
+  final double? fixedVolume; // Optional fixed volume (mL)
 
   ReconstitutionCalculator({
     required this.quantityController,
@@ -16,7 +17,12 @@ class ReconstitutionCalculator {
     required this.targetDoseUnit,
     required this.medicationName,
     required this.syringeSize,
+    this.fixedVolume,
   });
+
+  String _formatNumber(double value) {
+    return value.toStringAsFixed(value.truncateToDouble() == value ? 0 : 2);
+  }
 
   double _convertToMg(String unit, double value) {
     try {
@@ -62,47 +68,90 @@ class ReconstitutionCalculator {
         };
       }
 
-      // Minimum reconstitution volume: V_min = (d * S) / p
-      final V_min = (dMg * S) / pMg;
-      if (V_min > S) {
-        Logger.logError('Minimum volume $V_min exceeds syringe size $S');
-        return {
-          'suggestions': [],
-          'selectedReconstitution': null,
-          'totalAmount': pMg,
-          'targetDose': dMg,
-          'medicationName': medicationName.isNotEmpty ? medicationName : 'Medication',
-          'error': 'The minimum volume required exceeds the syringe size.',
-        };
-      }
-
-      // Generate suggestions
       final suggestions = <Map<String, dynamic>>[];
-      for (var V = (V_min / step).ceil() * step; V <= S; V += step) {
-        final roundedV = (V * 100).round() / 100;
-        final C = pMg / roundedV; // Concentration: C = p / V (mg/mL)
-        final V_d = dMg / C; // Dose Volume: V_d = d / C (mL)
-        final U = V_d * 100; // Syringe Units: U = V_d * 100 (1 mL = 100 units)
+      Map<String, dynamic>? selectedReconstitution;
 
-        if (V_d <= S) {
-          suggestions.add({
-            'volume': roundedV,
+      if (fixedVolume != null && fixedVolume! > 0) {
+        // Use fixed volume
+        final V = fixedVolume!;
+        final C = pMg / V; // Concentration: C = p / V (mg/mL)
+        final vD = dMg / C; // Dose Volume: V_d = d / C (mL)
+        final U = vD * 100; // Syringe Units: U = V_d * 100 (1 mL = 100 units)
+
+        if (vD <= S) {
+          selectedReconstitution = {
+            'volume': V,
             'concentration': C,
-            'doseVolume': V_d,
+            'doseVolume': vD,
             'syringeUnits': U,
             'syringeSize': S,
+          };
+          suggestions.add(selectedReconstitution);
+        } else {
+          return {
+            'suggestions': [],
+            'selectedReconstitution': null,
+            'totalAmount': pMg,
+            'targetDose': dMg,
+            'medicationName': medicationName.isNotEmpty ? medicationName : 'Medication',
+            'error': 'Dose volume exceeds syringe size for fixed volume.',
+          };
+        }
+      } else {
+        // Original volume iteration
+        final vMin = (dMg * S) / pMg;
+        if (vMin > S) {
+          Logger.logError('Minimum volume $vMin exceeds syringe size $S');
+          return {
+            'suggestions': [],
+            'selectedReconstitution': null,
+            'totalAmount': pMg,
+            'targetDose': dMg,
+            'medicationName': medicationName.isNotEmpty ? medicationName : 'Medication',
+            'error': 'The minimum volume required exceeds the syringe size.',
+          };
+        }
+
+        for (var V = (vMin / step).ceil() * step; V <= S; V += step) {
+          final roundedV = (V * 100).round() / 100;
+          final C = pMg / roundedV; // Concentration: C = p / V (mg/mL)
+          final vD = dMg / C; // Dose Volume: V_d = d / C (mL)
+          final U = vD * 100; // Syringe Units: U = V_d * 100 (1 mL = 100 units)
+
+          if (vD <= S) {
+            suggestions.add({
+              'volume': roundedV,
+              'concentration': C,
+              'doseVolume': vD,
+              'syringeUnits': U,
+              'syringeSize': S,
+            });
+          }
+        }
+
+        if (suggestions.isNotEmpty) {
+          selectedReconstitution = suggestions.reduce((a, b) {
+            final aDiff = (a['doseVolume'] - dMg / (pMg / a['volume'])).abs();
+            final bDiff = (b['doseVolume'] - dMg / (pMg / b['volume'])).abs();
+            return aDiff < bDiff ? a : b;
           });
         }
       }
 
-      // Select best suggestion
-      Map<String, dynamic>? selectedReconstitution;
-      if (suggestions.isNotEmpty) {
-        selectedReconstitution = suggestions.reduce((a, b) {
-          final aDiff = (a['doseVolume'] - dMg / (pMg / a['volume'])).abs();
-          final bDiff = (b['doseVolume'] - dMg / (pMg / b['volume'])).abs();
-          return aDiff < bDiff ? a : b;
-        });
+      // Calculate warnings for selected reconstitution
+      String? warning;
+      if (selectedReconstitution != null) {
+        final concentration = selectedReconstitution['concentration'] as double;
+        final syringeUnits = selectedReconstitution['syringeUnits'] as double;
+        if (syringeUnits < 5) {
+          warning = 'Warning: IU (${_formatNumber(syringeUnits)}) is too low. Increase fluid amount.';
+        } else if (syringeUnits > 100 * S) {
+          warning = 'Warning: IU (${_formatNumber(syringeUnits)}) exceeds syringe capacity (${_formatNumber(100 * S)} IU). Decrease fluid amount.';
+        } else if (concentration < 0.1) {
+          warning = 'Warning: Concentration is ${_formatNumber(concentration)} mg/mL, too low. Increase fluid amount.';
+        } else if (concentration > 10) {
+          warning = 'Warning: Concentration is ${_formatNumber(concentration)} mg/mL, too high. Decrease fluid amount.';
+        }
       }
 
       return {
@@ -111,7 +160,7 @@ class ReconstitutionCalculator {
         'totalAmount': pMg,
         'targetDose': dMg,
         'medicationName': medicationName.isNotEmpty ? medicationName : 'Medication',
-        'error': null,
+        'error': warning,
       };
     } catch (e, stackTrace) {
       Logger.logError('Calculation failed', error: e, stackTrace: stackTrace);

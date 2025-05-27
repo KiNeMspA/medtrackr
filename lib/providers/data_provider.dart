@@ -4,9 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:medtrackr/models/medication.dart';
 import 'package:medtrackr/models/dosage.dart';
 import 'package:medtrackr/models/schedule.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:medtrackr/services/notification_service.dart';
+import 'package:medtrackr/models/enums/frequency_type.dart';
+import 'package:medtrackr/models/enums/medication_type.dart';
+import 'package:medtrackr/models/enums/quantity_unit.dart';
 import 'package:medtrackr/models/enums/dosage_method.dart';
+import 'package:path_provider/path_provider.dart';
 
 class DataProvider with ChangeNotifier {
   final List<Medication> _medications = [];
@@ -27,13 +30,12 @@ class DataProvider with ChangeNotifier {
       final dosages = getDosagesForMedication(medication.id);
 
       if (schedule != null) {
-        final notificationTime = schedule.notificationTime?.toString() ?? '';
         final hour = schedule.time.hour;
         final minute = schedule.time.minute;
-
         final scheduleTime = DateTime(now.year, now.month, now.day, hour, minute);
         final nextTime = scheduleTime.isBefore(now)
-            ? scheduleTime.add(Duration(days: schedule.frequencyType == FrequencyType.daily ? 1 : 7))
+            ? scheduleTime.add(Duration(
+            days: schedule.frequencyType == FrequencyType.daily ? 1 : 7))
             : scheduleTime;
 
         upcoming.add({
@@ -59,6 +61,52 @@ class DataProvider with ChangeNotifier {
   DataProvider({NotificationService? notificationService})
       : _notificationService = notificationService ?? NotificationService() {
     _loadData();
+  }
+
+  Future<void> _migrateData() async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/medtrackr_data.json');
+      if (await file.exists()) {
+        final jsonString = await file.readAsString();
+        final data = jsonDecode(jsonString) as Map<String, dynamic>;
+        bool needsMigration = false;
+
+        final medications = (data['medications'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
+        for (var i = 0; i < medications.length; i++) {
+          final med = medications[i];
+          if (med['type'] is String && !MedicationType.values.any((e) => e.displayName == med['type'])) {
+            med['type'] = _parseMedicationType(med['type'] as String).displayName;
+            needsMigration = true;
+          }
+          if (med['quantityUnit'] is String && !QuantityUnit.values.any((e) => e.displayName == med['quantityUnit'])) {
+            med['quantityUnit'] = _parseQuantityUnit(med['quantityUnit'] as String).displayName;
+            needsMigration = true;
+          }
+        }
+
+        if (needsMigration) {
+          data['medications'] = medications;
+          await file.writeAsString(jsonEncode(data));
+        }
+      }
+    } catch (e) {
+      print('Error migrating data: $e');
+    }
+  }
+
+  MedicationType _parseMedicationType(String type) {
+    return MedicationType.values.firstWhere(
+          (e) => e.displayName.toLowerCase() == type.toLowerCase(),
+      orElse: () => MedicationType.other,
+    );
+  }
+
+  QuantityUnit _parseQuantityUnit(String unit) {
+    return QuantityUnit.values.firstWhere(
+          (e) => e.displayName.toLowerCase() == unit.toLowerCase(),
+      orElse: () => QuantityUnit.mg,
+    );
   }
 
   void addMedication(Medication medication) {
@@ -132,22 +180,28 @@ class DataProvider with ChangeNotifier {
             (m) => m.id == dosage.medicationId,
         orElse: () => Medication(
           id: '',
-          name: '',
-          type: '',
-          quantityUnit: '',
-          quantity: 0.0,
-          remainingQuantity: 0.0,
+          name: 'Unknown',
+          type: MedicationType.other,
+          quantityUnit: QuantityUnit.mg,
+          quantity: 0,
+          remainingQuantity: 0,
           reconstitutionVolumeUnit: '',
-          reconstitutionVolume: 0.0,
+          reconstitutionVolume: 0,
           reconstitutionFluid: '',
           notes: '',
         ),
       );
       if (medication.id.isNotEmpty) {
+        double doseInMg = dosage.totalDose;
+        if (dosage.doseUnit == 'mcg') {
+          doseInMg = dosage.totalDose / 1000;
+        } else if (dosage.doseUnit == 'g') {
+          doseInMg = dosage.totalDose * 1000;
+        }
         await updateMedicationAsync(
           medication.id,
           medication.copyWith(
-            remainingQuantity: medication.remainingQuantity - dosage.totalDose,
+            remainingQuantity: medication.remainingQuantity - doseInMg,
           ),
         );
       }
@@ -165,22 +219,28 @@ class DataProvider with ChangeNotifier {
               (m) => m.id == updatedDosage.medicationId,
           orElse: () => Medication(
             id: '',
-            name: '',
-            type: '',
-            quantityUnit: '',
-            quantity: 0.0,
-            remainingQuantity: 0.0,
+            name: 'Unknown',
+            type: MedicationType.other,
+            quantityUnit: QuantityUnit.mg,
+            quantity: 0,
+            remainingQuantity: 0,
             reconstitutionVolumeUnit: '',
-            reconstitutionVolume: 0.0,
+            reconstitutionVolume: 0,
             reconstitutionFluid: '',
             notes: '',
           ),
         );
         if (medication.id.isNotEmpty) {
+          double doseInMg = updatedDosage.totalDose;
+          if (updatedDosage.doseUnit == 'mcg') {
+            doseInMg = updatedDosage.totalDose / 1000;
+          } else if (updatedDosage.doseUnit == 'g') {
+            doseInMg = updatedDosage.totalDose * 1000;
+          }
           await updateMedicationAsync(
             medication.id,
             medication.copyWith(
-              remainingQuantity: medication.remainingQuantity - updatedDosage.totalDose,
+              remainingQuantity: medication.remainingQuantity - doseInMg,
             ),
           );
         }
@@ -220,6 +280,7 @@ class DataProvider with ChangeNotifier {
         totalDose: 0.0,
         volume: 0.0,
         insulinUnits: 0.0,
+        time: TimeOfDay.now(),
       ),
     );
     if (dosage.id.isNotEmpty) {
@@ -227,26 +288,35 @@ class DataProvider with ChangeNotifier {
             (m) => m.id == medicationId,
         orElse: () => Medication(
           id: '',
-          name: '',
-          type: '',
-          quantityUnit: '',
-          quantity: 0.0,
-          remainingQuantity: 0.0,
+          name: 'Unknown',
+          type: MedicationType.other,
+          quantityUnit: QuantityUnit.mg,
+          quantity: 0,
+          remainingQuantity: 0,
           reconstitutionVolumeUnit: '',
-          reconstitutionVolume: 0.0,
+          reconstitutionVolume: 0,
           reconstitutionFluid: '',
           notes: '',
         ),
       );
       if (medication.id.isNotEmpty) {
+        double doseInMg = dosage.totalDose;
+        if (dosage.doseUnit == 'mcg') {
+          doseInMg = dosage.totalDose / 1000;
+        } else if (dosage.doseUnit == 'g') {
+          doseInMg = dosage.totalDose * 1000;
+        }
         updateMedicationAsync(
           medication.id,
           medication.copyWith(
-            remainingQuantity: medication.remainingQuantity - dosage.totalDose,
+            remainingQuantity: medication.remainingQuantity - doseInMg,
           ),
         );
       }
-      addDosageAsync(dosage.copyWith(takenTime: DateTime.now()));
+      addDosageAsync(dosage.copyWith(
+        takenTime: DateTime.now(),
+        time: dosage.time,
+      ));
     }
     deleteSchedule(scheduleId);
   }
@@ -302,6 +372,7 @@ class DataProvider with ChangeNotifier {
   }
 
   Future<void> _loadData() async {
+    await _migrateData();
     try {
       final directory = await getApplicationDocumentsDirectory();
       final file = File('${directory.path}/medtrackr_data.json');

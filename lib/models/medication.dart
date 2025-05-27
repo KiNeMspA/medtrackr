@@ -1,8 +1,11 @@
+import 'package:medtrackr/models/enums/medication_type.dart';
+import 'package:medtrackr/models/enums/quantity_unit.dart';
+
 class Medication {
   final String id;
   final String name;
-  final String type;
-  final String quantityUnit;
+  final MedicationType type;
+  final QuantityUnit quantityUnit;
   final double quantity;
   final double remainingQuantity;
   final String reconstitutionVolumeUnit;
@@ -30,8 +33,8 @@ class Medication {
   Medication copyWith({
     String? id,
     String? name,
-    String? type,
-    String? quantityUnit,
+    MedicationType? type,
+    QuantityUnit? quantityUnit,
     double? quantity,
     double? remainingQuantity,
     String? reconstitutionVolumeUnit,
@@ -61,8 +64,8 @@ class Medication {
     return {
       'id': id,
       'name': name,
-      'type': type,
-      'quantityUnit': quantityUnit,
+      'type': type.displayName,
+      'quantityUnit': quantityUnit.displayName,
       'quantity': quantity,
       'remainingQuantity': remainingQuantity,
       'reconstitutionVolumeUnit': reconstitutionVolumeUnit,
@@ -76,16 +79,16 @@ class Medication {
 
   factory Medication.fromJson(Map<String, dynamic> json) {
     return Medication(
-      id: json['id'],
-      name: json['name'],
-      type: json['type'],
-      quantityUnit: json['quantityUnit'],
-      quantity: json['quantity'].toDouble(),
-      remainingQuantity: json['remainingQuantity'].toDouble(),
-      reconstitutionVolumeUnit: json['reconstitutionVolumeUnit'],
-      reconstitutionVolume: json['reconstitutionVolume'].toDouble(),
-      reconstitutionFluid: json['reconstitutionFluid'],
-      notes: json['notes'],
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      type: _parseMedicationType(json['type'] as String?),
+      quantityUnit: _parseQuantityUnit(json['quantityUnit'] as String?),
+      quantity: (json['quantity'] as num?)?.toDouble() ?? 0.0,
+      remainingQuantity: (json['remainingQuantity'] as num?)?.toDouble() ?? 0.0,
+      reconstitutionVolumeUnit: json['reconstitutionVolumeUnit'] as String? ?? '',
+      reconstitutionVolume: (json['reconstitutionVolume'] as num?)?.toDouble() ?? 0.0,
+      reconstitutionFluid: json['reconstitutionFluid'] as String? ?? '',
+      notes: json['notes'] as String? ?? '',
       reconstitutionOptions: (json['reconstitutionOptions'] as List<dynamic>?)
           ?.map((e) => Map<String, dynamic>.from(e))
           .toList() ??
@@ -93,6 +96,22 @@ class Medication {
       selectedReconstitution: json['selectedReconstitution'] != null
           ? Map<String, dynamic>.from(json['selectedReconstitution'])
           : null,
+    );
+  }
+
+  static MedicationType _parseMedicationType(String? type) {
+    if (type == null || type.isEmpty) return MedicationType.other;
+    return MedicationType.values.firstWhere(
+          (e) => e.displayName.toLowerCase() == type.toLowerCase(),
+      orElse: () => MedicationType.other,
+    );
+  }
+
+  static QuantityUnit _parseQuantityUnit(String? unit) {
+    if (unit == null || unit.isEmpty) return QuantityUnit.mg;
+    return QuantityUnit.values.firstWhere(
+          (e) => e.displayName.toLowerCase() == unit.toLowerCase(),
+      orElse: () => QuantityUnit.mg,
     );
   }
 }

@@ -82,6 +82,15 @@ To update this section:
   - Enhanced MedicationDetailsScreen with Add Schedule and Reconstitute buttons.
   - Improved confirmation dialogs with bolded text and styling.
   - Latest commit hash: `7cb8624efea1847ffb466829cddd6526f195c6bd`
+  - Added syringe size/type to IU terminology in Confirm Reconstitution Screen (May 27, 2025, 11:07 AM AEST, commit c131107f17269ebf6c331e1f52d7d153499f9cf8).
+  - Added SyringeSize enum in lib/models/enums/syringe_size.dart and updated ReconstitutionScreen to use it for syringe sizes (May 27, 2025, 11:25 AM AEST, commit f990613919f45ae2b520cc1e811766e88a948feb).
+  - Added cardDecoration constant in constants.dart and applied consistent card styling to MedicationDetailsScreen and ReconstitutionScreen (May 27, 2025, 11:29 AM AEST, commit ecac760eec1ab72764e350f39953ad40c47422c2).
+  - Fixed cardDecoration constant in constants.dart to use const-compatible Border and BorderRadius, applied to MedicationCard and ReconstitutionScreen cards. Commit e8d779f0e2753d37f08977dc6e1edf021f6ff85e (May 27, 2025, 12:01 PM AEST):
+  - Removed yellow highlight from MedicationCard and ReconstitutionScreen cards for cleaner styling (May 27, 2025, 12:11 PM AEST, commit <280b19dd8d7761f28638ecaa5dbc92f935f7a5ff>).- Enhanced card styling with National Geographic aesthetic (off-white background, shadow, yellow highlights, modern typography) in MedicationDetailsScreen and ReconstitutionScreen (May 27, 2025, 12:05 PM AEST, commit a8d86ec3f73600b57f3d6ce041d681f48387f61c).
+  - Consolidated add/edit medication screens, added enums, made MedicationCard tappable, moved reconstitution option to button in MedicationDetailsScreen (May 27, 2025, 1:05 PM AEST, commit <new_commit_hash>).
+  - Consolidated add/edit medication screens, added enums, made MedicationCard tappable, moved reconstitution to MedicationDetailsScreen button, added styled help message, bolded confirmation dialog labels, centered dialog buttons, set injection default to mg, made MedicationDetailsScreen cards full-width with bold headers, renamed to Medication Overview, added stock message and dosage/reconstitution buttons, enhanced MedicationCard with reconstitution summary and stylized fields (May 27, 2025, 1:21 PM AEST, commit <new_commit_hash>).
+  - Consolidated add/edit medication screens, added enums, made MedicationCard tappable, moved reconstitution to MedicationDetailsScreen button, added styled help message, bolded confirmation dialog labels, centered dialog buttons, set injection default to mg, made MedicationDetailsScreen cards full-width with bold headers, renamed to Medication Overview, added stock message and dosage/reconstitution buttons, enhanced MedicationCard with reconstitution summary, DosageMethod display, and stylized fields, fixed DosageMethod and dropdown issues, reverted to direct file operations in DataProvider (May 27, 2025, 1:37 PM AEST, commit <new_commit_hash>).
+
 
 ## Workflow Preservation
 To maintain the current development workflow with Grok:

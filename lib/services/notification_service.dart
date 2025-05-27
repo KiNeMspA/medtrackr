@@ -1,8 +1,12 @@
+import 'package:medtrackr/models/enums/frequency_type.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:medtrackr/models/dosage.dart';
 import 'package:medtrackr/models/medication.dart';
 import 'package:medtrackr/models/schedule.dart';
 import 'package:medtrackr/models/enums/dosage_method.dart';
+import 'package:medtrackr/models/enums/medication_type.dart';
+import 'package:medtrackr/models/enums/quantity_unit.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -27,16 +31,16 @@ class NotificationService {
             (m) => m.id == schedule.medicationId,
         orElse: () => Medication(
           id: '',
-          name: 'Unknown Medication',
-          type: '',
-          quantityUnit: '',
-          quantity: 0.0,
-          remainingQuantity: 0.0,
+          name: 'Unknown',
+          type: MedicationType.other,
+          quantityUnit: QuantityUnit.mg,
+          quantity: 0,
+          remainingQuantity: 0,
           reconstitutionVolumeUnit: '',
-          reconstitutionVolume: 0.0,
+          reconstitutionVolume: 0,
           reconstitutionFluid: '',
           notes: '',
-        ),
+        )
       );
       final dosage = dosages.firstWhere(
             (d) => d.id == schedule.dosageId,
@@ -49,6 +53,7 @@ class NotificationService {
           totalDose: 0.0,
           volume: 0.0,
           insulinUnits: 0.0,
+          time: TimeOfDay.now(),
         ),
       );
 
