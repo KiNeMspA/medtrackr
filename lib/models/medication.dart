@@ -79,18 +79,12 @@ class Medication {
 
   factory Medication.fromJson(Map<String, dynamic> json) {
     return Medication(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      type: MedicationType.values.firstWhere(
-            (e) => e.displayName == json['type'],
-        orElse: () => MedicationType.other,
-      ),
-      quantityUnit: QuantityUnit.values.firstWhere(
-            (e) => e.displayName == json['quantityUnit'],
-        orElse: () => QuantityUnit.mg,
-      ),
-      quantity: (json['quantity'] as num).toDouble(),
-      remainingQuantity: (json['remainingQuantity'] as num).toDouble(),
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      type: _parseMedicationType(json['type'] as String?),
+      quantityUnit: _parseQuantityUnit(json['quantityUnit'] as String?),
+      quantity: (json['quantity'] as num?)?.toDouble() ?? 0.0,
+      remainingQuantity: (json['remainingQuantity'] as num?)?.toDouble() ?? 0.0,
       reconstitutionVolumeUnit: json['reconstitutionVolumeUnit'] as String? ?? '',
       reconstitutionVolume: (json['reconstitutionVolume'] as num?)?.toDouble() ?? 0.0,
       reconstitutionFluid: json['reconstitutionFluid'] as String? ?? '',
@@ -102,6 +96,22 @@ class Medication {
       selectedReconstitution: json['selectedReconstitution'] != null
           ? Map<String, dynamic>.from(json['selectedReconstitution'])
           : null,
+    );
+  }
+
+  static MedicationType _parseMedicationType(String? type) {
+    if (type == null || type.isEmpty) return MedicationType.other;
+    return MedicationType.values.firstWhere(
+          (e) => e.displayName.toLowerCase() == type.toLowerCase(),
+      orElse: () => MedicationType.other,
+    );
+  }
+
+  static QuantityUnit _parseQuantityUnit(String? unit) {
+    if (unit == null || unit.isEmpty) return QuantityUnit.mg;
+    return QuantityUnit.values.firstWhere(
+          (e) => e.displayName.toLowerCase() == unit.toLowerCase(),
+      orElse: () => QuantityUnit.mg,
     );
   }
 }
