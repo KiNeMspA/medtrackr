@@ -35,23 +35,23 @@ class MyApp extends StatelessWidget {
             ),
             inputDecorationTheme: InputDecorationTheme(
               enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(
-                    color: AppConstants.kLightGrey, width: 1),
+                borderSide:
+                    BorderSide(color: AppConstants.kLightGrey, width: 1),
                 borderRadius: BorderRadius.circular(12),
               ),
               focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(
-                    color: AppConstants.primaryColor, width: 1),
+                borderSide:
+                    BorderSide(color: AppConstants.primaryColor, width: 1),
                 borderRadius: BorderRadius.circular(12),
               ),
               errorBorder: OutlineInputBorder(
-                borderSide: BorderSide(
-                    color: AppConstants.kLightGrey, width: 1),
+                borderSide:
+                    BorderSide(color: AppConstants.kLightGrey, width: 1),
                 borderRadius: BorderRadius.circular(12),
               ),
               focusedErrorBorder: OutlineInputBorder(
-                borderSide: BorderSide(
-                    color: AppConstants.primaryColor, width: 1),
+                borderSide:
+                    BorderSide(color: AppConstants.primaryColor, width: 1),
                 borderRadius: BorderRadius.circular(12),
               ),
               filled: true,
@@ -61,37 +61,65 @@ class MyApp extends StatelessWidget {
           ),
           initialRoute: '/home',
           routes: {
-        '/home': (context) => const HomeScreen(),
-        '/medication_form': (context) => MedicationFormScreen(
-        medication: ModalRoute.of(context)!.settings.arguments as Medication?,
-        ),
-        '/dosage_form': (context) {
-        final args = ModalRoute.of(context)!.settings.arguments;
-        if (args is Medication) {
-        return DosageFormScreen(medication: args);
-        } else if (args is Map<String, dynamic>) {
-        return DosageFormScreen(
-        medication: args['medication'] as Medication,
-        dosage: args['dosage'] as Dosage?,
-        );
-        }
-        return const HomeScreen(); // Fallback
-        },
-        '/add_schedule': (context) => ScheduleFormScreen(medication: Medication(id: '', name: '', type: MedicationType.tablet, quantity: 0, quantityUnit: QuantityUnit.mg, remainingQuantity: 0, reconstitutionVolumeUnit: '', reconstitutionVolume: 0, reconstitutionFluid: '', notes: ''),),
-        '/schedule_form': (context) {
-        final args = ModalRoute.of(context)?.settings.arguments;
-        return ScheduleFormScreen(
-        medication: args is Medication ? args : Medication(id: '', name: '', type: MedicationType.tablet, quantity: 0, quantityUnit: QuantityUnit.mg, remainingQuantity: 0, reconstitutionVolumeUnit: '', reconstitutionVolume: 0, reconstitutionFluid: '', notes: ''),
-        );
-        },
-        '/reconstitute': (context) => ReconstitutionScreen(
-        medication: ModalRoute.of(context)!.settings.arguments as Medication,
-        ),
-        '/calendar': (context) => const Placeholder(),
-        '/history': (context) => const Placeholder(),
-        '/settings': (context) => const Placeholder(),
-        },
-        )
-    );
+            '/home': (context) => const HomeScreen(),
+            '/medication_form': (context) => MedicationFormScreen(
+                  medication:
+                      ModalRoute.of(context)!.settings.arguments as Medication?,
+                ),
+            '/medication_details': (context) => MedicationDetailsScreen(
+              medication: ModalRoute.of(context)!.settings.arguments as Medication,
+            ),
+            '/dosage_form': (context) {
+              final args = ModalRoute.of(context)!.settings.arguments;
+              if (args is Medication) {
+                return DosageFormScreen(medication: args);
+              } else if (args is Map<String, dynamic>) {
+                return DosageFormScreen(
+                  medication: args['medication'] as Medication,
+                  dosage: args['dosage'] as Dosage?,
+                );
+              }
+              return const HomeScreen(); // Fallback
+            },
+            '/add_schedule': (context) => ScheduleFormScreen(
+                  medication: Medication(
+                      id: '',
+                      name: '',
+                      type: MedicationType.tablet,
+                      quantity: 0,
+                      quantityUnit: QuantityUnit.mg,
+                      remainingQuantity: 0,
+                      reconstitutionVolumeUnit: '',
+                      reconstitutionVolume: 0,
+                      reconstitutionFluid: '',
+                      notes: ''),
+                ),
+            '/schedule_form': (context) {
+              final args = ModalRoute.of(context)?.settings.arguments;
+              return ScheduleFormScreen(
+                medication: args is Medication
+                    ? args
+                    : Medication(
+                        id: '',
+                        name: '',
+                        type: MedicationType.tablet,
+                        quantity: 0,
+                        quantityUnit: QuantityUnit.mg,
+                        remainingQuantity: 0,
+                        reconstitutionVolumeUnit: '',
+                        reconstitutionVolume: 0,
+                        reconstitutionFluid: '',
+                        notes: ''),
+              );
+            },
+            '/reconstitute': (context) => ReconstitutionScreen(
+                  medication:
+                      ModalRoute.of(context)!.settings.arguments as Medication,
+                ),
+            '/calendar': (context) => const Placeholder(),
+            '/history': (context) => const Placeholder(),
+            '/settings': (context) => const Placeholder(),
+          },
+        ));
   }
 }
