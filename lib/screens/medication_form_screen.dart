@@ -23,7 +23,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
   late TextEditingController _quantityController;
   late TextEditingController _notesController;
   MedicationType _type = MedicationType.injection;
-  QuantityUnit _quantityUnit = QuantityUnit.mcg;
+  QuantityUnit _quantityUnit = QuantityUnit.mg;
 
   @override
   void initState() {
@@ -74,7 +74,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
         title: Text(
-          'Confirm Medication Settings',
+          'Confirm Medication',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             color: Colors.black,
             fontWeight: FontWeight.bold,
@@ -82,30 +82,46 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
         ),
         content: Padding(
           padding: const EdgeInsets.symmetric(vertical: 16.0),
-          child: Text(
-            'Name: ${medication.name}\n'
-                'Type: ${medication.type.displayName}\n'
-                'Quantity: ${medication.quantity.toStringAsFixed(0)} ${medication.quantityUnit.displayName}\n'
-                'Notes: ${medication.notes.isNotEmpty ? medication.notes : 'None'}',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Colors.black,
+          child: RichText(
+            text: TextSpan(
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.black),
+              children: [
+                const TextSpan(
+                  text: 'Name: ',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                TextSpan(text: medication.name),
+                const TextSpan(
+                  text: '\nType: ',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                TextSpan(text: medication.type.displayName),
+                const TextSpan(
+                  text: '\nQuantity: ',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                TextSpan(text: '${medication.quantity.toStringAsFixed(0)} ${medication.quantityUnit.displayName}'),
+                const TextSpan(
+                  text: '\nNotes: ',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                TextSpan(text: medication.notes.isNotEmpty ? medication.notes : 'None'),
+              ],
             ),
           ),
         ),
+        actionsAlignment: MainAxisAlignment.center,
         actions: [
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: AppConstants.primaryColor, fontWeight: FontWeight.bold),
-            ),
+            style: AppConstants.cancelButtonStyle,
+            child: const Text('Cancel'),
           ),
-          TextButton(
+          const SizedBox(width: 16),
+          ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              'Confirm',
-              style: TextStyle(color: AppConstants.primaryColor, fontWeight: FontWeight.bold),
-            ),
+            style: AppConstants.dialogButtonStyle,
+            child: const Text('Confirm'),
           ),
         ],
       ),
@@ -121,7 +137,11 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
         await dataProvider.updateMedicationAsync(medication.id, medication);
       }
       if (context.mounted) {
-        Navigator.pop(context, medication); // Return medication for navigation
+        Navigator.pushReplacementNamed(
+          context,
+          '/medication_details',
+          arguments: medication,
+        );
       }
     } catch (e) {
       if (context.mounted) {
@@ -165,7 +185,12 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                   onNameChanged: (value) {},
                   onTypeChanged: (value) {
                     if (value != null) {
-                      setState(() => _type = value);
+                      setState(() {
+                        _type = value;
+                        if (_type == MedicationType.injection) {
+                          _quantityUnit = QuantityUnit.mg;
+                        }
+                      });
                     }
                   },
                   onQuantityUnitChanged: (value) {
@@ -175,17 +200,26 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                   },
                   onQuantityChanged: () {},
                 ),
+                if (widget.medication == null) ...[
+                  const SizedBox(height: 24),
+                  Container(
+                    decoration: AppConstants.infoCardDecoration,
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      _type == MedicationType.injection
+                          ? 'Next, configure dosages, reconstitution (if needed), and schedules in the Medication Overview.'
+                          : 'Next, configure dosages and schedules in the Medication Overview.',
+                      style: AppConstants.infoTextStyle,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: () => _saveMedication(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppConstants.primaryColor,
-                    minimumSize: const Size(double.infinity, 50),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
+                  style: AppConstants.actionButtonStyle,
                   child: Text(
                     widget.medication == null ? 'Add Medication' : 'Update Medication',
-                    style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                    style: const TextStyle(color: Colors.black),
                   ),
                 ),
               ],

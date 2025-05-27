@@ -21,15 +21,15 @@ class MedicationCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Type: ${medication.type}',
+            'Type: ${medication.type.displayName}',
             style: AppConstants.cardBodyStyle,
           ),
           Text(
-            'Quantity: ${medication.quantity.toStringAsFixed(2)} ${medication.quantityUnit}',
+            'Quantity: ${medication.quantity.toStringAsFixed(2)} ${medication.quantityUnit.displayName}',
             style: AppConstants.cardBodyStyle,
           ),
           Text(
-            'Remaining: ${medication.remainingQuantity.toStringAsFixed(2)} ${medication.quantityUnit}',
+            'Remaining: ${medication.remainingQuantity.toStringAsFixed(2)} ${medication.quantityUnit.displayName}',
             style: AppConstants.cardBodyStyle,
           ),
           if (medication.reconstitutionVolume > 0)

@@ -19,11 +19,9 @@ class MedicationDetailsScreen extends StatelessWidget {
       );
     }
 
-    final isReconstituted = medication!.reconstitutionVolume > 0;
-
     return Scaffold(
       appBar: AppBar(
-        title: Text(medication!.name),
+        title: const Text('Medication Overview'),
         backgroundColor: AppConstants.primaryColor,
       ),
       body: Padding(
@@ -31,66 +29,44 @@ class MedicationDetailsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            GestureDetector(
-              onTap: () {
+            Text(
+              'Please add the medication stock to begin tracking.',
+              style: AppConstants.cardBodyStyle.copyWith(color: Colors.grey[700]),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Medication Details',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            MedicationCard(medication: medication!),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
                 Navigator.pushNamed(
                   context,
-                  '/medication_form',
+                  '/add_dosage',
+                  arguments: {'medication': medication},
+                );
+              },
+              style: AppConstants.actionButtonStyle,
+              child: const Text('Add Dosage'),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(
+                  context,
+                  '/reconstitute',
                   arguments: medication,
                 );
               },
-              child: MedicationCard(medication: medication!),
+              style: AppConstants.actionButtonStyle,
+              child: const Text('Edit Reconstitution'),
             ),
-            const SizedBox(height: 16),
-            if (isReconstituted) ...[
-              Container(
-                decoration: AppConstants.cardDecoration,
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Reconstitution Details',
-                      style: AppConstants.cardTitleStyle,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Volume: ${medication!.reconstitutionVolume.toStringAsFixed(2)} ${medication!.reconstitutionVolumeUnit}',
-                      style: AppConstants.cardBodyStyle,
-                    ),
-                    Text(
-                      'Fluid: ${medication!.reconstitutionFluid.isNotEmpty ? medication!.reconstitutionFluid : 'None'}',
-                      style: AppConstants.cardBodyStyle,
-                    ),
-                    if (medication!.selectedReconstitution != null)
-                      Text(
-                        'Concentration: ${medication!.selectedReconstitution!['concentration']?.toStringAsFixed(2)} mg/mL',
-                        style: AppConstants.cardBodyStyle,
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-            if (!isReconstituted)
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/reconstitute',
-                    arguments: medication,
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppConstants.primaryColor,
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text(
-                  'Reconstitute Medication',
-                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-              ),
           ],
         ),
       ),
