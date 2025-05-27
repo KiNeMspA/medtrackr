@@ -76,6 +76,7 @@ class MedicationDetailsScreen extends StatelessWidget {
     );
   }
 
+  // In lib/screens/medication_details_screen.dart, replace the build method
   @override
   Widget build(BuildContext context) {
     final dataProvider = Provider.of<DataProvider>(context);
@@ -100,84 +101,122 @@ class MedicationDetailsScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Medication Details',
-              style: AppConstants.cardTitleStyle.copyWith(fontSize: 20),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              decoration: AppConstants.cardDecoration, // Apply styling
-              child: Card(
-                elevation: 0, // Set to 0 since decoration handles shadow
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Name: ${medication.name}', style: AppConstants.cardBodyStyle),
-                      Text('Type: ${medication.type.displayName}', style: AppConstants.cardBodyStyle),
-                      Text(
-                          'Quantity: ${medication.quantity % 1 == 0 ? medication.quantity.toInt() : medication.quantity.toStringAsFixed(2)} ${medication.quantityUnit.displayName}',
-                          style: AppConstants.cardBodyStyle),
-                      if (medication.dosePerTablet != null)
-                        Text('Dose per Tablet: ${medication.dosePerTablet} mg/mcg',
-                            style: AppConstants.cardBodyStyle),
-                      if (medication.reconstitutionVolume > 0)
+      body: SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height - kToolbarHeight - kBottomNavigationBarHeight,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Medication Overview',
+                  style: AppConstants.cardTitleStyle.copyWith(fontSize: 20),
+                ),
+                const SizedBox(height: 16),
+                Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Name: ${medication.name}', style: AppConstants.cardBodyStyle),
+                        Text('Type: ${medication.type.displayName}', style: AppConstants.cardBodyStyle),
                         Text(
-                            'Reconstituted: ${medication.reconstitutionVolume} ${medication.reconstitutionVolumeUnit} ${medication.reconstitutionFluid}',
+                            'Quantity: ${medication.quantity % 1 == 0 ? medication.quantity.toInt() : medication.quantity.toStringAsFixed(2)} ${medication.quantityUnit.displayName}',
                             style: AppConstants.cardBodyStyle),
-                      Text('Notes: ${medication.notes.isNotEmpty ? medication.notes : 'None'}',
-                          style: AppConstants.cardBodyStyle),
-                    ],
+                        if (medication.dosePerTablet != null)
+                          Text('Dose per Tablet: ${medication.dosePerTablet} mg/mcg',
+                              style: AppConstants.cardBodyStyle),
+                        if (medication.reconstitutionVolume > 0)
+                          Text(
+                              'Reconstituted: ${medication.reconstitutionVolume} ${medication.reconstitutionVolumeUnit} ${medication.reconstitutionFluid}',
+                              style: AppConstants.cardBodyStyle),
+                        Text('Notes: ${medication.notes.isNotEmpty ? medication.notes : 'None'}',
+                            style: AppConstants.cardBodyStyle),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Dosages',
-              style: AppConstants.cardTitleStyle.copyWith(fontSize: 20),
-            ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: dosages.length,
-                itemBuilder: (context, index) {
-                  final dosage = dosages[index];
-                  return Container(
-                    decoration: AppConstants.cardDecoration, // Apply styling
-                    child: Card(
-                      elevation: 0, // Set to 0 since decoration handles shadow
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      child: ListTile(
-                        title: Text(dosage.name, style: AppConstants.cardTitleStyle),
-                        subtitle: Text(
-                            '${dosage.totalDose} ${dosage.doseUnit} (${dosage.method.displayName})',
-                            style: AppConstants.cardBodyStyle),
-                        onTap: () => Navigator.pushNamed(
-                            context, '/dosage_form', arguments: {'medication': medication, 'dosage': dosage}),
+                const SizedBox(height: 16),
+                Text(
+                  'Dosages',
+                  style: AppConstants.cardTitleStyle.copyWith(fontSize: 20),
+                ),
+                dosages.isEmpty
+                    ? const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text(
+                    'No dosages added.',
+                    style: AppConstants.secondaryTextStyle,
+                  ),
+                )
+                    : Column(
+                  children: dosages.map((dosage) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        child: ListTile(
+                          title: Text(dosage.name, style: AppConstants.cardTitleStyle),
+                          subtitle: Text(
+                              '${dosage.totalDose} ${dosage.doseUnit} (${dosage.method.displayName})',
+                              style: AppConstants.cardBodyStyle),
+                          onTap: () => Navigator.pushNamed(context, '/dosage_form',
+                              arguments: {'medication': medication, 'dosage': dosage}),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pushNamed(context, '/add_schedule', arguments: medication),
+                          style: AppConstants.actionButtonStyle,
+                          child: const Text('Add Schedule'),
+                        ),
                       ),
                     ),
-                  );
-                },
-              ),
+                    if (medication.type == MedicationType.injection)
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.pushNamed(context, '/reconstitute', arguments: medication),
+                            style: AppConstants.actionButtonStyle,
+                            child: const Text('Reconstitute'),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
       floatingActionButton: canAddDosage
           ? FloatingActionButton(
         onPressed: () => Navigator.pushNamed(context, '/dosage_form', arguments: medication),
-        child: const Icon(Icons.add),
+        backgroundColor: AppConstants.primaryColor,
+        child: const Icon(Icons.add, color: Colors.black),
       )
           : FloatingActionButton(
         onPressed: () => _showAddDosageDialog(context),
-        child: const Icon(Icons.info),
+        backgroundColor: AppConstants.primaryColor,
+        child: const Icon(Icons.info, color: Colors.black),
       ),
       bottomNavigationBar: AppBottomNavigationBar(
         currentIndex: 0,
