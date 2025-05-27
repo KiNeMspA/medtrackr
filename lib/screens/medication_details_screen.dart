@@ -52,7 +52,7 @@ class MedicationDetailsScreen extends StatelessWidget {
 
     if (confirmed == true) {
       final dataProvider = Provider.of<DataProvider>(context, listen: false);
-      await dataProvider.deleteMedication(medication!.id);
+      dataProvider.deleteMedication(medication!.id);
       if (context.mounted) {
         Navigator.pushReplacementNamed(context, '/home');
       }
@@ -85,21 +85,14 @@ class MedicationDetailsScreen extends StatelessWidget {
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,
+                fontSize: 28,
               ),
             ),
             const SizedBox(height: 16),
-            MedicationCard(medication: medication!),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(
-                  context,
-                  '/add_dosage',
-                  arguments: {'medication': medication},
-                );
-              },
-              style: AppConstants.actionButtonStyle,
-              child: const Text('Add Dosage'),
+            Container(
+              width: double.infinity,
+              decoration: AppConstants.cardDecoration,
+              child: MedicationCard(medication: medication!),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
@@ -119,9 +112,21 @@ class MedicationDetailsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(
+                  context,
+                  '/add_dosage',
+                  arguments: {'medication': medication},
+                );
+              },
+              style: AppConstants.actionButtonStyle,
+              child: const Text('Add Dosage'),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
               onPressed: () => _deleteMedication(context),
               style: AppConstants.actionButtonStyle.copyWith(
-                backgroundColor: WidgetStateProperty.all(Colors.red),
+                backgroundColor: WidgetStateProperty.all(Colors.red[300]),
               ),
               child: const Text('Delete Medication'),
             ),

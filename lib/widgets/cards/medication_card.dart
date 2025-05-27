@@ -75,10 +75,10 @@ class MedicationCard extends StatelessWidget {
                 style: AppConstants.cardBodyStyle,
                 children: [
                   const TextSpan(
-                    text: 'Remaining: ',
+                    text: 'Quantity: ',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  TextSpan(text: remainingFraction),
+                  TextSpan(text: '${_formatNumber(medication.remainingQuantity)} out of ${_formatNumber(medication.quantity)} ${medication.quantityUnit.displayName}'),
                 ],
               ),
             ),
@@ -104,10 +104,10 @@ class MedicationCard extends StatelessWidget {
                   style: AppConstants.cardBodyStyle,
                   children: [
                     TextSpan(
-                      text: 'Remaining in $reconVolumeUnit: ',
+                      text: 'Quantity in $reconVolumeUnit: ',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    TextSpan(text: reconRemaining),
+                    TextSpan(text: '${_formatNumber(medication.remainingQuantity / (medication.quantity / medication.reconstitutionVolume))} out of ${_formatNumber(medication.reconstitutionVolume)} $reconVolumeUnit'),
                   ],
                 ),
               ),
@@ -121,38 +121,33 @@ class MedicationCard extends StatelessWidget {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     TextSpan(
-                      text:
-                      '${_formatNumber(medication.reconstitutionVolume)} $reconVolumeUnit of ${medication.reconstitutionFluid.isNotEmpty ? medication.reconstitutionFluid : 'None'}',
+                      text: '${_formatNumber(medication.reconstitutionVolume)} $reconVolumeUnit of ${medication.reconstitutionFluid.isNotEmpty ? medication.reconstitutionFluid : 'None'}',
                     ),
                   ],
                 ),
               ),
-              if (medication.selectedReconstitution != null &&
-                  medication.selectedReconstitution!.isNotEmpty) ...[
+              if (medication.selectedReconstitution != null && medication.selectedReconstitution!.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 RichText(
                   text: TextSpan(
                     style: AppConstants.cardBodyStyle,
                     children: [
                       const TextSpan(
-                        text: 'Administer ',
+                        text: 'Initial Dose: ',
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       TextSpan(
-                        text:
-                        '${_formatNumber(medication.selectedReconstitution!['iu'] ?? 0)} IU ',
+                        text: '${_formatNumber(medication.selectedReconstitution!['syringeUnits'] ?? 0)} IU ',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       const TextSpan(text: 'for a '),
                       TextSpan(
-                        text:
-                        '${_formatNumber(medication.selectedReconstitution!['targetDose'] ?? 0)} mcg ',
+                        text: '${_formatNumber(medication.selectedReconstitution!['targetDose'] ?? 0)} ${medication.selectedReconstitution!['targetDoseUnit'] ?? 'mcg'} ',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       const TextSpan(text: 'dose using '),
                       TextSpan(
-                        text:
-                        '${_formatNumber(medication.selectedReconstitution!['volume'] ?? 0)} mL ',
+                        text: '${_formatNumber(medication.selectedReconstitution!['volume'] ?? 0)} mL ',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       const TextSpan(text: 'volume.'),
@@ -169,8 +164,7 @@ class MedicationCard extends StatelessWidget {
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       TextSpan(
-                        text:
-                        '${_formatNumber(medication.selectedReconstitution!['concentration'] ?? 0)} mg/mL',
+                        text: '${_formatNumber(medication.selectedReconstitution!['concentration'] ?? 0)} mg/mL',
                       ),
                     ],
                   ),
