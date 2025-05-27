@@ -17,19 +17,38 @@ class MedicationCard extends StatelessWidget {
         children: [
           Text(
             medication.name,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: AppConstants.cardTitleStyle,
           ),
           const SizedBox(height: 8),
-          Text('Type: ${medication.type}'),
-          Text('Quantity: ${medication.quantity.toStringAsFixed(2)} ${medication.quantityUnit}'),
-          Text('Remaining: ${medication.remainingQuantity.toStringAsFixed(2)} ${medication.quantityUnit}'),
+          Container(
+            height: 2,
+            width: 48,
+            color: AppConstants.primaryColor, // Yellow highlight
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Type: ${medication.type}',
+            style: AppConstants.cardBodyStyle,
+          ),
+          Text(
+            'Quantity: ${medication.quantity.toStringAsFixed(2)} ${medication.quantityUnit}',
+            style: AppConstants.cardBodyStyle,
+          ),
+          Text(
+            'Remaining: ${medication.remainingQuantity.toStringAsFixed(2)} ${medication.quantityUnit}',
+            style: AppConstants.cardBodyStyle,
+          ),
           if (medication.reconstitutionVolume > 0)
             Text(
               'Reconstitution: ${medication.reconstitutionVolume.toStringAsFixed(2)} mL '
                   '${medication.reconstitutionFluid}, '
                   '${medication.selectedReconstitution?['concentration']?.toStringAsFixed(2)} mg/mL',
+              style: AppConstants.cardBodyStyle,
             ),
-          Text('Notes: ${medication.notes.isNotEmpty ? medication.notes : 'None'}'),
+          Text(
+            'Notes: ${medication.notes.isNotEmpty ? medication.notes : 'None'}',
+            style: AppConstants.cardBodyStyle,
+          ),
         ],
       ),
     );

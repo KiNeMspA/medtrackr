@@ -343,59 +343,80 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
                   constraints: const BoxConstraints(minWidth: double.infinity),
                   padding: const EdgeInsets.all(16),
                   decoration: AppConstants.cardDecoration,
-                  child: RichText(
-                    text: TextSpan(
-                      style: const TextStyle(color: Colors.black, fontSize: 16, height: 1.8),
-                      children: [
-                        const TextSpan(text: 'Administer '),
-                        TextSpan(
-                          text: _formatNumber(_selectedReconstitution!['syringeUnits']),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Reconstitution Summary',
+                        style: AppConstants.cardTitleStyle,
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        height: 2,
+                        width: 48,
+                        color: AppConstants.primaryColor, // Yellow highlight
+                      ),
+                      const SizedBox(height: 8),
+                      RichText(
+                        text: TextSpan(
+                          style: AppConstants.cardBodyStyle,
+                          children: [
+                            const TextSpan(
+                              text: 'Administer ',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            TextSpan(
+                              text: _formatNumber(_selectedReconstitution!['syringeUnits']),
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const TextSpan(
+                              text: ' IU',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const TextSpan(text: ' on a '),
+                            TextSpan(
+                              text: _syringeSize.displayName,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const TextSpan(text: '\nfor a dosage of '),
+                            TextSpan(
+                              text: _formatNumber(_targetDose),
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            TextSpan(text: ' $_targetDoseUnit\n'),
+                            const TextSpan(text: 'by reconstituting '),
+                            TextSpan(
+                              text: _formatNumber(widget.medication.quantity),
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const TextSpan(text: ' mg of '),
+                            TextSpan(
+                              text: widget.medication.name,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const TextSpan(text: '\nwith '),
+                            TextSpan(
+                              text: _formatNumber(_selectedReconstitution!['volume']),
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const TextSpan(
+                              text: ' mL',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const TextSpan(text: ' of '),
+                            TextSpan(
+                              text: _reconstitutionFluidController.text,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const TextSpan(text: '\nConcentration: '),
+                            TextSpan(
+                              text: '${_formatNumber(_selectedReconstitution!['concentration'])} mg/mL',
+                              style: TextStyle(color: Colors.grey[600]),
+                            ),
+                          ],
                         ),
-                        const TextSpan(
-                            text: ' IU',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                        const TextSpan(text: ' on a '),
-                        TextSpan(
-                          text: _syringeSize.displayName,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const TextSpan(text: '\nfor a dosage of '),
-                        TextSpan(
-                          text: _formatNumber(_targetDose),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        TextSpan(text: ' $_targetDoseUnit\n'),
-                        const TextSpan(text: 'by reconstituting '),
-                        TextSpan(
-                          text: _formatNumber(widget.medication.quantity),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const TextSpan(text: ' mg of '),
-                        TextSpan(
-                          text: widget.medication.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const TextSpan(text: '\nwith '),
-                        TextSpan(
-                          text: _formatNumber(_selectedReconstitution!['volume']),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const TextSpan(
-                            text: ' mL',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                        const TextSpan(text: ' of '),
-                        TextSpan(
-                          text: _reconstitutionFluidController.text,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const TextSpan(text: '\nConcentration: '),
-                        TextSpan(
-                          text: '${_formatNumber(_selectedReconstitution!['concentration'])} mg/mL',
-                          style: const TextStyle(color: Colors.grey),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 )
               ],
