@@ -6,7 +6,9 @@ A Flutter-based medication tracking app to manage medications, dosages, schedule
 - Always provide code snippets with clear instructions on where to paste them in the specified files. Do not include full file replacements unless explicitly requested. (May 27, 2025, 10:38 PM AEST)
 - Provide minimal code snippets targeting specific changes, avoiding full file replacements unless necessary, to save memory. Include precise placement instructions. (May 27, 2025, 11:18 PM AEST)
 - Information cards use `Themes.informationCardDecoration` for consistent styling (off-white, yellow border, shadow).
-- 
+- Information cards use `Themes.informationCardDecoration` for consistent styling (off-white, yellow border, shadow).
+- For numeric displays, drop trailing decimal zeros app-wide (e.g., 1.0 → 1) using a formatting function.
+
 ## Features Implemented
 To update this section:
 - Add new features or fixes under the relevant category.
@@ -78,6 +80,10 @@ To update this section:
   - Made `Dose per Tablet` unit dropdown functional (g, mg, mcg).
   - Fixed confirmation dialog text display issue.
   - Commit: <new_commit_hash> (May 27, 2025, 11:18 PM AEST)
+  - Added help text for `MedicationType` dropdown and `Total Units` in `MedicationFormScreen`.
+  - Made `Dose per Tablet` unit dropdown functional (g, mg, mcg).
+  - Fixed confirmation dialog text display issue.
+  - Commit: `ea39b884e4591f7c682d7f42940f55177a23cfdd` (May 27, 2025, 11:18 PM AEST)
 
 ## Workflow Preservation
 To maintain development workflow with Grok:

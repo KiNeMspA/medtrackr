@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:medtrackr/constants/constants.dart';
 import 'package:medtrackr/constants/themes.dart';
 import 'package:medtrackr/models/enums/enums.dart';
+import 'package:medtrackr/utils/helpers/format_helper.dart';
 import 'package:medtrackr/models/medication.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
@@ -25,37 +26,41 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
   late TextEditingController _volumeController;
   late TextEditingController _dosePerTabletController;
   late TextEditingController _notesController;
+
+  String _formatNumber(double value) => formatNumber(value);
   MedicationType? _type;
   QuantityUnit _quantityUnit = QuantityUnit.mg;
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.medication?.name ?? '');
+    _nameController =
+        TextEditingController(text: widget.medication?.name ?? '');
     _quantityController = TextEditingController(
         text: widget.medication?.quantity != null &&
-            widget.medication!.type == MedicationType.injection &&
-            widget.medication!.quantityUnit != QuantityUnit.mL
+                widget.medication!.type == MedicationType.injection &&
+                widget.medication!.quantityUnit != QuantityUnit.mL
             ? widget.medication!.quantity.toStringAsFixed(2)
             : '');
     _tabletCountController = TextEditingController(
         text: widget.medication?.quantity != null &&
-            (widget.medication!.type == MedicationType.tablet ||
-                widget.medication!.type == MedicationType.capsule)
+                (widget.medication!.type == MedicationType.tablet ||
+                    widget.medication!.type == MedicationType.capsule)
             ? widget.medication!.quantity.toInt().toString()
             : '');
     _volumeController = TextEditingController(
         text: widget.medication?.quantity != null &&
-            widget.medication!.type == MedicationType.injection
+                widget.medication!.type == MedicationType.injection
             ? widget.medication!.quantity.toStringAsFixed(2)
             : '');
     _dosePerTabletController = TextEditingController(
         text: widget.medication?.dosePerTablet != null &&
-            (widget.medication!.type == MedicationType.tablet ||
-                widget.medication!.type == MedicationType.capsule)
+                (widget.medication!.type == MedicationType.tablet ||
+                    widget.medication!.type == MedicationType.capsule)
             ? widget.medication!.dosePerTablet!.toStringAsFixed(2)
             : '');
-    _notesController = TextEditingController(text: widget.medication?.notes ?? '');
+    _notesController =
+        TextEditingController(text: widget.medication?.notes ?? '');
     if (widget.medication != null) {
       _type = widget.medication!.type;
       _quantityUnit = widget.medication!.quantityUnit;
@@ -81,17 +86,20 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
       return;
     }
 
-    final isTabletOrCapsule = _type == MedicationType.tablet || _type == MedicationType.capsule;
+    final isTabletOrCapsule =
+        _type == MedicationType.tablet || _type == MedicationType.capsule;
     final isInjection = _type == MedicationType.injection;
     double quantity = isTabletOrCapsule
         ? double.tryParse(_tabletCountController.text) ?? 0.0
         : isInjection && _quantityUnit == QuantityUnit.mL
-        ? double.tryParse(_volumeController.text) ?? 0.0
-        : double.tryParse(_quantityController.text) ?? 0.0;
-    QuantityUnit unit = isTabletOrCapsule ? QuantityUnit.tablets : _quantityUnit;
+            ? double.tryParse(_volumeController.text) ?? 0.0
+            : double.tryParse(_quantityController.text) ?? 0.0;
+    QuantityUnit unit =
+        isTabletOrCapsule ? QuantityUnit.tablets : _quantityUnit;
 
     final medication = Medication(
-      id: widget.medication?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id: widget.medication?.id ??
+          DateTime.now().millisecondsSinceEpoch.toString(),
       name: _nameController.text,
       type: _type!,
       quantityUnit: unit,
@@ -118,7 +126,8 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
             children: [
               RichText(
                 text: TextSpan(
-                  style: const TextStyle(color: Colors.black, fontSize: 14, height: 1.8),
+                  style: const TextStyle(
+                      color: Colors.black, fontSize: 14, height: 1.8),
                   children: [
                     const TextSpan(
                       text: 'Name: ',
@@ -136,19 +145,25 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                     ),
                     TextSpan(
                         text:
-                        '${medication.quantity % 1 == 0 ? medication.quantity.toInt() : medication.quantity.toStringAsFixed(2)} ${medication.quantityUnit.displayName}'),
-                    if (isTabletOrCapsule && medication.dosePerTablet != null) ...[
+                            '${_formatNumber(medication.quantity)} ${medication.quantityUnit.displayName}'),
+                    if (isTabletOrCapsule &&
+                        medication.dosePerTablet != null) ...[
                       const TextSpan(
                         text: '\nDose per Tablet: ',
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      TextSpan(text: '${medication.dosePerTablet} mg/mcg'),
+                      TextSpan(
+                          text:
+                              '${_formatNumber(medication.dosePerTablet!)} ${_quantityUnit.displayName}'),
                     ],
                     const TextSpan(
                       text: '\nNotes: ',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    TextSpan(text: medication.notes.isNotEmpty ? medication.notes : 'None'),
+                    TextSpan(
+                        text: medication.notes.isNotEmpty
+                            ? medication.notes
+                            : 'None'),
                   ],
                 ),
               ),
@@ -208,7 +223,8 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
     return Scaffold(
       backgroundColor: AppConstants.backgroundColor,
       appBar: AppBar(
-        title: Text(widget.medication == null ? 'Add Medication' : 'Edit Medication'),
+        title: Text(
+            widget.medication == null ? 'Add Medication' : 'Edit Medication'),
         backgroundColor: AppConstants.primaryColor,
       ),
       body: Padding(
@@ -222,31 +238,31 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                 DropdownButtonFormField<MedicationType>(
                   value: _type,
                   decoration: AppConstants.formFieldDecoration.copyWith(
-                    labelText: 'Type *',
+                    labelText: 'Select a Medication Type *',
                   ),
                   items: [
                     MedicationType.tablet,
                     MedicationType.capsule,
                     MedicationType.injection,
-                  ].map((type) => DropdownMenuItem(
-                    value: type,
-                    child: Text(type.displayName),
-                  )).toList(),
+                  ]
+                      .map((type) => DropdownMenuItem(
+                            value: type,
+                            child: Text(type.displayName),
+                          ))
+                      .toList(),
                   onChanged: (value) {
                     setState(() {
                       _type = value;
-                      _quantityUnit = value == MedicationType.tablet || value == MedicationType.capsule
+                      _quantityUnit = value == MedicationType.tablet ||
+                              value == MedicationType.capsule
                           ? QuantityUnit.tablets
                           : QuantityUnit.mg;
                     });
                   },
-                  validator: (value) => value == null ? 'Please select a type' : null,
+                  validator: (value) =>
+                      value == null ? 'Please select a type' : null,
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Select the medication type (Tablet, Capsule, or Injection) to proceed with entering details.',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
+
                 if (_type != null) ...[
                   const SizedBox(height: 16),
                   MedicationFormFields(
@@ -284,7 +300,8 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                 const SizedBox(height: 24),
                 Center(
                   child: ElevatedButton(
-                    onPressed: _type == null ? null : () => _saveMedication(context),
+                    onPressed:
+                        _type == null ? null : () => _saveMedication(context),
                     style: AppConstants.actionButtonStyle,
                     child: const Text('Save Medication'),
                   ),

@@ -37,17 +37,18 @@ class MedicationFormFields extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final quantityUnits = {
-      MedicationType.tablet: [QuantityUnit.tablets],
-      MedicationType.capsule: [QuantityUnit.tablets],
-      MedicationType.injection: [
-        QuantityUnit.g,
-        QuantityUnit.mg,
-        QuantityUnit.mcg,
-        QuantityUnit.mL,
-        QuantityUnit.iu,
-        QuantityUnit.unit,
-      ],
-    }[type] ?? [QuantityUnit.mg];
+          MedicationType.tablet: [QuantityUnit.tablets],
+          MedicationType.capsule: [QuantityUnit.tablets],
+          MedicationType.injection: [
+            QuantityUnit.g,
+            QuantityUnit.mg,
+            QuantityUnit.mcg,
+            QuantityUnit.mL,
+            QuantityUnit.iu,
+            QuantityUnit.unit,
+          ],
+        }[type] ??
+        [QuantityUnit.mg];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,16 +62,19 @@ class MedicationFormFields extends StatelessWidget {
           onChanged: onNameChanged,
         ),
         const SizedBox(height: 16),
-        if (type == MedicationType.tablet || type == MedicationType.capsule) ...[
+        if (type == MedicationType.tablet ||
+            type == MedicationType.capsule) ...[
           TextFormField(
             controller: tabletCountController,
             decoration: AppConstants.formFieldDecoration.copyWith(
-              labelText: 'Total Units (Tablets/Capsules) *',
+              labelText:
+                  'Total Number of ${type == MedicationType.tablet ? 'Tablets' : 'Capsules'} *',
             ),
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             validator: (value) {
-              if (value == null || value.isEmpty) return 'Please enter total units';
+              if (value == null || value.isEmpty)
+                return 'Please enter total units';
               if (double.tryParse(value) == null || double.parse(value)! <= 0) {
                 return 'Please enter a valid positive number';
               }
@@ -94,8 +98,10 @@ class MedicationFormFields extends StatelessWidget {
                   ),
                   keyboardType: TextInputType.number,
                   validator: (value) {
-                    if (value == null || value.isEmpty) return 'Please enter dose per tablet';
-                    if (double.tryParse(value) == null || double.parse(value)! <= 0) {
+                    if (value == null || value.isEmpty)
+                      return 'Please enter dose per tablet';
+                    if (double.tryParse(value) == null ||
+                        double.parse(value)! <= 0) {
                       return 'Please enter a valid positive number';
                     }
                     return null;
@@ -107,15 +113,19 @@ class MedicationFormFields extends StatelessWidget {
               SizedBox(
                 width: 120,
                 child: DropdownButtonFormField<QuantityUnit>(
-                  value: QuantityUnit.mg,
+                  value: quantityUnit == QuantityUnit.tablets
+                      ? QuantityUnit.mg
+                      : quantityUnit,
                   decoration: AppConstants.formFieldDecoration.copyWith(
                     labelText: 'Unit',
                   ),
                   items: [QuantityUnit.g, QuantityUnit.mg, QuantityUnit.mcg]
-                      .map((unit) => DropdownMenuItem(value: unit, child: Text(unit.displayName)))
+                      .map((unit) => DropdownMenuItem(
+                          value: unit, child: Text(unit.displayName)))
                       .toList(),
                   onChanged: onQuantityUnitChanged,
-                  validator: (value) => value == null ? 'Please select a unit' : null,
+                  validator: (value) =>
+                      value == null ? 'Please select a unit' : null,
                 ),
               ),
             ],
@@ -131,8 +141,10 @@ class MedicationFormFields extends StatelessWidget {
                   ),
                   keyboardType: TextInputType.number,
                   validator: (value) {
-                    if (value == null || value.isEmpty) return 'Please enter a quantity';
-                    if (double.tryParse(value) == null || double.parse(value)! <= 0) {
+                    if (value == null || value.isEmpty)
+                      return 'Please enter a quantity';
+                    if (double.tryParse(value) == null ||
+                        double.parse(value)! <= 0) {
                       return 'Please enter a valid positive number';
                     }
                     return null;
@@ -143,18 +155,21 @@ class MedicationFormFields extends StatelessWidget {
               const SizedBox(width: 16),
               Expanded(
                 child: DropdownButtonFormField<QuantityUnit>(
-                  value: quantityUnits.contains(quantityUnit) ? quantityUnit : quantityUnits.first,
+                  value: quantityUnits.contains(quantityUnit)
+                      ? quantityUnit
+                      : quantityUnits.first,
                   decoration: AppConstants.formFieldDecoration.copyWith(
                     labelText: 'Unit',
                   ),
                   items: quantityUnits
                       .map((unit) => DropdownMenuItem(
-                    value: unit,
-                    child: Text(unit.displayName),
-                  ))
+                            value: unit,
+                            child: Text(unit.displayName),
+                          ))
                       .toList(),
                   onChanged: onQuantityUnitChanged,
-                  validator: (value) => value == null ? 'Please select a unit' : null,
+                  validator: (value) =>
+                      value == null ? 'Please select a unit' : null,
                 ),
               ),
             ],
