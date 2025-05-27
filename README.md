@@ -2,6 +2,11 @@
 
 A Flutter-based medication tracking app to manage medications, dosages, schedules, and history.
 
+## Notes for Grok**: 
+- Always provide code snippets with clear instructions on where to paste them in the specified files. Do not include full file replacements unless explicitly requested. (May 27, 2025, 10:38 PM AEST)
+- Provide minimal code snippets targeting specific changes, avoiding full file replacements unless necessary, to save memory. Include precise placement instructions. (May 27, 2025, 11:18 PM AEST)
+- Information cards use `Themes.informationCardDecoration` for consistent styling (off-white, yellow border, shadow).
+- 
 ## Features Implemented
 To update this section:
 - Add new features or fixes under the relevant category.
@@ -61,6 +66,18 @@ To update this section:
   - Fixed `medication_form_screen.dart`: added `tabletCountController`, `volumeController`.
   - Created `lib/models/enums.dart` barrel file for enum imports.
   - Commits: `f74b6601948f0062a0ee54b47de2bad9b9ba8a89`, `ca43f038c3f484596b9a6e6a919182d0933a32ef`
+  - Fixed `CompactMedicationCard` navigation to `MedicationDetailsScreen` by adding `/medication_details` route in `main.dart`.
+  - Commit: `f7fafe15093810cd531c9b8c6cebaffd5235b5e0` (May 27, 2025, 10:25 PM AEST)
+  - Restored card styling in `MedicationDetailsScreen` with `AppConstants.cardDecoration` (yellow border, off-white background, shadow, rounded corners).
+  - Updated `constants.dart` to include yellow border in `cardDecoration`.
+  - Commit: <new_commit_hash> (May 27, 2025, 10:31 PM AEST)
+  - Fixed `MedicationDetailsScreen` layout issues causing stacked cards and unresponsiveness.
+  - Added `ConstrainedBox` and adjusted `Column` sizing to ensure proper rendering.
+  - Commit: `6bc1f8304e16f476bff016b63f978cab00e4e155` (May 27, 2025, 10:58 PM AEST)
+  - Added help text for `MedicationType` dropdown and `Total Units` in `MedicationFormScreen`.
+  - Made `Dose per Tablet` unit dropdown functional (g, mg, mcg).
+  - Fixed confirmation dialog text display issue.
+  - Commit: <new_commit_hash> (May 27, 2025, 11:18 PM AEST)
 
 ## Workflow Preservation
 To maintain development workflow with Grok:
