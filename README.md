@@ -82,6 +82,8 @@ To update this section:
   - Enhanced MedicationDetailsScreen with Add Schedule and Reconstitute buttons.
   - Improved confirmation dialogs with bolded text and styling.
   - Latest commit hash: `7cb8624efea1847ffb466829cddd6526f195c6bd`
+  - Added syringe size/type to IU terminology in Confirm Reconstitution Screen (May 27, 2025, 11:07 AM AEST, commit c131107f17269ebf6c331e1f52d7d153499f9cf8).
+  - Added SyringeSize enum in lib/models/enums/syringe_size.dart and updated ReconstitutionScreen to use it for syringe sizes (May 27, 2025, 11:25 AM AEST, commit f990613919f45ae2b520cc1e811766e88a948feb).
 
 ## Workflow Preservation
 To maintain the current development workflow with Grok:
