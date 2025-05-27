@@ -84,6 +84,15 @@ To update this section:
   - Made `Dose per Tablet` unit dropdown functional (g, mg, mcg).
   - Fixed confirmation dialog text display issue.
   - Commit: `ea39b884e4591f7c682d7f42940f55177a23cfdd` (May 27, 2025, 11:18 PM AEST)
+  - - **UI Enhancements** (May 27, 2025)
+  - Updated `MedicationType` dropdown label to "Select a Medication Type" and removed helper text.
+  - Changed `Total Units` label to "Total Number of Tablets" or "Total Number of Capsules".
+  - Updated confirmation dialog to show selected unit for `Dose per Tablet` (g, mg, mcg).
+  - Implemented app-wide number formatting to drop trailing decimal zeros using `formatNumber` in `format_helper.dart`.
+  - Commit: `9ef01b11373a3dd5d60624e2c8540d5fec89424a` (May 27, 2025, 11:39 PM AEST)
+  - - **Fixes** (May 28, 2025)
+  - Added missing `_showAddDosageDialog` method to `MedicationDetailsScreen` to handle injection dosage prompts.
+  - Commit: <new_commit_hash> (May 28, 2025, 12:36 AM AEST)
 
 ## Workflow Preservation
 To maintain development workflow with Grok:
