@@ -4,154 +4,85 @@ A Flutter-based medication tracking app to manage medications, dosages, schedule
 
 ## Features Implemented
 To update this section:
-- Add new features or build fixes under the relevant category (e.g., Medication Management, Build Fixes).
-- Include the date (e.g., May 26, 2025), time (e.g., 04:30 PM AEST), and commit hash.
-- Commit changes with `git add README.md`, `git commit -m "Updated README with changes"`, and `git push origin main`.
-- Retrieve the commit hash with `git log -1 --pretty=%H` and share it in the next chat.
+- Add new features or fixes under the relevant category.
+- Include date, time (AEST), and commit hash.
+- Commit changes with `git add README.md`, `git commit -m "Updated README with changes"`, `git push origin main`.
+- Retrieve commit hash with `git log -1 --pretty=%H`.
 
+### Features and Fixes
 - **Medication Management** (May 26, 2025)
   - Add, edit, delete medications (Tablet, Capsule, Injection, Other).
-  - Quantity units (g, mg, mcg, mL, IU, Unit) with accurate conversions.
-  - Reconstitution: single syringe size dropdown (0.3, 0.5, 1, 3, 5 mL), peptide formula (C=p/V, V_d=d/C), rounded volumes, warning bypass.
+  - Quantity units (g, mg, mcg, mL, IU, Unit) with conversions.
+  - Reconstitution: syringe size dropdown (0.3, 0.5, 1, 3, 5 mL), peptide formula (C=p/V, V_d=d/C), rounded volumes, warning bypass.
   - Helper text for stock entry.
   - National Geographic-themed UI: yellow accents, white cards, rounded corners.
-- **Dosage Management**
+  - Commit: `c75b6817a25d24c1e0813a6b52dd2e0cfb31d253`
+
+- **Dosage Management** (May 27, 2025)
   - Add, edit, delete dosages (e.g., "BPC157 Dose of 100mcg").
   - Dynamic summary card per dose.
   - Units: mcg, syringe units for reconstituted injections.
-  - No purple field highlighting.
-- **Home Screen**
+  - Form-based add/edit with validation, map-based arguments.
+  - Dosage name field with dynamic defaults, reconstitution defaults, syringe size for injections.
+  - Recent dosages in MedicationCard on MedicationDetailsScreen.
+  - Commits: `c75b6817a25d24c1e0813a6b52dd2e0cfb31d253`, `ca43f038c3f484596b9a6e6a919182d0933a32ef`
+
+- **Home Screen** (May 26, 2025)
   - FAB for adding medications.
   - "No medications added" message.
   - Next scheduled dose display.
   - Medication tiles with "Remaining X/Y" (mL for reconstituted).
   - Schedule creation button.
-- **Schedules**
+  - Commit: `f1b5971aa29a8a2f225f227f857e7d54ba8956c4`
+
+- **Schedules** (May 26, 2025)
   - Pre-populate medication/dosage, optional cycle period.
   - Frequency: hourly, daily, weekly, monthly.
   - Navigate to MedicationDetailsScreen after saving.
   - Notifications with details, supporting daily/weekly recurrence.
-- **Navigation**
+  - Commit: `96ac5411efb7b0986842f089765275b443caf76c`
+
+- **Navigation** (May 26, 2025)
   - Bottom navigation bar on all screens (Home, Calendar, History, Settings).
   - Protected navigation stack with `WillPopScope`.
-- **Build Fixes**
-  - Commit `42337984b04a1649c3229cd13d64832540a598a2`: Fixed navigation.
-  - Commit `e74e621a05e653bd8d730056e2519cf07164dd5c`: Added `Dosage`, `doseUnits`.
-  - Commit `0a51ccb38b274a19219cc576c682d097291d12c6`: Enhanced UI, fixed reconstitution.
-  - Commit `f1b5971aa29a8a2f225f227f857e7d54ba8956c4`: Added home screen, schedule model.
-  - Commit `6f0eff93734fccc40feabdb07914376e48ca0754`: Fixed `upcomingDoses` parsing.
-  - Commit `d252f5421fb91218394db19fe45378d3bc7647b7`: Fixed schedule imports, async methods.
-  - Commit `b81b4326b56deb0e54a70c98f79011be2afbd7c4`: Fixed `notification_service.dart`.
-  - Commit `96ac5411efb7b0986842f089765275b443caf76c`: Fixed reconstitution, added schedule creation.
-  - Commit `35f206cae73add2a5b0d94624db602a337c08b45`: Fixed reconstitution math, syringe pop-up.
-  - Commit `f87b75af7b96ffae8726e39b540a91489ec94b5c`: Removed duplicate syringe dropdown, added schedule and UI enhancements.
-  - Commit `c75b6817a25d24c1e0813a6b52dd2e0cfb31d253` (May 26, 2025, 04:30 PM AEST):
-  - Fixed `selectedIU` in `main.dart`, `amount` and `dosageUnit` in `add_dosage_screen.dart`.
-  - Corrected `dosageUnit`, `frequencyType`, and `notificationTime` in `add_schedule_screen.dart`.
-  - Updated `notificationTime` to `int?` in `schedule.dart` and fixed type mismatches in `data_provider.dart` and `notification_service.dart`.
-  - Commit `f74b6601948f0062a0ee54b47de2bad9b9ba8a89` (May 26, 2025, 04:25 PM AEST):
-  - Fixed `selectedIU` in `main.dart`.
-  - Corrected `Dosage` fields (`dosageAmount`, `unit`) in `add_dosage_screen.dart` and `add_schedule_screen.dart`.
-  - Fixed `notificationTime` handling in `notification_service.dart` and `data_provider.dart`.
-  - Initial setup for medication input and schedule generation.
-  - Fixed errors in DosageMethod enum, null safety, missing parameters, and type mismatches in dosage and schedule screens.
-  - Latest commit hash: `158216041ab3d87e0c3eb7b8a62da55023a4fad1`
-  - Initial setup for medication input and schedule generation.
-  - Fixed errors in DosageMethod enum, null safety, missing parameters, and type mismatches in dosage and schedule screens.
-  - Latest commit hash: `4524241d0b48148781c78b4962298ec2f387ec46`
-  - - Initial setup for medication input and schedule generation.
-  - Fixed errors in DosageMethod, FrequencyType, missing parameters, undefined identifiers, and type mismatches.
-  - Resolved warnings for unused variables and imports.
-  - Latest commit hash: `d951f27e2df3a35fb171ea9e78e84a7c5cdf222b`
-  - Initial setup for medication input and schedule generation.
-  - Fixed errors in undefined identifiers, missing parameters, type mismatches, and ambiguous imports.
-  - Removed duplicate FrequencyType enum from schedule.dart.
-  - Resolved warnings for unused variables and dead code.
-  - Latest commit hash: `36cd007435e39ca9088c2fb458c51ffa3b2e3e48`
-  - Initial setup for medication input and schedule generation.
-  - Fixed errors in undefined identifiers, missing parameters, type mismatches, and ambiguous imports.
-  - Removed duplicate FrequencyType enum from schedule.dart and added missing imports.
-  - Resolved warnings for unused variables and dead code.
-  - Latest commit hash: `c9ae2f5105b8962dff688a98ae7048bfe38c584f`
-  - Initial setup for medication input and schedule generation.
-  - Fixed duplicate bottom navigation bar on HomeScreen.
-  - Added AppBottomNavigationBar in `lib/widgets/navigation`.
-  - Updated AddMedicationScreen to start with Medicine Type selection.
-  - Moved reconstitution calculator to ReconstitutionScreen for Injection/Other types.
-  - Fixed AddDosageScreen crash and updated UI (default name, dose unit placement).
-  - Enhanced MedicationDetailsScreen with Add Schedule and Reconstitute buttons.
-  - Improved confirmation dialogs with bolded text and styling.
-  - Latest commit hash: `7cb8624efea1847ffb466829cddd6526f195c6bd`
-  - Added syringe size/type to IU terminology in Confirm Reconstitution Screen (May 27, 2025, 11:07 AM AEST, commit c131107f17269ebf6c331e1f52d7d153499f9cf8).
-  - Added SyringeSize enum in lib/models/enums/syringe_size.dart and updated ReconstitutionScreen to use it for syringe sizes (May 27, 2025, 11:25 AM AEST, commit f990613919f45ae2b520cc1e811766e88a948feb).
-  - Added cardDecoration constant in constants.dart and applied consistent card styling to MedicationDetailsScreen and ReconstitutionScreen (May 27, 2025, 11:29 AM AEST, commit ecac760eec1ab72764e350f39953ad40c47422c2).
-  - Fixed cardDecoration constant in constants.dart to use const-compatible Border and BorderRadius, applied to MedicationCard and ReconstitutionScreen cards. Commit e8d779f0e2753d37f08977dc6e1edf021f6ff85e (May 27, 2025, 12:01 PM AEST):
-  - Removed yellow highlight from MedicationCard and ReconstitutionScreen cards for cleaner styling (May 27, 2025, 12:11 PM AEST, commit <280b19dd8d7761f28638ecaa5dbc92f935f7a5ff>).- Enhanced card styling with National Geographic aesthetic (off-white background, shadow, yellow highlights, modern typography) in MedicationDetailsScreen and ReconstitutionScreen (May 27, 2025, 12:05 PM AEST, commit a8d86ec3f73600b57f3d6ce041d681f48387f61c).
-  - Consolidated add/edit medication screens, added enums, made MedicationCard tappable, moved reconstitution option to button in MedicationDetailsScreen (May 27, 2025, 1:05 PM AEST, commit <new_commit_hash>).
-  - Consolidated add/edit medication screens, added enums, made MedicationCard tappable, moved reconstitution to MedicationDetailsScreen button, added styled help message, bolded confirmation dialog labels, centered dialog buttons, set injection default to mg, made MedicationDetailsScreen cards full-width with bold headers, renamed to Medication Overview, added stock message and dosage/reconstitution buttons, enhanced MedicationCard with reconstitution summary and stylized fields (May 27, 2025, 1:21 PM AEST, commit <new_commit_hash>).
-  - Consolidated add/edit medication screens, added enums, made MedicationCard tappable, moved reconstitution to MedicationDetailsScreen button, added styled help message, bolded confirmation dialog labels, centered dialog buttons, set injection default to mg, made MedicationDetailsScreen cards full-width with bold headers, renamed to Medication Overview, added stock message and dosage/reconstitution buttons, enhanced MedicationCard with reconstitution summary, DosageMethod display, and stylized fields, fixed DosageMethod and dropdown issues, reverted to direct file operations in DataProvider (May 27, 2025, 1:37 PM AEST, commit <new_commit_hash>).
-  - Fixed undefined concentration variable in reconstitution_screen.dart (commit: <commit_hash>)
-  - Commit `<commit_hash>` (May 27, 2025, 04:21 PM AEST):
-  - Fixed reconstitution_screen.dart: used TargetDoseUnit enum.
-  - Updated medication_card.dart: removed redundant quantity, added next dose.
-  - Updated home_screen.dart: replaced ListTile with MedicationCard.
-  - Updated medication_details_screen.dart: added back to home navigation.
-  - Updated main.dart: set cursor to amber, fixed typo in inputDecorationTheme.
-  - Added add_dosage_screen.dart: form-based add/edit dosage with map arguments.
-  - **Dosage Management** (May 27, 2025, 04:21 PM AEST, commit `<commit_hash>`):
-  - Form-based dosage add/edit with validation, map-based arguments.
-  - - Commit `<commit_hash>` (May 27, 2025, 05:00 PM AEST):
-  - Updated reconstitution_screen.dart: revised summary text, highlighted Fluid Amount and IU in dialog.
-  - Updated home_screen.dart: used CompactMedicationCard, replaced BottomNavigationBar with AppBottomNavigationBar.
-  - Updated medication_details_screen.dart: moved medication name to MedicationCard, fixed back button navigation.
-  - Updated medication_card.dart: improved styling (gradient, spacing), added name and recent dosages.
-  - Updated add_dosage_screen.dart: added dosage name, reconstitution defaults, syringe size for injections.
-  - Added compact_medication_card.dart: compact card for HomeScreen.
+  - Commit: `42337984b04a1649c3229cd13d64832540a598a2`
 
-## Features Implemented
-- **Dosage Management** (May 27, 2025, 05:00 PM AEST, commit `<commit_hash>`):
-  - Added dosage name field with dynamic defaults.
-  - Used reconstitution values as defaults in AddDosageScreen.
-  - Included syringe size selection for injection methods.
-  - Displayed recent dosages in MedicationCard on MedicationDetailsScreen.
-- **UI Enhancements** (May 27, 2025, 05:00 PM AEST, commit `<commit_hash>`):
+- **UI Enhancements** (May 27, 2025)
   - Created CompactMedicationCard for HomeScreen.
-  - Improved MedicationCard styling.
+  - Improved MedicationCard styling (gradient, spacing).
   - Moved medication name into MedicationCard.
-- - Commit `<commit_hash>` (May 27, 2025, 05:58 PM AEST):
-- Fixed build errors in `dosage_form_screen.dart`:
-  - Removed invalid `importPlaylist` directive.
-  - Ensured import directives are at the top.
-  - Added null check for `recon['syringeSize']` to resolve null safety issue.
-  - ### Fixes (2025-05-27)
-- Fixed non-ASCII character error in `dosage_form_screen.dart` by correcting `_tabletCountController` reference.
-- Moved `isReconstituted` to class level in `_DosageFormScreenState` to resolve undefined getter error.
-- ### Fixes (2025-05-27)
-- Fixed build error in `medication_form_screen.dart` by adding `tabletCountController` and `volumeController` to `MedicationFormFields` (commit: <your_commit_hash>).
-- Created barrel file `lib/models/enums.dart` to simplify enum imports, keeping enums in separate files (commit: <your_commit_hash>).
-- 
+  - Card styling: off-white background, shadow, yellow highlights, modern typography.
+  - Commit: `ca43f038c3f484596b9a6e6a919182d0933a32ef`
+
+- **Build Fixes** (May 27, 2025)
+  - Fixed `selectedIU` in `main.dart`, `dosageUnit`, `frequencyType`, `notificationTime` in screens.
+  - Fixed type mismatches in `data_provider.dart`, `notification_service.dart`.
+  - Fixed `dosage_form_screen.dart`: removed invalid `importPlaylist`, added null check for `recon['syringeSize']`, corrected `_tabletCountController`, moved `isReconstituted` to class level.
+  - Fixed `medication_form_screen.dart`: added `tabletCountController`, `volumeController`.
+  - Created `lib/models/enums.dart` barrel file for enum imports.
+  - Commits: `f74b6601948f0062a0ee54b47de2bad9b9ba8a89`, `ca43f038c3f484596b9a6e6a919182d0933a32ef`
 
 ## Workflow Preservation
-To maintain the current development workflow with Grok:
-1. Provide the latest commit hash from https://github.com/kinemedsppa/MedTrackr.
-2. Share detailed feedback on UI/UX, functionality, and bugs, including console logs or errors.
-3. Include any missing files (e.g., `medication.dart`) if referenced.
-4. Specify desired changes with examples (e.g., styling, medical terminology).
+To maintain development workflow with Grok:
+1. Provide latest commit hash from https://github.com/kinemspa/MedTrackr.
+2. Share UI/UX feedback, functionality issues, bugs, console logs.
+3. Include missing files if referenced.
+4. Specify desired changes with examples.
 5. Grok will:
-  - Analyze the commit and feedback.
+  - Analyze commit and feedback.
   - Provide updated code with explanations.
-  - Include commit instructions (stage, commit, push).
-  - Update README with progress and workflow notes.
-  - Request test results and next priorities.
+  - Include commit instructions.
+  - Update README with progress.
+  - Request test results and priorities.
 
 ## Planned Features
-- **Schedules**: Add cycle period calculations, multi-dose schedules.
-- **Calendar Screen**: View using `table_calendar`.
-- **History**: Track dosages with CSV export.
-- **Settings**: Themes, notifications.
+- Schedules: Cycle period calculations, multi-dose schedules.
+- Calendar Screen: View using `table_calendar`.
+- History: Track dosages with CSV export.
+- Settings: Themes, notifications.
 
 ## Build Instructions
-1. Clone: `git clone https://github.com/kinemedsppa/MedTrackr.git`
+1. Clone: `git clone https://github.com/kinemspa/MedTrackr.git`
 2. Install dependencies: `flutter pub get`
 3. Run: `flutter run`
 
@@ -160,4 +91,3 @@ To maintain the current development workflow with Grok:
 - IDE: Android Studio
 - OS: Windows 11
 - Emulator: sdk gphone64 x86 64
-- 
