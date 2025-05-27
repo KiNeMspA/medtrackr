@@ -351,12 +351,6 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
                         style: AppConstants.cardTitleStyle,
                       ),
                       const SizedBox(height: 8),
-                      Container(
-                        height: 2,
-                        width: 48,
-                        color: AppConstants.primaryColor, // Yellow highlight
-                      ),
-                      const SizedBox(height: 8),
                       RichText(
                         text: TextSpan(
                           style: AppConstants.cardBodyStyle,

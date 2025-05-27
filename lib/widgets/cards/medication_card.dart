@@ -20,12 +20,6 @@ class MedicationCard extends StatelessWidget {
             style: AppConstants.cardTitleStyle,
           ),
           const SizedBox(height: 8),
-          Container(
-            height: 2,
-            width: 48,
-            color: AppConstants.primaryColor, // Yellow highlight
-          ),
-          const SizedBox(height: 8),
           Text(
             'Type: ${medication.type}',
             style: AppConstants.cardBodyStyle,
