@@ -407,7 +407,11 @@ class DataProvider with ChangeNotifier {
   }
 
   Future<void> deleteMedicationAsync(String id) async {
-    // Implement storage deletion (e.g., Firebase, local database)
+    _medications.removeWhere((m) => m.id == id);
+    _schedules.removeWhere((s) => s.medicationId == id);
+    _dosages.removeWhere((d) => d.medicationId == id);
+    _notificationService.cancelNotification(id.hashCode);
+    await _saveData();
     notifyListeners();
   }
 }

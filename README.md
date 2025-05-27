@@ -6,8 +6,8 @@ A Flutter-based medication tracking app to manage medications, dosages, schedule
 - Always provide code snippets with clear instructions on where to paste them in the specified files. Do not include full file replacements unless explicitly requested. (May 27, 2025, 10:38 PM AEST)
 - Provide minimal code snippets targeting specific changes, avoiding full file replacements unless necessary, to save memory. Include precise placement instructions. (May 27, 2025, 11:18 PM AEST)
 - Information cards use `Themes.informationCardDecoration` for consistent styling (off-white, yellow border, shadow).
-- Information cards use `Themes.informationCardDecoration` for consistent styling (off-white, yellow border, shadow).
 - For numeric displays, drop trailing decimal zeros app-wide (e.g., 1.0 → 1) using a formatting function.
+- Ensure the Reconstitution button on `MedicationDetailsScreen` only appears for `Injection` medications. (May 28, 2025, 12:48 AM AEST)
 
 ## Features Implemented
 To update this section:
@@ -93,7 +93,13 @@ To update this section:
   - - **Fixes** (May 28, 2025)
   - Added missing `_showAddDosageDialog` method to `MedicationDetailsScreen` to handle injection dosage prompts.
   - Commit: <new_commit_hash> (May 28, 2025, 12:36 AM AEST)
-
+  - **Fixes** (May 28, 2025)
+    - Added missing `_showAddDosageDialog` method to `MedicationDetailsScreen` to handle injection dosage prompts.
+    - Commit: `228d31d1e53ee17a1846230af7d9f14e4940c4e1` (May 28, 2025, 12:36 AM AEST)
+    - - **Fixes** (May 28, 2025)
+  - Removed `_getSelectedUnit` from `MedicationDetailsScreen` and used `dosePerTabletUnit`/`dosePerCapsuleUnit`.
+  - Restored Reconstitution button for injections on `MedicationDetailsScreen`.
+  - Commit: <new_commit_hash> (May 28, 2025, 12:53 AM AEST)
 ## Workflow Preservation
 To maintain development workflow with Grok:
 1. Provide latest commit hash from https://github.com/kinemspa/MedTrackr.

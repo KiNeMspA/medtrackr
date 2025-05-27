@@ -158,12 +158,10 @@ class MedicationDetailsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 GestureDetector(
-                  onTap: () => Navigator.pushNamed(context, '/medication_form',
-                      arguments: medication),
+                  onTap: () => Navigator.pushNamed(context, '/medication_form', arguments: medication),
                   child: Card(
                     elevation: 6,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     margin: const EdgeInsets.symmetric(horizontal: 0),
                     child: Container(
                       width: double.infinity,
@@ -171,29 +169,22 @@ class MedicationDetailsScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Name: ${medication.name}',
-                              style: AppConstants.cardBodyStyle),
-                          Text('Type: ${medication.type.displayName}',
-                              style: AppConstants.cardBodyStyle),
+                          Text('Name: ${medication.name}', style: AppConstants.cardBodyStyle),
+                          Text('Type: ${medication.type.displayName}', style: AppConstants.cardBodyStyle),
                           Text(
                               'Quantity: ${formatNumber(medication.quantity)} ${medication.quantityUnit.displayName}',
                               style: AppConstants.cardBodyStyle),
-                          if (medication.dosePerTablet != null &&
-                              medication.type == MedicationType.tablet)
-                            Text(
-                                'Dose per Tablet: ${formatNumber(medication.dosePerTablet!)} ${medication.dosePerTabletUnit?.displayName ?? 'mg'}',
+                          if (medication.dosePerTablet != null && medication.type == MedicationType.tablet)
+                            Text('Dose per Tablet: ${formatNumber(medication.dosePerTablet!)} ${medication.dosePerTabletUnit?.displayName ?? 'mg'}',
                                 style: AppConstants.cardBodyStyle),
-                          if (medication.dosePerCapsule != null &&
-                              medication.type == MedicationType.capsule)
-                            Text(
-                                'Dose per Capsule: ${formatNumber(medication.dosePerCapsule!)} ${medication.dosePerCapsuleUnit?.displayName ?? 'mg'}',
+                          if (medication.dosePerCapsule != null && medication.type == MedicationType.capsule)
+                            Text('Dose per Capsule: ${formatNumber(medication.dosePerCapsule!)} ${medication.dosePerCapsuleUnit?.displayName ?? 'mg'}',
                                 style: AppConstants.cardBodyStyle),
                           if (medication.reconstitutionVolume > 0)
                             Text(
                                 'Reconstituted: ${formatNumber(medication.reconstitutionVolume)} ${medication.reconstitutionVolumeUnit} ${medication.reconstitutionFluid}',
                                 style: AppConstants.cardBodyStyle),
-                          Text(
-                              'Notes: ${medication.notes.isNotEmpty ? medication.notes : 'None'}',
+                          Text('Notes: ${medication.notes.isNotEmpty ? medication.notes : 'None'}',
                               style: AppConstants.cardBodyStyle),
                         ],
                       ),
@@ -245,9 +236,7 @@ class MedicationDetailsScreen extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4.0),
                         child: ElevatedButton(
-                          onPressed: () => Navigator.pushNamed(
-                              context, '/dosage_form',
-                              arguments: medication),
+                          onPressed: () => Navigator.pushNamed(context, '/dosage_form', arguments: medication),
                           style: AppConstants.actionButtonStyle,
                           child: const Text('Add Dosage'),
                         ),
@@ -259,9 +248,7 @@ class MedicationDetailsScreen extends StatelessWidget {
                         child: ElevatedButton(
                           onPressed: dosages.isEmpty
                               ? () => _showNoDosageDialog(context)
-                              : () => Navigator.pushNamed(
-                                  context, '/add_schedule',
-                                  arguments: medication),
+                              : () => Navigator.pushNamed(context, '/add_schedule', arguments: medication),
                           style: AppConstants.actionButtonStyle,
                           child: const Text('Add Schedule'),
                         ),
@@ -271,14 +258,23 @@ class MedicationDetailsScreen extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4.0),
                         child: ElevatedButton(
-                          onPressed: () => Navigator.pushNamed(
-                              context, '/medication_form',
-                              arguments: medication),
+                          onPressed: () => Navigator.pushNamed(context, '/medication_form', arguments: medication),
                           style: AppConstants.actionButtonStyle,
                           child: const Text('Refill'),
                         ),
                       ),
                     ),
+                    if (medication.type == MedicationType.injection)
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.pushNamed(context, '/reconstitute', arguments: medication),
+                            style: AppConstants.actionButtonStyle,
+                            child: const Text('Reconstitute'),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ],

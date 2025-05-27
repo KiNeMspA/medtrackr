@@ -54,10 +54,10 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
             ? widget.medication!.quantity.toStringAsFixed(2)
             : '');
     _dosePerTabletController = TextEditingController(
-        text: widget.medication?.dosePerTablet != null &&
-                (widget.medication!.type == MedicationType.tablet ||
-                    widget.medication!.type == MedicationType.capsule)
-            ? widget.medication!.dosePerTablet!.toStringAsFixed(2)
+        text: widget.medication != null &&
+            (widget.medication!.type == MedicationType.tablet ||
+                widget.medication!.type == MedicationType.capsule)
+            ? formatNumber(widget.medication!.dosePerTablet ?? widget.medication!.dosePerCapsule ?? 0.0)
             : '');
     _notesController =
         TextEditingController(text: widget.medication?.notes ?? '');
@@ -98,8 +98,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
         isTabletOrCapsule ? QuantityUnit.tablets : _quantityUnit;
 
     final medication = Medication(
-      id: widget.medication?.id ??
-          DateTime.now().millisecondsSinceEpoch.toString(),
+      id: widget.medication?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
       name: _nameController.text,
       type: _type!,
       quantityUnit: unit,
@@ -109,9 +108,10 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
       reconstitutionVolume: 0.0,
       reconstitutionFluid: '',
       notes: _notesController.text,
-      dosePerTablet: isTabletOrCapsule
-          ? double.tryParse(_dosePerTabletController.text) ?? 0.0
-          : null,
+      dosePerTablet: isTabletOrCapsule && _type == MedicationType.tablet ? double.tryParse(_dosePerTabletController.text) ?? 0.0 : null,
+      dosePerCapsule: isTabletOrCapsule && _type == MedicationType.capsule ? double.tryParse(_dosePerTabletController.text) ?? 0.0 : null,
+      dosePerTabletUnit: isTabletOrCapsule && _type == MedicationType.tablet ? _quantityUnit : null,
+      dosePerCapsuleUnit: isTabletOrCapsule && _type == MedicationType.capsule ? _quantityUnit : null,
     );
 
     final confirmed = await showDialog<bool>(
@@ -126,8 +126,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
             children: [
               RichText(
                 text: TextSpan(
-                  style: const TextStyle(
-                      color: Colors.black, fontSize: 14, height: 1.8),
+                  style: const TextStyle(color: Colors.black, fontSize: 14, height: 1.8),
                   children: [
                     const TextSpan(
                       text: 'Name: ',
@@ -144,26 +143,26 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     TextSpan(
-                        text:
-                            '${_formatNumber(medication.quantity)} ${medication.quantityUnit.displayName}'),
-                    if (isTabletOrCapsule &&
-                        medication.dosePerTablet != null) ...[
+                        text: '${_formatNumber(medication.quantity)} ${medication.quantityUnit.displayName}'),
+                    if (isTabletOrCapsule && medication.dosePerTablet != null && _type == MedicationType.tablet) ...[
                       const TextSpan(
                         text: '\nDose per Tablet: ',
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      TextSpan(
-                          text:
-                              '${_formatNumber(medication.dosePerTablet!)} ${_quantityUnit.displayName}'),
+                      TextSpan(text: '${_formatNumber(medication.dosePerTablet!)} ${medication.dosePerTabletUnit?.displayName ?? "mg"}'),
+                    ],
+                    if (isTabletOrCapsule && medication.dosePerCapsule != null && _type == MedicationType.capsule) ...[
+                      const TextSpan(
+                        text: '\nDose per Capsule: ',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      TextSpan(text: '${_formatNumber(medication.dosePerCapsule!)} ${medication.dosePerCapsuleUnit?.displayName ?? "mg"}'),
                     ],
                     const TextSpan(
                       text: '\nNotes: ',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    TextSpan(
-                        text: medication.notes.isNotEmpty
-                            ? medication.notes
-                            : 'None'),
+                    TextSpan(text: medication.notes.isNotEmpty ? medication.notes : 'None'),
                   ],
                 ),
               ),
@@ -290,8 +289,8 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                       padding: const EdgeInsets.all(16.0),
                       child: Text(
                         _type == MedicationType.injection
-                            ? 'Proceed to the Medication Overview to set up dosages, reconstitution (if applicable), and schedules.'
-                            : 'Proceed to the Medication Overview to set up dosages and schedules.',
+                            ? 'Save Medication to proceed to Medication Overview where you can calculate reconstitution, add dosages and setup schedules.'
+                            : 'Save Medication to proceed to Medication Overview where you can add dosages and setup schedules.',
                         style: AppConstants.infoTextStyle,
                       ),
                     ),

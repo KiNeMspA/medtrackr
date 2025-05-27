@@ -94,12 +94,14 @@ class MedicationFormFields extends StatelessWidget {
                 child: TextFormField(
                   controller: dosePerTabletController,
                   decoration: AppConstants.formFieldDecoration.copyWith(
-                    labelText: 'Dose per Tablet *',
+                    labelText: type == MedicationType.tablet
+                        ? 'Dose per Tablet *'
+                        : 'Dose per Capsule *',
                   ),
                   keyboardType: TextInputType.number,
                   validator: (value) {
                     if (value == null || value.isEmpty)
-                      return 'Please enter dose per tablet';
+                      return 'Please enter dose per ${type == MedicationType.tablet ? 'tablet' : 'capsule'}';
                     if (double.tryParse(value) == null ||
                         double.parse(value)! <= 0) {
                       return 'Please enter a valid positive number';
