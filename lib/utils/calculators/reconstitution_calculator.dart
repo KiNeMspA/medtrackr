@@ -78,16 +78,37 @@ class ReconstitutionCalculator {
         final C = pMg / V;
         final vD = dMg / C;
         final U = vD * 100;
+        final maxIU = S == 0.3 ? 30 : S == 0.5 ? 50 : S == 1.0 ? 100 : 300;
 
-        if (vD <= S) {
+        if (vD <= S && U <= maxIU) {
           selectedReconstitution = {
             'volume': V,
             'concentration': C,
             'doseVolume': vD,
             'syringeUnits': U,
             'syringeSize': S,
+            'targetDose': d,
+            'targetDoseUnit': targetDoseUnit,
           };
           suggestions.add(selectedReconstitution);
+          suggestions.add({
+            'volume': V,
+            'concentration': C,
+            'doseVolume': vD * 0.5,
+            'syringeUnits': U * 0.5,
+            'syringeSize': S,
+            'targetDose': d * 0.5,
+            'targetDoseUnit': targetDoseUnit,
+          });
+          suggestions.add({
+            'volume': V,
+            'concentration': C,
+            'doseVolume': vD * 1.5,
+            'syringeUnits': U * 1.5,
+            'syringeSize': S,
+            'targetDose': d * 1.5,
+            'targetDoseUnit': targetDoseUnit,
+          });
         } else {
           return {
             'suggestions': [],
@@ -95,12 +116,10 @@ class ReconstitutionCalculator {
             'totalAmount': pMg,
             'targetDose': dMg,
             'medicationName': medicationName.isNotEmpty ? medicationName : 'Medication',
-            'error': 'Dose volume exceeds syringe size for fixed volume.',
+            'error': 'Dose volume or IU (${_formatNumber(U)}) exceeds syringe capacity (${_formatNumber(maxIU.toDouble())} IU).',
           };
         }
       } else {
-        // ... (rest unchanged)
-        // Original volume iteration
         final vMin = (dMg * S) / pMg;
         if (vMin > S) {
           Logger.logError('Minimum volume $vMin exceeds syringe size $S');
@@ -116,17 +135,20 @@ class ReconstitutionCalculator {
 
         for (var V = (vMin / step).ceil() * step; V <= S; V += step) {
           final roundedV = (V * 100).round() / 100;
-          final C = pMg / roundedV; // Concentration: C = p / V (mg/mL)
-          final vD = dMg / C; // Dose Volume: V_d = d / C (mL)
-          final U = vD * 100; // Syringe Units: U = V_d * 100 (1 mL = 100 units)
+          final C = pMg / roundedV;
+          final vD = dMg / C;
+          final U = vD * 100;
+          final maxIU = S == 0.3 ? 30 : S == 0.5 ? 50 : S == 1.0 ? 100 : 300;
 
-          if (vD <= S) {
+          if (vD <= S && U <= maxIU) {
             suggestions.add({
               'volume': roundedV,
               'concentration': C,
               'doseVolume': vD,
               'syringeUnits': U,
               'syringeSize': S,
+              'targetDose': d,
+              'targetDoseUnit': targetDoseUnit,
             });
           }
         }
@@ -140,19 +162,19 @@ class ReconstitutionCalculator {
         }
       }
 
-      // Calculate warnings for selected reconstitution
       String? warning;
       if (selectedReconstitution != null) {
         final concentration = selectedReconstitution['concentration'] as double;
         final syringeUnits = selectedReconstitution['syringeUnits'] as double;
+        final maxIU = S == 0.3 ? 30 : S == 0.5 ? 50 : S == 1.0 ? 100 : 300;
         if (syringeUnits < 5) {
           warning = 'Warning: IU (${_formatNumber(syringeUnits)}) is too low. Increase fluid amount.';
-        } else if (syringeUnits > 100 * S) {
-          warning = 'Warning: IU (${_formatNumber(syringeUnits)}) exceeds syringe capacity (${_formatNumber(100 * S)} IU). Decrease fluid amount.';
+        } else if (syringeUnits > maxIU) {
+          warning = 'Warning: IU (${_formatNumber(syringeUnits)}) exceeds syringe capacity (${_formatNumber(maxIU.toDouble())} IU).';
         } else if (concentration < 0.1) {
-          warning = 'Warning: Concentration is ${_formatNumber(concentration)} mg/mL, too low. Increase fluid amount.';
+          warning = 'Warning: Concentration is ${_formatNumber(concentration)} mg/mL, too low.';
         } else if (concentration > 10) {
-          warning = 'Warning: Concentration is ${_formatNumber(concentration)} mg/mL, too high. Decrease fluid amount.';
+          warning = 'Warning: Concentration is ${_formatNumber(concentration)} mg/mL, too high.';
         }
       }
 
@@ -160,7 +182,7 @@ class ReconstitutionCalculator {
         'suggestions': suggestions.take(4).toList(),
         'selectedReconstitution': selectedReconstitution,
         'totalAmount': pMg,
-        'targetDose': dMg,
+        'targetDose': d,
         'medicationName': medicationName.isNotEmpty ? medicationName : 'Medication',
         'error': warning,
       };

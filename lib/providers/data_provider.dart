@@ -15,7 +15,9 @@ class DataProvider with ChangeNotifier {
   final NotificationService _notificationService;
 
   List<Medication> get medications => _medications;
+
   List<Schedule> get schedules => _schedules;
+
   List<Dosage> get dosages => _dosages;
 
   List<Map<String, dynamic>> get upcomingDoses {
@@ -29,10 +31,11 @@ class DataProvider with ChangeNotifier {
       if (schedule != null) {
         final hour = schedule.time.hour;
         final minute = schedule.time.minute;
-        final scheduleTime = DateTime(now.year, now.month, now.day, hour, minute);
+        final scheduleTime =
+            DateTime(now.year, now.month, now.day, hour, minute);
         final nextTime = scheduleTime.isBefore(now)
             ? scheduleTime.add(Duration(
-            days: schedule.frequencyType == FrequencyType.daily ? 1 : 7))
+                days: schedule.frequencyType == FrequencyType.daily ? 1 : 7))
             : scheduleTime;
 
         upcoming.add({
@@ -69,15 +72,22 @@ class DataProvider with ChangeNotifier {
         final data = jsonDecode(jsonString) as Map<String, dynamic>;
         bool needsMigration = false;
 
-        final medications = (data['medications'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
+        final medications = (data['medications'] as List<dynamic>?)
+                ?.cast<Map<String, dynamic>>() ??
+            [];
         for (var i = 0; i < medications.length; i++) {
           final med = medications[i];
-          if (med['type'] is String && !MedicationType.values.any((e) => e.displayName == med['type'])) {
-            med['type'] = _parseMedicationType(med['type'] as String).displayName;
+          if (med['type'] is String &&
+              !MedicationType.values.any((e) => e.displayName == med['type'])) {
+            med['type'] =
+                _parseMedicationType(med['type'] as String).displayName;
             needsMigration = true;
           }
-          if (med['quantityUnit'] is String && !QuantityUnit.values.any((e) => e.displayName == med['quantityUnit'])) {
-            med['quantityUnit'] = _parseQuantityUnit(med['quantityUnit'] as String).displayName;
+          if (med['quantityUnit'] is String &&
+              !QuantityUnit.values
+                  .any((e) => e.displayName == med['quantityUnit'])) {
+            med['quantityUnit'] =
+                _parseQuantityUnit(med['quantityUnit'] as String).displayName;
             needsMigration = true;
           }
         }
@@ -94,20 +104,21 @@ class DataProvider with ChangeNotifier {
 
   MedicationType _parseMedicationType(String type) {
     return MedicationType.values.firstWhere(
-          (e) => e.displayName.toLowerCase() == type.toLowerCase(),
+      (e) => e.displayName.toLowerCase() == type.toLowerCase(),
       orElse: () => MedicationType.other,
     );
   }
 
   QuantityUnit _parseQuantityUnit(String unit) {
     return QuantityUnit.values.firstWhere(
-          (e) => e.displayName.toLowerCase() == unit.toLowerCase(),
+      (e) => e.displayName.toLowerCase() == unit.toLowerCase(),
       orElse: () => QuantityUnit.mg,
     );
   }
 
   void addMedication(Medication medication) {
-    if (_medications.any((m) => m.name.toLowerCase() == medication.name.toLowerCase())) {
+    if (_medications
+        .any((m) => m.name.toLowerCase() == medication.name.toLowerCase())) {
       return;
     }
     _medications.add(medication);
@@ -150,7 +161,8 @@ class DataProvider with ChangeNotifier {
 
   Future<void> addScheduleAsync(Schedule schedule) async {
     _schedules.add(schedule);
-    await _notificationService.scheduleNotification(schedule, _medications, _dosages);
+    await _notificationService.scheduleNotification(
+        schedule, _medications, _dosages);
     await _saveData();
     notifyListeners();
   }
@@ -160,7 +172,8 @@ class DataProvider with ChangeNotifier {
     if (index != -1) {
       _schedules[index] = updatedSchedule;
       await _notificationService.cancelNotification(id.hashCode);
-      await _notificationService.scheduleNotification(updatedSchedule, _medications, _dosages);
+      await _notificationService.scheduleNotification(
+          updatedSchedule, _medications, _dosages);
       await _saveData();
       notifyListeners();
     }
@@ -174,7 +187,7 @@ class DataProvider with ChangeNotifier {
     _dosages.add(dosage);
     if (dosage.takenTime != null) {
       final medication = _medications.firstWhere(
-            (m) => m.id == dosage.medicationId,
+        (m) => m.id == dosage.medicationId,
         orElse: () => Medication(
           id: '',
           name: 'Unknown',
@@ -213,7 +226,7 @@ class DataProvider with ChangeNotifier {
       _dosages[index] = updatedDosage;
       if (updatedDosage.takenTime != null) {
         final medication = _medications.firstWhere(
-              (m) => m.id == updatedDosage.medicationId,
+          (m) => m.id == updatedDosage.medicationId,
           orElse: () => Medication(
             id: '',
             name: 'Unknown',
@@ -248,7 +261,8 @@ class DataProvider with ChangeNotifier {
   }
 
   Future<void> addMedicationAsync(Medication medication) async {
-    if (_medications.any((m) => m.name.toLowerCase() == medication.name.toLowerCase())) {
+    if (_medications
+        .any((m) => m.name.toLowerCase() == medication.name.toLowerCase())) {
       return;
     }
     _medications.add(medication);
@@ -256,7 +270,8 @@ class DataProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateMedicationAsync(String id, Medication updatedMedication) async {
+  Future<void> updateMedicationAsync(
+      String id, Medication updatedMedication) async {
     final index = _medications.indexWhere((m) => m.id == id);
     if (index != -1) {
       _medications[index] = updatedMedication;
@@ -267,7 +282,7 @@ class DataProvider with ChangeNotifier {
 
   void takeDose(String medicationId, String scheduleId, String dosageId) {
     final dosage = _dosages.firstWhere(
-          (d) => d.id == dosageId,
+      (d) => d.id == dosageId,
       orElse: () => Dosage(
         id: '',
         medicationId: '',
@@ -282,7 +297,7 @@ class DataProvider with ChangeNotifier {
     );
     if (dosage.id.isNotEmpty) {
       final medication = _medications.firstWhere(
-            (m) => m.id == medicationId,
+        (m) => m.id == medicationId,
         orElse: () => Medication(
           id: '',
           name: 'Unknown',
@@ -324,7 +339,7 @@ class DataProvider with ChangeNotifier {
 
   void postponeDose(String scheduleId, String newTime) {
     final schedule = _schedules.firstWhere(
-          (s) => s.id == scheduleId,
+      (s) => s.id == scheduleId,
       orElse: () => Schedule(
         id: '',
         medicationId: '',
@@ -376,15 +391,23 @@ class DataProvider with ChangeNotifier {
       if (await file.exists()) {
         final data = json.decode(await file.readAsString());
         _medications.clear();
-        _medications.addAll((data['medications'] as List).map((m) => Medication.fromJson(m)));
+        _medications.addAll(
+            (data['medications'] as List).map((m) => Medication.fromJson(m)));
         _schedules.clear();
-        _schedules.addAll((data['schedules'] as List).map((s) => Schedule.fromJson(s)));
+        _schedules.addAll(
+            (data['schedules'] as List).map((s) => Schedule.fromJson(s)));
         _dosages.clear();
-        _dosages.addAll((data['dosages'] as List).map((d) => Dosage.fromJson(d)));
+        _dosages
+            .addAll((data['dosages'] as List).map((d) => Dosage.fromJson(d)));
         notifyListeners();
       }
     } catch (e) {
       print('Error loading data: $e');
     }
+  }
+
+  Future<void> deleteMedicationAsync(String id) async {
+    // Implement storage deletion (e.g., Firebase, local database)
+    notifyListeners();
   }
 }

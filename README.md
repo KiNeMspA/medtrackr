@@ -126,6 +126,10 @@ To update this section:
   - ### Fixes (2025-05-27)
 - Fixed non-ASCII character error in `dosage_form_screen.dart` by correcting `_tabletCountController` reference.
 - Moved `isReconstituted` to class level in `_DosageFormScreenState` to resolve undefined getter error.
+- ### Fixes (2025-05-27)
+- Fixed build error in `medication_form_screen.dart` by adding `tabletCountController` and `volumeController` to `MedicationFormFields` (commit: <your_commit_hash>).
+- Created barrel file `lib/models/enums.dart` to simplify enum imports, keeping enums in separate files (commit: <your_commit_hash>).
+- 
 
 ## Workflow Preservation
 To maintain the current development workflow with Grok:

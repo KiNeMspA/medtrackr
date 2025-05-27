@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:medtrackr/constants/constants.dart';
+import 'package:medtrackr/constants/themes.dart';
 import 'package:medtrackr/models/enums/enums.dart';
 import 'package:medtrackr/models/medication.dart';
 import 'package:provider/provider.dart';
@@ -22,6 +23,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
   late TextEditingController _quantityController;
   late TextEditingController _tabletCountController;
   late TextEditingController _volumeController;
+  late TextEditingController _dosePerTabletController;
   late TextEditingController _notesController;
   MedicationType _type = MedicationType.injection;
   QuantityUnit _quantityUnit = QuantityUnit.mg;
@@ -44,9 +46,14 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
             : '');
     _volumeController = TextEditingController(
         text: widget.medication != null &&
-            widget.medication!.type == MedicationType.injection &&
-            widget.medication!.quantityUnit == QuantityUnit.mL
+            widget.medication!.type == MedicationType.injection
             ? widget.medication!.quantity.toStringAsFixed(2)
+            : '');
+    _dosePerTabletController = TextEditingController(
+        text: widget.medication != null &&
+            (widget.medication!.type == MedicationType.tablet ||
+                widget.medication!.type == MedicationType.capsule)
+            ? widget.medication!.dosePerTablet?.toStringAsFixed(2) ?? ''
             : '');
     _notesController = TextEditingController(text: widget.medication?.notes ?? '');
     if (widget.medication != null) {
@@ -61,6 +68,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
     _quantityController.dispose();
     _tabletCountController.dispose();
     _volumeController.dispose();
+    _dosePerTabletController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -78,7 +86,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
     final isInjection = _type == MedicationType.injection;
     double quantity = isTabletOrCapsule
         ? double.tryParse(_tabletCountController.text) ?? 0.0
-        : _quantityUnit == QuantityUnit.mL
+        : isInjection && _quantityUnit == QuantityUnit.mL
         ? double.tryParse(_volumeController.text) ?? 0.0
         : double.tryParse(_quantityController.text) ?? 0.0;
     QuantityUnit unit = isTabletOrCapsule ? QuantityUnit.tablets : _quantityUnit;
@@ -87,10 +95,12 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          backgroundColor: Colors.white,
-          title: const Text('Set Volume or Reconstitute'),
-          content: const Text(
-              'Non-reconstituted injections require a volume in mL. Enter a volume or reconstitute the medication.'),
+          backgroundColor: DialogThemes.warning.backgroundColor,
+          title: Text('Set Volume or Reconstitute', style: DialogThemes.warning.titleTextStyle),
+          content: Text(
+            'Non-reconstituted injections require a volume in mL. Enter a volume or reconstitute the medication.',
+            style: DialogThemes.warning.contentTextStyle,
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -116,15 +126,16 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
           reconstitutionVolume: 0.0,
           reconstitutionFluid: '',
           notes: _notesController.text,
-          reconstitutionOptions: [],
-          selectedReconstitution: null,
+          dosePerTablet: isTabletOrCapsule
+              ? double.tryParse(_dosePerTabletController.text) ?? 0.0
+              : null,
         );
         Navigator.pushNamed(context, '/reconstitute', arguments: medication);
         return;
       } else {
         unit = QuantityUnit.mL;
         quantity = double.tryParse(_volumeController.text) ?? 0.0;
-        if (quantity <= 0) {
+        if (quantity <= 0 && _volumeController.text.isNotEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Please enter a valid volume')),
           );
@@ -144,27 +155,21 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
       reconstitutionVolume: 0.0,
       reconstitutionFluid: '',
       notes: _notesController.text,
-      reconstitutionOptions: [],
-      selectedReconstitution: null,
+      dosePerTablet: isTabletOrCapsule
+          ? double.tryParse(_dosePerTabletController.text) ?? 0.0
+          : null,
     );
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text(
-          'Confirm Medication',
-          style: TextStyle(
-            color: Colors.black54,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-          ),
-        ),
+        backgroundColor: DialogThemes.information.backgroundColor,
+        title: Text('Confirm Medication', style: DialogThemes.information.titleTextStyle),
         content: Padding(
           padding: const EdgeInsets.symmetric(vertical: 16.0),
           child: RichText(
             text: TextSpan(
-              style: AppConstants.cardBodyStyle.copyWith(height: 1.8),
+              style: DialogThemes.information.contentTextStyle?.copyWith(height: 1.8),
               children: [
                 const TextSpan(
                   text: 'Name: ',
@@ -183,6 +188,13 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                 TextSpan(
                     text:
                     '${medication.quantity % 1 == 0 ? medication.quantity.toInt() : medication.quantity.toStringAsFixed(2)} ${medication.quantityUnit.displayName}'),
+                if (isTabletOrCapsule && medication.dosePerTablet != null) ...[
+                  const TextSpan(
+                    text: '\nDose per Tablet: ',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  TextSpan(text: '${medication.dosePerTablet} mg/mcg'),
+                ],
                 const TextSpan(
                   text: '\nNotes: ',
                   style: TextStyle(fontWeight: FontWeight.bold),
@@ -260,6 +272,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                   quantityController: _quantityController,
                   tabletCountController: _tabletCountController,
                   volumeController: _volumeController,
+                  dosePerTabletController: _dosePerTabletController,
                   notesController: _notesController,
                   quantityUnit: _quantityUnit,
                   type: _type,

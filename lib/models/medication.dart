@@ -13,6 +13,7 @@ class Medication {
   final String notes;
   final List<Map<String, dynamic>> reconstitutionOptions;
   final Map<String, dynamic>? selectedReconstitution;
+  final double? dosePerTablet; // New field
 
   Medication({
     required this.id,
@@ -27,6 +28,7 @@ class Medication {
     required this.notes,
     this.reconstitutionOptions = const [],
     this.selectedReconstitution,
+    this.dosePerTablet,
   });
 
   Medication copyWith({
@@ -42,6 +44,7 @@ class Medication {
     String? notes,
     List<Map<String, dynamic>>? reconstitutionOptions,
     Map<String, dynamic>? selectedReconstitution,
+    double? dosePerTablet,
   }) {
     return Medication(
       id: id ?? this.id,
@@ -56,6 +59,7 @@ class Medication {
       notes: notes ?? this.notes,
       reconstitutionOptions: reconstitutionOptions ?? this.reconstitutionOptions,
       selectedReconstitution: selectedReconstitution ?? this.selectedReconstitution,
+      dosePerTablet: dosePerTablet ?? this.dosePerTablet,
     );
   }
 
@@ -73,6 +77,7 @@ class Medication {
       'notes': notes,
       'reconstitutionOptions': reconstitutionOptions,
       'selectedReconstitution': selectedReconstitution,
+      'dosePerTablet': dosePerTablet,
     };
   }
 
@@ -95,6 +100,7 @@ class Medication {
       selectedReconstitution: json['selectedReconstitution'] != null
           ? Map<String, dynamic>.from(json['selectedReconstitution'])
           : null,
+      dosePerTablet: (json['dosePerTablet'] as num?)?.toDouble(),
     );
   }
 

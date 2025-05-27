@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:medtrackr/constants/constants.dart';
-import 'package:medtrackr/models/enums/enums.dart';
+import 'package:medtrackr/constants/themes.dart';
 import 'package:medtrackr/models/medication.dart';
 import 'package:medtrackr/models/dosage.dart';
+import 'package:medtrackr/models/enums/enums.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
 import 'package:medtrackr/widgets/navigation/app_bottom_navigation_bar.dart';
@@ -23,6 +24,7 @@ class _DosageFormScreenState extends State<DosageFormScreen> {
   final _amountController = TextEditingController();
   final _nameController = TextEditingController();
   final _tabletCountController = TextEditingController();
+  final _iuController = TextEditingController();
   late bool isReconstituted;
   String _doseUnit = 'mg';
   DosageMethod _method = DosageMethod.oral;
@@ -41,11 +43,13 @@ class _DosageFormScreenState extends State<DosageFormScreen> {
     }
     isReconstituted = widget.medication!.reconstitutionVolume > 0;
     final isInjection = widget.medication!.type == MedicationType.injection;
-    final isTabletOrCapsule = widget.medication!.type == MedicationType.tablet ||
-        widget.medication!.type == MedicationType.capsule;
+    final isTabletOrCapsule =
+        widget.medication!.type == MedicationType.tablet ||
+            widget.medication!.type == MedicationType.capsule;
     final recon = widget.medication!.selectedReconstitution;
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
-    _doseCount = dataProvider.getDosagesForMedication(widget.medication!.id).length + 1;
+    _doseCount =
+        dataProvider.getDosagesForMedication(widget.medication!.id).length + 1;
 
     if (widget.dosage != null) {
       _amountController.text = widget.dosage!.totalDose.toString();
@@ -53,29 +57,34 @@ class _DosageFormScreenState extends State<DosageFormScreen> {
       _method = widget.dosage!.method;
       _nameController.text = widget.dosage!.name;
       _tabletCountController.text =
-      isTabletOrCapsule ? widget.dosage!.totalDose.toInt().toString() : '';
+          isTabletOrCapsule ? widget.dosage!.totalDose.toInt().toString() : '';
+      _iuController.text = isInjection && isReconstituted
+          ? widget.dosage!.insulinUnits.toString()
+          : '';
       _syringeSize = recon != null && recon['syringeSize'] != null
           ? SyringeSize.values.firstWhere(
-            (e) => e.value == recon['syringeSize'],
-        orElse: () => SyringeSize.size1_0,
-      )
+              (e) => e.value == recon['syringeSize'],
+              orElse: () => SyringeSize.size1_0,
+            )
           : null;
     } else {
       if (isInjection && isReconstituted && recon != null) {
         final targetDose = recon['targetDose']?.toDouble() ?? 0;
         final syringeUnits = recon['syringeUnits']?.toDouble() ?? 0;
         _amountController.text = _formatNumber(targetDose);
+        _iuController.text = _formatNumber(syringeUnits);
         _doseUnit = recon['targetDoseUnit'] ?? 'mcg';
         _syringeSize = recon['syringeSize'] != null
             ? SyringeSize.values.firstWhere(
-              (e) => e.value == recon['syringeSize'],
-          orElse: () => SyringeSize.size1_0,
-        )
+                (e) => e.value == recon['syringeSize'],
+                orElse: () => SyringeSize.size1_0,
+              )
             : SyringeSize.size1_0;
-        _nameController.text = '$syringeUnits IU containing $targetDose $_doseUnit';
+        _nameController.text =
+            '$syringeUnits IU containing $targetDose $_doseUnit';
         _method = DosageMethod.subcutaneous;
       } else if (isTabletOrCapsule) {
-        _doseUnit = 'tablets';
+        _doseUnit = 'mg';
         _method = DosageMethod.oral;
         _nameController.text = 'Dose $_doseCount';
       } else {
@@ -91,6 +100,7 @@ class _DosageFormScreenState extends State<DosageFormScreen> {
     _amountController.dispose();
     _nameController.dispose();
     _tabletCountController.dispose();
+    _iuController.dispose();
     super.dispose();
   }
 
@@ -102,124 +112,150 @@ class _DosageFormScreenState extends State<DosageFormScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isSaving = true);
-    final isTabletOrCapsule = widget.medication!.type == MedicationType.tablet ||
-        widget.medication!.type == MedicationType.capsule;
+    final isTabletOrCapsule =
+        widget.medication!.type == MedicationType.tablet ||
+            widget.medication!.type == MedicationType.capsule;
     final isInjection = widget.medication!.type == MedicationType.injection;
     final isReconstituted = widget.medication!.reconstitutionVolume > 0;
 
-    // Validate injection volume
-    if (isInjection && !isReconstituted && widget.medication!.quantityUnit != QuantityUnit.mL) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Non-reconstituted injection requires a volume (mL) set in medication')),
+    if (isInjection &&
+        !isReconstituted &&
+        widget.medication!.quantityUnit != QuantityUnit.mL) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: DialogThemes.warning.backgroundColor,
+          title: Text('Volume Required',
+              style: DialogThemes.warning.titleTextStyle),
+          content: Text('Non-reconstituted injections require a volume in mL.',
+              style: DialogThemes.warning.contentTextStyle),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel')),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: AppConstants.dialogButtonStyle,
+              child: const Text('Edit Medication'),
+            ),
+          ],
+        ),
       );
       setState(() => _isSaving = false);
+      if (confirmed == true) {
+        Navigator.pushNamed(context, '/medication_form',
+            arguments: widget.medication);
+      }
       return;
     }
 
-    // Parse amount
     double amount = 0.0;
+    double insulinUnits = 0.0;
     if (isTabletOrCapsule) {
-      amount = double.tryParse(_tabletCountController.text) ?? 0.0;
-      if (amount <= 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invalid tablet count')),
-        );
+      final tabletCount = double.tryParse(_tabletCountController.text) ?? 0.0;
+      if (tabletCount <= 0 || widget.medication!.dosePerTablet == null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Invalid tablet count or dose per tablet')));
         setState(() => _isSaving = false);
         return;
       }
+      amount = tabletCount * widget.medication!.dosePerTablet!;
+    } else if (isInjection && isReconstituted) {
+      insulinUnits = double.tryParse(_iuController.text) ?? 0.0;
+      if (insulinUnits <= 0) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Invalid IU amount')));
+        setState(() => _isSaving = false);
+        return;
+      }
+      amount = widget.medication!.selectedReconstitution != null
+          ? insulinUnits *
+              (widget.medication!.selectedReconstitution!['concentration']
+                      ?.toDouble() ??
+                  1.0) /
+              100
+          : 0.0;
     } else {
       amount = double.tryParse(_amountController.text) ?? 0.0;
       if (amount <= 0) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invalid dosage amount')),
-        );
+            const SnackBar(content: Text('Invalid dosage amount')));
         setState(() => _isSaving = false);
         return;
       }
     }
 
-    // Calculate volume for injections
     double volume = 0.0;
-    if (isInjection && isReconstituted && widget.medication!.selectedReconstitution != null) {
-      final concentration = widget.medication!.selectedReconstitution!['concentration']?.toDouble() ?? 1.0;
-      volume = amount / concentration;
+    if (isInjection &&
+        isReconstituted &&
+        widget.medication!.selectedReconstitution != null) {
+      final concentration = widget
+              .medication!.selectedReconstitution!['concentration']
+              ?.toDouble() ??
+          1.0;
+      volume = insulinUnits / concentration * 100;
     } else if (isInjection) {
-      volume = amount; // Dosage amount in mL for non-reconstituted
+      volume = amount;
     }
 
     final dosage = Dosage(
       id: widget.dosage?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
       medicationId: widget.medication!.id,
-      name: _nameController.text.isEmpty ? 'Dose $_doseCount' : _nameController.text,
+      name: _nameController.text.isEmpty
+          ? 'Dose $_doseCount'
+          : _nameController.text,
       method: _method,
       doseUnit: _doseUnit,
       totalDose: amount,
       volume: volume,
-      insulinUnits: isReconstituted && widget.medication!.selectedReconstitution != null
-          ? (widget.medication!.selectedReconstitution!['syringeUnits'] as num?)?.toDouble() ?? 0.0
-          : 0.0,
+      insulinUnits: insulinUnits,
       time: TimeOfDay.now(),
     );
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: Text(
-          widget.dosage == null ? 'Add Dosage' : 'Update Dosage',
-          style: AppConstants.cardTitleStyle.copyWith(fontSize: 20),
-        ),
+        backgroundColor: DialogThemes.information.backgroundColor,
+        title: Text(widget.dosage == null ? 'Add Dosage' : 'Update Dosage',
+            style: DialogThemes.information.titleTextStyle),
         content: RichText(
           text: TextSpan(
-            style: AppConstants.cardBodyStyle.copyWith(height: 1.5),
+            style: DialogThemes.information.contentTextStyle
+                ?.copyWith(height: 1.5),
             children: [
               const TextSpan(
-                text: 'Dosage: ',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+                  text: 'Dosage: ',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               TextSpan(text: dosage.name),
               const TextSpan(text: '\n'),
               const TextSpan(
-                text: 'Amount: ',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+                  text: 'Amount: ',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               TextSpan(
                   text: isTabletOrCapsule
-                      ? '${_formatNumber(amount)} tablets'
-                      : '${_formatNumber(amount)} $_doseUnit',
+                      ? '${_formatNumber(double.tryParse(_tabletCountController.text) ?? 0)} tablets (${_formatNumber(amount)} $_doseUnit)'
+                      : isReconstituted
+                          ? '${_formatNumber(insulinUnits)} IU'
+                          : '${_formatNumber(amount)} $_doseUnit',
                   style: TextStyle(color: AppConstants.primaryColor)),
               if (isInjection) ...[
                 const TextSpan(text: '\n'),
                 const TextSpan(
-                  text: 'Volume: ',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
+                    text: 'Volume: ',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
                 TextSpan(
                     text: '${_formatNumber(volume)} mL',
                     style: TextStyle(color: AppConstants.primaryColor)),
-                if (isReconstituted) ...[
-                  const TextSpan(text: '\n'),
-                  const TextSpan(
-                    text: 'IU: ',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  TextSpan(
-                      text: '${_formatNumber(dosage.insulinUnits)}',
-                      style: TextStyle(color: AppConstants.primaryColor)),
-                ],
               ],
               const TextSpan(text: '\n'),
               const TextSpan(
-                text: 'Method: ',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+                  text: 'Method: ',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               TextSpan(text: dosage.method.displayName),
               const TextSpan(text: '\n'),
               const TextSpan(
-                text: 'Medication: ',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+                  text: 'Medication: ',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               TextSpan(text: widget.medication!.name),
             ],
           ),
@@ -230,13 +266,10 @@ class _DosageFormScreenState extends State<DosageFormScreen> {
             children: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text(
-                  'Cancel',
-                  style: AppConstants.cardBodyStyle.copyWith(
-                    color: AppConstants.primaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: Text('Cancel',
+                    style: TextStyle(
+                        color: AppConstants.primaryColor,
+                        fontWeight: FontWeight.bold)),
               ),
               const SizedBox(width: 16),
               ElevatedButton(
@@ -267,9 +300,8 @@ class _DosageFormScreenState extends State<DosageFormScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving dosage: $e')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     } finally {
       setState(() => _isSaving = false);
@@ -284,8 +316,9 @@ class _DosageFormScreenState extends State<DosageFormScreen> {
       );
     }
     final isInjection = widget.medication!.type == MedicationType.injection;
-    final isTabletOrCapsule = widget.medication!.type == MedicationType.tablet ||
-        widget.medication!.type == MedicationType.capsule;
+    final isTabletOrCapsule =
+        widget.medication!.type == MedicationType.tablet ||
+            widget.medication!.type == MedicationType.capsule;
 
     return Scaffold(
       backgroundColor: AppConstants.backgroundColor,
@@ -310,30 +343,23 @@ class _DosageFormScreenState extends State<DosageFormScreen> {
                   nameController: _nameController,
                   amountController: _amountController,
                   tabletCountController: _tabletCountController,
+                  iuController: _iuController,
                   doseUnit: _doseUnit,
                   method: _method,
                   syringeSize: _syringeSize,
                   isInjection: isInjection,
                   isTabletOrCapsule: isTabletOrCapsule,
                   isReconstituted: isReconstituted,
+                  medication: widget.medication!,
                   onDoseUnitChanged: (value) {
                     if (value != null) {
                       setState(() => _doseUnit = value);
                     }
                   },
-                  onMethodChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        _method = value;
-                        if (!isInjection) _syringeSize = null;
-                      });
-                    }
-                  },
-                  onSyringeSizeChanged: (value) {
-                    if (value != null) {
-                      setState(() => _syringeSize = value);
-                    }
-                  },
+                  onMethodChanged: (value) =>
+                      setState(() => _method = value as DosageMethod),
+                  onSyringeSizeChanged: (value) =>
+                      setState(() => _syringeSize = value as SyringeSize?),
                 ),
                 const SizedBox(height: 24),
                 Center(

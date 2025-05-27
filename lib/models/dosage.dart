@@ -12,6 +12,7 @@ class Dosage {
   final double insulinUnits;
   final TimeOfDay time;
   final DateTime? takenTime;
+  //final double syringeSize;
 
   Dosage({
     required this.id,
@@ -23,6 +24,7 @@ class Dosage {
     required this.volume,
     required this.insulinUnits,
     required this.time,
+    //required this.syringeSize,
     this.takenTime,
   });
 

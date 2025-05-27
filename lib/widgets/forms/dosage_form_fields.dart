@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:medtrackr/constants/constants.dart';
 import 'package:medtrackr/models/enums/enums.dart';
+import 'package:medtrackr/models/medication.dart';
 
 class DosageFormFields extends StatelessWidget {
   final TextEditingController nameController;
   final TextEditingController amountController;
   final TextEditingController tabletCountController;
+  final TextEditingController iuController;
   final String doseUnit;
   final DosageMethod method;
   final SyringeSize? syringeSize;
   final bool isInjection;
   final bool isTabletOrCapsule;
   final bool isReconstituted;
+  final Medication medication;
   final ValueChanged<String?> onDoseUnitChanged;
   final ValueChanged<DosageMethod?> onMethodChanged;
   final ValueChanged<SyringeSize?> onSyringeSizeChanged;
@@ -21,12 +24,14 @@ class DosageFormFields extends StatelessWidget {
     required this.nameController,
     required this.amountController,
     required this.tabletCountController,
+    required this.iuController,
     required this.doseUnit,
     required this.method,
     required this.syringeSize,
     required this.isInjection,
     required this.isTabletOrCapsule,
     required this.isReconstituted,
+    required this.medication,
     required this.onDoseUnitChanged,
     required this.onMethodChanged,
     required this.onSyringeSizeChanged,
@@ -34,6 +39,10 @@ class DosageFormFields extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final concentration = medication.selectedReconstitution?['concentration']?.toDouble() ?? 1.0;
+    final iuValue = double.tryParse(iuController.text) ?? 0.0;
+    final mcgValue = isReconstituted ? iuValue * concentration / 100 : 0.0;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -42,8 +51,7 @@ class DosageFormFields extends StatelessWidget {
           decoration: AppConstants.formFieldDecoration.copyWith(
             labelText: 'Dosage Name',
           ),
-          validator: (value) =>
-          value == null || value.isEmpty ? 'Please enter a name' : null,
+          validator: (value) => value == null || value.isEmpty ? 'Please enter a name' : null,
         ),
         const SizedBox(height: 16),
         if (isTabletOrCapsule) ...[
@@ -54,26 +62,40 @@ class DosageFormFields extends StatelessWidget {
             ),
             keyboardType: TextInputType.number,
             validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter the number of tablets';
-              }
-              if (double.tryParse(value) == null || double.tryParse(value)! <= 0) {
+              if (value == null || value.isEmpty) return 'Please enter the number of tablets';
+              if (double.tryParse(value) == null || double.parse(value)! <= 0) {
                 return 'Please enter a valid positive number';
               }
               return null;
             },
           ),
           const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            value: doseUnit,
+          Text(
+            'Total Dose: ${(double.tryParse(tabletCountController.text) ?? 0) * (medication.dosePerTablet ?? 0)} $doseUnit',
+            style: const TextStyle(color: Colors.grey),
+          ),
+        ] else if (isInjection && isReconstituted) ...[
+          TextFormField(
+            controller: iuController,
             decoration: AppConstants.formFieldDecoration.copyWith(
-              labelText: 'Dose per Tablet',
+              labelText: 'Dosage Amount (IU)',
             ),
-            items: ['mg', 'mcg']
-                .map((unit) => DropdownMenuItem(value: unit, child: Text(unit)))
-                .toList(),
-            onChanged: onDoseUnitChanged,
-            validator: (value) => value == null ? 'Please select a unit' : null,
+            keyboardType: TextInputType.number,
+            validator: (value) {
+              if (value == null || value.isEmpty) return 'Please enter an IU amount';
+              if (double.tryParse(value) == null || double.parse(value)! <= 0) {
+                return 'Please enter a valid positive number';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            initialValue: mcgValue > 0 ? mcgValue.toStringAsFixed(2) : '',
+            decoration: AppConstants.formFieldDecoration.copyWith(
+              labelText: 'Equivalent (mcg)',
+            ),
+            enabled: false,
           ),
         ] else ...[
           Row(
@@ -86,15 +108,12 @@ class DosageFormFields extends StatelessWidget {
                   ),
                   keyboardType: TextInputType.number,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter an amount';
-                    }
+                    if (value == null || value.isEmpty) return 'Please enter an amount';
                     if (double.tryParse(value) == null || double.parse(value)! <= 0) {
                       return 'Please enter a valid positive number';
                     }
                     return null;
                   },
-                  enabled: !isReconstituted,
                 ),
               ),
               const SizedBox(width: 16),
@@ -108,7 +127,7 @@ class DosageFormFields extends StatelessWidget {
                   items: ['g', 'mg', 'mcg', 'mL', 'IU', 'Unit']
                       .map((unit) => DropdownMenuItem(value: unit, child: Text(unit)))
                       .toList(),
-                  onChanged: isReconstituted ? null : onDoseUnitChanged,
+                  onChanged: onDoseUnitChanged,
                   validator: (value) => value == null ? 'Please select a unit' : null,
                 ),
               ),
@@ -122,17 +141,12 @@ class DosageFormFields extends StatelessWidget {
             labelText: 'Dosage Method',
           ),
           items: DosageMethod.values
-              .map((method) => DropdownMenuItem(
-            value: method,
-            child: Text(method.displayName),
-          ))
+              .map((method) => DropdownMenuItem(value: method, child: Text(method.displayName)))
               .toList(),
           onChanged: onMethodChanged,
           validator: (value) => value == null ? 'Please select a method' : null,
         ),
-        if (isInjection &&
-            [DosageMethod.subcutaneous, DosageMethod.intramuscular, DosageMethod.intravenous]
-                .contains(method)) ...[
+        if (isInjection && [DosageMethod.subcutaneous, DosageMethod.intramuscular, DosageMethod.intravenous].contains(method)) ...[
           const SizedBox(height: 16),
           DropdownButtonFormField<SyringeSize>(
             value: syringeSize,
@@ -140,10 +154,7 @@ class DosageFormFields extends StatelessWidget {
               labelText: 'Syringe Size',
             ),
             items: SyringeSize.values
-                .map((size) => DropdownMenuItem(
-              value: size,
-              child: Text(size.displayName),
-            ))
+                .map((size) => DropdownMenuItem(value: size, child: Text(size.displayName)))
                 .toList(),
             onChanged: onSyringeSizeChanged,
             validator: (value) => value == null ? 'Please select a syringe size' : null,

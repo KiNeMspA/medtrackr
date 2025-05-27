@@ -1,8 +1,13 @@
 enum TargetDoseUnit {
-  mcg('mcg'),
-  mg('mg');
+  mg,
+  mcg;
 
-  final String displayName;
-
-  const TargetDoseUnit(this.displayName);
+  String get displayName {
+    switch (this) {
+      case TargetDoseUnit.mg:
+        return 'mg';
+      case TargetDoseUnit.mcg:
+        return 'mcg';
+    }
+  }
 }
