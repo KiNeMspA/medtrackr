@@ -1,69 +1,59 @@
 import 'package:flutter/material.dart';
-import 'package:medtrackr/models/dosage.dart';
+import 'package:medtrackr/constants/constants.dart';
 import 'package:medtrackr/models/medication.dart';
+import 'package:medtrackr/models/dosage.dart';
 import 'package:medtrackr/models/enums/dosage_method.dart';
-import 'package:medtrackr/models/enums/quantity_unit.dart';
-import 'package:medtrackr/widgets/forms/dosage_form_fields.dart';
-import 'package:medtrackr/widgets/navigation/app_bottom_navigation_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
-import 'package:uuid/uuid.dart';
-import 'package:medtrackr/constants/constants.dart';
+import 'package:medtrackr/widgets/navigation/app_bottom_navigation_bar.dart';
 
 class AddDosageScreen extends StatefulWidget {
   final Medication medication;
+  final Dosage? dosage;
 
-  const AddDosageScreen({super.key, required this.medication});
+  const AddDosageScreen({super.key, required this.medication, this.dosage});
 
   @override
   _AddDosageScreenState createState() => _AddDosageScreenState();
 }
 
 class _AddDosageScreenState extends State<AddDosageScreen> {
-  late TextEditingController _nameController;
-  late TextEditingController _doseController;
-  late TextEditingController _volumeController;
-  late TextEditingController _insulinUnitsController;
-  late String _doseUnit;
-  late DosageMethod _method;
   final _formKey = GlobalKey<FormState>();
+  final _amountController = TextEditingController();
+  String _doseUnit = 'mcg';
+  DosageMethod _method = DosageMethod.subcutaneous;
+  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    final targetDose =
-        widget.medication.selectedReconstitution?['doseVolume']?.toDouble() ?? 0;
-    _nameController = TextEditingController(
-      text: targetDose > 0 ? 'Dose ${targetDose * 1000}mcg' : 'Dose 1',
-    );
-    _doseController = TextEditingController(text: targetDose.toStringAsFixed(2));
-    _volumeController = TextEditingController();
-    _insulinUnitsController = TextEditingController();
-    _doseUnit = widget.medication.quantityUnit.displayName;
-    _method = DosageMethod.oral;
+    if (widget.dosage != null) {
+      _amountController.text = widget.dosage!.totalDose.toString();
+      _doseUnit = widget.dosage!.doseUnit;
+      _method = widget.dosage!.method;
+    }
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _doseController.dispose();
-    _volumeController.dispose();
-    _insulinUnitsController.dispose();
+    _amountController.dispose();
     super.dispose();
   }
 
   Future<void> _saveDosage(BuildContext context) async {
     if (!_formKey.currentState!.validate()) return;
 
+    setState(() => _isSaving = true);
+    final amount = double.parse(_amountController.text);
     final dosage = Dosage(
-      id: const Uuid().v4(),
+      id: widget.dosage?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
       medicationId: widget.medication.id,
-      name: _nameController.text,
+      name: widget.medication.name,
       method: _method,
       doseUnit: _doseUnit,
-      totalDose: double.tryParse(_doseController.text) ?? 0.0,
-      volume: double.tryParse(_volumeController.text) ?? 0.0,
-      insulinUnits: double.tryParse(_insulinUnitsController.text) ?? 0.0,
+      totalDose: amount,
+      volume: 0.0,
+      insulinUnits: 0.0,
       time: TimeOfDay.now(),
     );
 
@@ -71,74 +61,58 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
-        title: const Text(
-          'Confirm Dosage',
-          style: TextStyle(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: Text(
+          widget.dosage == null ? 'Add Dosage' : 'Update Dosage',
+          style: const TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
             fontSize: 22,
+            shadows: [Shadow(color: AppConstants.primaryColor, blurRadius: 2)],
           ),
         ),
-        content: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16.0),
-          child: RichText(
-            text: TextSpan(
-              style: AppConstants.cardBodyStyle,
-              children: [
-                const TextSpan(
-                  text: 'Name: ',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                TextSpan(text: '${dosage.name}\n'),
-                const TextSpan(
-                  text: 'Dose: ',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                TextSpan(
-                    text: '${dosage.totalDose.toStringAsFixed(2)} ${dosage.doseUnit}\n'),
-                const TextSpan(
-                  text: 'Method: ',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                TextSpan(text: dosage.method.displayName),
-              ],
-            ),
-          ),
+        content: Text(
+          '${widget.dosage == null ? 'Add' : 'Update'} dosage of $amount $_doseUnit via ${_method.displayName} for ${widget.medication.name}?',
+          style: AppConstants.cardBodyStyle,
         ),
-        actionsAlignment: MainAxisAlignment.center,
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(
-                color: AppConstants.primaryColor,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(
+                      color: AppConstants.primaryColor, fontWeight: FontWeight.bold, fontSize: 16),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: AppConstants.dialogButtonStyle,
-            child: const Text('Confirm'),
+              const SizedBox(width: 16),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: AppConstants.dialogButtonStyle,
+                child: const Text('Confirm'),
+              ),
+            ],
           ),
         ],
       ),
     );
 
-    if (confirmed != true) return;
+    if (confirmed != true) {
+      setState(() => _isSaving = false);
+      return;
+    }
 
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
     try {
-      await dataProvider.addDosageAsync(dosage);
+      if (widget.dosage == null) {
+        await dataProvider.addDosageAsync(dosage);
+      } else {
+        await dataProvider.updateDosageAsync(dosage.id, dosage);
+      }
       if (context.mounted) {
-        Navigator.pushReplacementNamed(
-          context,
-          '/medication_details',
-          arguments: widget.medication,
-        );
+        Navigator.pop(context);
       }
     } catch (e) {
       if (context.mounted) {
@@ -146,15 +120,17 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
           SnackBar(content: Text('Error saving dosage: $e')),
         );
       }
+    } finally {
+      setState(() => _isSaving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.grey[200],
       appBar: AppBar(
-        title: const Text('Add Dosage'),
+        title: Text(widget.dosage == null ? 'Add Dosage' : 'Edit Dosage'),
         backgroundColor: AppConstants.primaryColor,
       ),
       body: Padding(
@@ -165,22 +141,78 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                DosageFormFields(
-                  nameController: _nameController,
-                  doseController: _doseController,
-                  volumeController: _volumeController,
-                  insulinUnitsController: _insulinUnitsController,
-                  doseUnit: _doseUnit,
-                  doseUnits: QuantityUnit.values.map((e) => e.displayName).toList(),
-                  method: _method,
-                  onDoseUnitChanged: (value) => setState(() => _doseUnit = value!),
-                  onMethodChanged: (value) => setState(() => _method = value!),
+                Text(
+                  'Dosage Details for ${widget.medication.name}',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _amountController,
+                        decoration: AppConstants.formFieldDecoration.copyWith(
+                          labelText: 'Dosage Amount',
+                        ),
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter an amount';
+                          }
+                          if (double.tryParse(value) == null || double.parse(value) <= 0) {
+                            return 'Please enter a valid positive number';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    SizedBox(
+                      width: 100,
+                      child: DropdownButtonFormField<String>(
+                        value: _doseUnit,
+                        decoration: AppConstants.formFieldDecoration.copyWith(
+                          labelText: 'Unit',
+                        ),
+                        items: ['mg', 'mcg', 'IU']
+                            .map((unit) => DropdownMenuItem(value: unit, child: Text(unit)))
+                            .toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => _doseUnit = value);
+                          }
+                        },
+                        validator: (value) => value == null ? 'Please select a unit' : null,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<DosageMethod>(
+                  value: _method,
+                  decoration: AppConstants.formFieldDecoration.copyWith(
+                    labelText: 'Dosage Method',
+                  ),
+                  items: DosageMethod.values
+                      .map((method) => DropdownMenuItem(value: method, child: Text(method.displayName)))
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _method = value);
+                    }
+                  },
+                  validator: (value) => value == null ? 'Please select a method' : null,
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: () => _saveDosage(context),
+                  onPressed: _isSaving ? null : () => _saveDosage(context),
                   style: AppConstants.actionButtonStyle,
-                  child: const Text('Save Dosage'),
+                  child: _isSaving
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Save'),
                 ),
               ],
             ),
@@ -189,7 +221,7 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
       ),
       bottomNavigationBar: AppBottomNavigationBar(
         currentIndex: 0,
-        onTap: (index) {
+        onTap: (int index) {
           if (index == 0) Navigator.pushReplacementNamed(context, '/home');
           if (index == 1) Navigator.pushReplacementNamed(context, '/calendar');
           if (index == 2) Navigator.pushReplacementNamed(context, '/history');

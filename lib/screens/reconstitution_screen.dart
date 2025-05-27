@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:medtrackr/constants/constants.dart';
 import 'package:medtrackr/models/medication.dart';
 import 'package:medtrackr/models/enums/syringe_size.dart';
+import 'package:medtrackr/models/enums/fluid_unit.dart';
+import 'package:medtrackr/models/enums/target_dose_unit.dart';
 import 'package:medtrackr/utils/calculators/reconstitution_calculator.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
@@ -20,8 +22,8 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
   final _reconstitutionFluidController = TextEditingController();
   final _targetDoseController = TextEditingController();
   final _fluidAmountController = TextEditingController();
-  String _targetDoseUnit = 'mcg';
-  String _fluidVolumeUnit = 'mL';
+  TargetDoseUnit _targetDoseUnit = TargetDoseUnit.mcg;
+  FluidUnit _fluidVolumeUnit = FluidUnit.mL;
   List<Map<String, dynamic>> _reconstitutionSuggestions = [];
   Map<String, dynamic>? _selectedReconstitution;
   double _targetDose = 0;
@@ -46,7 +48,12 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
       orElse: () => SyringeSize.size1_0,
     )
         : SyringeSize.size1_0;
-    _targetDoseUnit = widget.medication.selectedReconstitution?['targetDoseUnit'] ?? 'mcg';
+    _targetDoseUnit = widget.medication.selectedReconstitution?['targetDoseUnit'] != null
+        ? TargetDoseUnit.values.firstWhere(
+          (e) => e.displayName == widget.medication.selectedReconstitution!['targetDoseUnit'],
+      orElse: () => TargetDoseUnit.mcg,
+    )
+        : TargetDoseUnit.mcg;
     _calculateReconstitutionSuggestions();
   }
 
@@ -63,15 +70,16 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
   }
 
   void _calculateReconstitutionSuggestions() {
-    final volume = (double.tryParse(_fluidAmountController.text) ?? 1.0) * (_fluidVolumeUnit == 'L' ? 1000 : 1);
+    final volume = double.tryParse(_fluidAmountController.text) ?? 1.0;
     final calculator = ReconstitutionCalculator(
       quantityController: TextEditingController(text: widget.medication.quantity.toString()),
       targetDoseController: _targetDoseController,
       quantityUnit: widget.medication.quantityUnit.displayName,
-      targetDoseUnit: _targetDoseUnit,
+      targetDoseUnit: _targetDoseUnit.displayName,
       medicationName: widget.medication.name,
       syringeSize: _syringeSize.value,
       fixedVolume: volume,
+      fixedVolumeUnit: _fluidVolumeUnit,
     );
     final result = calculator.calculate();
     final concentration = result['selectedReconstitution'] != null
@@ -112,7 +120,10 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
       reconstitutionVolume: _selectedReconstitution!['volume']?.toDouble() ?? 0,
       reconstitutionFluid: _reconstitutionFluidController.text,
       reconstitutionOptions: _reconstitutionSuggestions,
-      selectedReconstitution: _selectedReconstitution,
+      selectedReconstitution: {
+        ...?_selectedReconstitution,
+        'targetDoseUnit': _targetDoseUnit.displayName,
+      },
     );
 
     final confirmed = await showDialog<bool>(
@@ -142,7 +153,7 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
                 const TextSpan(
                     text: 'Fluid Amount: ',
                     style: TextStyle(fontWeight: FontWeight.bold)),
-                TextSpan(text: '${_formatNumber(_selectedReconstitution!['volume'])} mL\n'),
+                TextSpan(text: '${_formatNumber(_selectedReconstitution!['volume'])} ${_fluidVolumeUnit.displayName}\n'),
                 const TextSpan(
                     text: 'Concentration: ',
                     style: TextStyle(fontWeight: FontWeight.bold)),
@@ -150,24 +161,34 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
                 const TextSpan(
                     text: 'Target Dose: ',
                     style: TextStyle(fontWeight: FontWeight.bold)),
-                TextSpan(text: '${_formatNumber(_targetDose)} $_targetDoseUnit'),
+                TextSpan(text: '${_formatNumber(_targetDose)} ${_targetDoseUnit.displayName}\n'),
+                const TextSpan(
+                    text: 'Administer: ',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                TextSpan(text: '${_formatNumber(_selectedReconstitution!['syringeUnits'])} IU on a ${_syringeSize.displayName}'),
               ],
             ),
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(
-                  color: AppConstants.primaryColor, fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: AppConstants.dialogButtonStyle,
-            child: const Text('Confirm'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(
+                      color: AppConstants.primaryColor, fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ),
+              const SizedBox(width: 16),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: AppConstants.dialogButtonStyle,
+                child: const Text('Confirm'),
+              ),
+            ],
           ),
         ],
       ),
@@ -192,7 +213,9 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final targetDoseUnits = widget.medication.quantityUnit == 'mg' ? ['mg', 'mcg'] : ['mcg', 'mg'];
+    final targetDoseUnits = widget.medication.quantityUnit == QuantityUnit.mg
+        ? [TargetDoseUnit.mg, TargetDoseUnit.mcg]
+        : [TargetDoseUnit.mcg, TargetDoseUnit.mg];
 
     return Scaffold(
       backgroundColor: Colors.grey[200],
@@ -216,11 +239,8 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _reconstitutionFluidController,
-                decoration: InputDecoration(
+                decoration: AppConstants.formFieldDecoration.copyWith(
                   labelText: 'Reconstitution Fluid (e.g., Bacteriostatic Water)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  filled: true,
-                  fillColor: Colors.white,
                 ),
                 onChanged: (value) => _calculateReconstitutionSuggestions(),
               ),
@@ -230,11 +250,8 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
                   Expanded(
                     child: TextFormField(
                       controller: _targetDoseController,
-                      decoration: InputDecoration(
+                      decoration: AppConstants.formFieldDecoration.copyWith(
                         labelText: 'Target Dose',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        filled: true,
-                        fillColor: Colors.white,
                       ),
                       keyboardType: TextInputType.number,
                       onChanged: (value) => _calculateReconstitutionSuggestions(),
@@ -243,16 +260,13 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
                   const SizedBox(width: 16),
                   SizedBox(
                     width: 100,
-                    child: DropdownButtonFormField<String>(
+                    child: DropdownButtonFormField<TargetDoseUnit>(
                       value: _targetDoseUnit,
-                      decoration: InputDecoration(
+                      decoration: AppConstants.formFieldDecoration.copyWith(
                         labelText: 'Unit',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        filled: true,
-                        fillColor: Colors.white,
                       ),
                       items: targetDoseUnits
-                          .map((unit) => DropdownMenuItem(value: unit, child: Text(unit)))
+                          .map((unit) => DropdownMenuItem(value: unit, child: Text(unit.displayName)))
                           .toList(),
                       onChanged: (value) {
                         if (value != null) {
@@ -272,11 +286,8 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
                   Expanded(
                     child: TextFormField(
                       controller: _fluidAmountController,
-                      decoration: InputDecoration(
+                      decoration: AppConstants.formFieldDecoration.copyWith(
                         labelText: 'Fluid Amount',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        filled: true,
-                        fillColor: Colors.white,
                       ),
                       keyboardType: TextInputType.number,
                       onChanged: (value) => _calculateReconstitutionSuggestions(),
@@ -285,16 +296,13 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
                   const SizedBox(width: 16),
                   SizedBox(
                     width: 100,
-                    child: DropdownButtonFormField<String>(
+                    child: DropdownButtonFormField<FluidUnit>(
                       value: _fluidVolumeUnit,
-                      decoration: InputDecoration(
+                      decoration: AppConstants.formFieldDecoration.copyWith(
                         labelText: 'Unit',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        filled: true,
-                        fillColor: Colors.white,
                       ),
-                      items: ['mL', 'L']
-                          .map((unit) => DropdownMenuItem(value: unit, child: Text(unit)))
+                      items: FluidUnit.values
+                          .map((unit) => DropdownMenuItem(value: unit, child: Text(unit.displayName)))
                           .toList(),
                       onChanged: (value) {
                         if (value != null) {
@@ -320,11 +328,8 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
               const SizedBox(height: 16),
               DropdownButtonFormField<SyringeSize>(
                 value: _syringeSize,
-                decoration: InputDecoration(
+                decoration: AppConstants.formFieldDecoration.copyWith(
                   labelText: 'Syringe Size',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  filled: true,
-                  fillColor: Colors.white,
                 ),
                 items: SyringeSize.values
                     .map((size) => DropdownMenuItem(value: size, child: Text(size.displayName)))
@@ -347,11 +352,11 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
                     children: [
                       Text(
                         'Formula: Units = (Target Dose (mg) / Concentration (mg/mL)) * 100',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                        style: AppConstants.secondaryTextStyle,
                       ),
                       Text(
-                        'Calculation: ${_formatNumber(_targetDose * (_targetDoseUnit == 'mg' ? 1 : 1 / 1000))} mg / ${_formatNumber(_selectedReconstitution!['concentration'])} mg/mL * 100 = ${_formatNumber(_selectedReconstitution!['syringeUnits'])} IU',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                        'Calculation: ${_formatNumber(_targetDose * (_targetDoseUnit == TargetDoseUnit.mg ? 1 : 1 / 1000))} mg / ${_formatNumber(_selectedReconstitution!['concentration'])} mg/mL * 100 = ${_formatNumber(_selectedReconstitution!['syringeUnits'])} IU',
+                        style: AppConstants.secondaryTextStyle,
                       ),
                     ],
                   ),
@@ -364,10 +369,22 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
                     text: TextSpan(
                       style: AppConstants.cardBodyStyle,
                       children: [
-                        const TextSpan(
-                          text: 'Administer ',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                        TextSpan(
+                          text: 'Reconstitute ${widget.medication.name} ',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
+                        const TextSpan(text: 'with '),
+                        TextSpan(
+                          text: _formatNumber(_selectedReconstitution!['volume']),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextSpan(text: ' ${_fluidVolumeUnit.displayName} '),
+                        const TextSpan(text: 'of '),
+                        TextSpan(
+                          text: _reconstitutionFluidController.text,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const TextSpan(text: '\nAdminister '),
                         TextSpan(
                           text: _formatNumber(_selectedReconstitution!['syringeUnits']),
                           style: const TextStyle(fontWeight: FontWeight.bold),
@@ -386,32 +403,11 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
                           text: _formatNumber(_targetDose),
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        TextSpan(text: ' $_targetDoseUnit\n'),
-                        const TextSpan(text: 'by reconstituting '),
-                        TextSpan(
-                          text: _formatNumber(widget.medication.quantity),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        TextSpan(text: ' ${widget.medication.quantityUnit.displayName} of '),
-                        TextSpan(
-                          text: widget.medication.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const TextSpan(text: '\nwith '),
-                        TextSpan(
-                          text: _formatNumber(_selectedReconstitution!['volume']),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
+                        TextSpan(text: ' ${_targetDoseUnit.displayName}\n'),
                         const TextSpan(
-                          text: ' mL',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          text: 'Concentration: ',
+                          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
                         ),
-                        const TextSpan(text: ' of '),
-                        TextSpan(
-                          text: _reconstitutionFluidController.text,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const TextSpan(text: '\nConcentration: '),
                         TextSpan(
                           text: '${_formatNumber(_selectedReconstitution!['concentration'])} mg/mL',
                           style: AppConstants.secondaryTextStyle,

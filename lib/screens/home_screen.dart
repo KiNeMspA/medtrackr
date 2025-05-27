@@ -3,6 +3,7 @@ import 'package:medtrackr/models/medication.dart';
 import 'package:medtrackr/models/schedule.dart';
 import 'package:medtrackr/models/enums/medication_type.dart';
 import 'package:medtrackr/models/enums/quantity_unit.dart';
+import 'package:medtrackr/widgets/cards/medication_card.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
 import 'package:medtrackr/constants/constants.dart';
@@ -113,32 +114,9 @@ class HomeScreen extends StatelessWidget {
                 itemCount: medications.length,
                 itemBuilder: (context, index) {
                   final medication = medications[index];
-                  final remaining = medication.reconstitutionVolume > 0
-                      ? '${_formatNumber(medication.remainingQuantity)}/${_formatNumber(medication.quantity)} mL'
-                      : '${_formatNumber(medication.remainingQuantity)}/${_formatNumber(medication.quantity)} ${medication.quantityUnit.displayName}';
-                  return Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.all(16),
-                      title: Text(
-                        medication.name,
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
-                      ),
-                      subtitle: Text(
-                        'Remaining: $remaining',
-                        style: const TextStyle(fontSize: 14, color: Colors.grey),
-                      ),
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/medication_details',
-                          arguments: medication,
-                        );
-                      },
-                    ),
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: MedicationCard(medication: medication),
                   );
                 },
               ),

@@ -62,12 +62,13 @@ class MedicationDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (medication == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pushReplacementNamed(context, '/home');
-      });
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      body:
+      WillPopScope(
+          onWillPop: () async {
+            Navigator.pushReplacementNamed(context, '/home');
+            return false;
+          },
+          child: Padding(padding: const EdgeInsets.all(16.0), child: Column()));
     }
 
     return Scaffold(
@@ -83,10 +84,10 @@ class MedicationDetailsScreen extends StatelessWidget {
             Text(
               medication!.name,
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: 28,
-              ),
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 28,
+                  ),
             ),
             const SizedBox(height: 16),
             Container(
@@ -116,7 +117,7 @@ class MedicationDetailsScreen extends StatelessWidget {
                 Navigator.pushNamed(
                   context,
                   '/add_dosage',
-                  arguments: {'medication': medication},
+                  arguments: widget.medication,
                 );
               },
               style: AppConstants.actionButtonStyle,

@@ -75,10 +75,14 @@ class MedicationCard extends StatelessWidget {
                 style: AppConstants.cardBodyStyle,
                 children: [
                   const TextSpan(
-                    text: 'Quantity: ',
+                    text: 'Stock: ',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  TextSpan(text: '${_formatNumber(medication.remainingQuantity)} out of ${_formatNumber(medication.quantity)} ${medication.quantityUnit.displayName}'),
+                  TextSpan(text: remainingFraction),
+                  if (isReconstituted) ...[
+                    const TextSpan(text: ', '),
+                    TextSpan(text: '$reconRemaining (reconstituted)'),
+                  ],
                 ],
               ),
             ),
@@ -96,21 +100,25 @@ class MedicationCard extends StatelessWidget {
                   ],
                 ),
               ),
-            ],
-            if (isReconstituted) ...[
               const SizedBox(height: 12),
               RichText(
                 text: TextSpan(
                   style: AppConstants.cardBodyStyle,
                   children: [
-                    TextSpan(
-                      text: 'Quantity in $reconVolumeUnit: ',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    const TextSpan(
+                      text: 'Next Dose: ',
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    TextSpan(text: '${_formatNumber(medication.remainingQuantity / (medication.quantity / medication.reconstitutionVolume))} out of ${_formatNumber(medication.reconstitutionVolume)} $reconVolumeUnit'),
+                    TextSpan(
+                      text: dosages.isNotEmpty
+                          ? '${_formatNumber(dosages.first.totalDose)} ${dosages.first.doseUnit}'
+                          : 'None scheduled',
+                    ),
                   ],
                 ),
               ),
+            ],
+            if (isReconstituted) ...[
               const SizedBox(height: 12),
               RichText(
                 text: TextSpan(

@@ -26,6 +26,11 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.blue,
           scaffoldBackgroundColor: Colors.grey[200],
+          textSelectionTheme: TextSelectionThemeData(
+            cursorColor: AppConstants.primaryColor,
+            selectionColor: AppConstants.primaryColor.withOpacity(0.5),
+            selectionHandleColor: AppConstants.primaryColor,
+          ),
           inputDecorationTheme: InputDecorationTheme(
             enabledBorder: OutlineInputBorder(
               borderSide: BorderSide(color: AppConstants.kLightGrey, width: 1),
@@ -55,7 +60,7 @@ class MyApp extends StatelessWidget {
             medication: ModalRoute.of(context)!.settings.arguments as Medication?,
           ),
           '/add_dosage': (context) => AddDosageScreen(
-            medication: (ModalRoute.of(context)!.settings.arguments as Map)['medication'] as Medication,
+            medication: ModalRoute.of(context)!.settings.arguments as Medication,
           ),
           '/add_schedule': (context) => const AddScheduleScreen(),
           '/medication_details': (context) {

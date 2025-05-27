@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:medtrackr/utils/helpers/logger.dart';
+import 'package:medtrackr/models/enums/fluid_unit.dart';
 
 class ReconstitutionCalculator {
-  final TextEditingController quantityController; // Peptide Quantity (p, mg)
-  final TextEditingController targetDoseController; // Desired Dosage (d, mg or mcg)
-  final String quantityUnit; // mg, mcg, etc.
-  final String targetDoseUnit; // mg or mcg
+  final TextEditingController quantityController;
+  final TextEditingController targetDoseController;
+  final String quantityUnit;
+  final String targetDoseUnit;
   final String medicationName;
-  final double syringeSize; // Syringe Size (S, mL)
-  final double? fixedVolume; // Optional fixed volume (mL)
+  final double syringeSize;
+  final double? fixedVolume;
+  final FluidUnit fixedVolumeUnit;
 
   ReconstitutionCalculator({
     required this.quantityController,
@@ -18,6 +20,7 @@ class ReconstitutionCalculator {
     required this.medicationName,
     required this.syringeSize,
     this.fixedVolume,
+    this.fixedVolumeUnit = FluidUnit.mL,
   });
 
   String _formatNumber(double value) {
@@ -48,14 +51,13 @@ class ReconstitutionCalculator {
 
   Map<String, dynamic> calculate() {
     try {
-      final p = double.tryParse(quantityController.text) ?? 0.0; // Peptide Quantity
-      final d = double.tryParse(targetDoseController.text) ?? 0.0; // Desired Dosage
-      final pMg = _convertToMg(quantityUnit, p); // Convert to mg
-      final dMg = _convertToMg(targetDoseUnit, d); // Convert to mg
-      final S = syringeSize; // Syringe Size (mL)
-      const step = 0.1; // Volume increment (mL)
+      final p = double.tryParse(quantityController.text) ?? 0.0;
+      final d = double.tryParse(targetDoseController.text) ?? 0.0;
+      final pMg = _convertToMg(quantityUnit, p);
+      final dMg = _convertToMg(targetDoseUnit, d);
+      final S = syringeSize;
+      const step = 0.1;
 
-      // Validate inputs
       if (pMg <= 0 || dMg <= 0 || S <= 0) {
         Logger.logError('Invalid input: pMg=$pMg, dMg=$dMg, S=$S');
         return {
@@ -72,11 +74,10 @@ class ReconstitutionCalculator {
       Map<String, dynamic>? selectedReconstitution;
 
       if (fixedVolume != null && fixedVolume! > 0) {
-        // Use fixed volume
-        final V = fixedVolume!;
-        final C = pMg / V; // Concentration: C = p / V (mg/mL)
-        final vD = dMg / C; // Dose Volume: V_d = d / C (mL)
-        final U = vD * 100; // Syringe Units: U = V_d * 100 (1 mL = 100 units)
+        final V = fixedVolume! * fixedVolumeUnit.toMLFactor;
+        final C = pMg / V;
+        final vD = dMg / C;
+        final U = vD * 100;
 
         if (vD <= S) {
           selectedReconstitution = {
@@ -98,6 +99,7 @@ class ReconstitutionCalculator {
           };
         }
       } else {
+        // ... (rest unchanged)
         // Original volume iteration
         final vMin = (dMg * S) / pMg;
         if (vMin > S) {
