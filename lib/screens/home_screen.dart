@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:medtrackr/models/medication.dart';
 import 'package:medtrackr/models/schedule.dart';
+import 'package:medtrackr/models/enums/medication_type.dart';
+import 'package:medtrackr/models/enums/quantity_unit.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
+import 'package:medtrackr/constants/constants.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  String _formatNumber(double value) {
+    return value % 1 == 0 ? value.toInt().toString() : value.toStringAsFixed(2);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +39,7 @@ class HomeScreen extends StatelessWidget {
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
         title: const Text('MedTrackr', style: TextStyle(color: Colors.black)),
-        backgroundColor: const Color(0xFFFFC107),
+        backgroundColor: AppConstants.primaryColor,
         actions: [
           IconButton(
             icon: const Icon(Icons.schedule, color: Colors.black),
@@ -59,11 +66,8 @@ class HomeScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.pushNamed(context, '/medication_form');
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFFC107),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('Add Medication', style: TextStyle(color: Colors.black)),
+                style: AppConstants.actionButtonStyle,
+                child: const Text('Add Medication'),
               ),
             ],
           ),
@@ -83,11 +87,12 @@ class HomeScreen extends StatelessWidget {
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(24),
                   title: Text(
-                    '${medications.firstWhere((m) => m.id == nextSchedule!.medicationId, orElse: () => Medication(id: '', name: 'Unknown', type: '', quantityUnit: '', quantity: 0, remainingQuantity: 0, reconstitutionVolumeUnit: '', reconstitutionVolume: 0, reconstitutionFluid: '', notes: '')).name} (${nextSchedule.dosageName})',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+                    '${medications.firstWhere((m) => m.id == nextSchedule!.medicationId, orElse: () => Medication(id: '', name: 'Unknown', type: MedicationType.other, quantityUnit: QuantityUnit.mg, quantity: 0, remainingQuantity: 0, reconstitutionVolumeUnit: '', reconstitutionVolume: 0, reconstitutionFluid: '', notes: '')).name} (${nextSchedule.dosageName})',
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
                   ),
                   subtitle: Text(
-                    'Time: ${nextSchedule.time.format(context)}\nDose: ${nextSchedule.dosageAmount.toStringAsFixed(nextSchedule.dosageAmount % 1 == 0 ? 0 : 1)} ${nextSchedule.dosageUnit}',
+                    'Time: ${nextSchedule.time.format(context)}\nDose: ${_formatNumber(nextSchedule.dosageAmount)} ${nextSchedule.dosageUnit}',
                     style: const TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                 ),
@@ -109,8 +114,8 @@ class HomeScreen extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final medication = medications[index];
                   final remaining = medication.reconstitutionVolume > 0
-                      ? '${medication.remainingQuantity.toStringAsFixed(2)}/${medication.quantity.toStringAsFixed(2)} mL'
-                      : '${medication.remainingQuantity.toStringAsFixed(2)}/${medication.quantity.toStringAsFixed(2)} ${medication.quantityUnit}';
+                      ? '${_formatNumber(medication.remainingQuantity)}/${_formatNumber(medication.quantity)} mL'
+                      : '${_formatNumber(medication.remainingQuantity)}/${_formatNumber(medication.quantity)} ${medication.quantityUnit.displayName}';
                   return Card(
                     elevation: 4,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -119,7 +124,8 @@ class HomeScreen extends StatelessWidget {
                       contentPadding: const EdgeInsets.all(16),
                       title: Text(
                         medication.name,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
                       ),
                       subtitle: Text(
                         'Remaining: $remaining',
@@ -144,12 +150,12 @@ class HomeScreen extends StatelessWidget {
         onPressed: () {
           Navigator.pushNamed(context, '/medication_form');
         },
-        backgroundColor: const Color(0xFFFFC107),
+        backgroundColor: AppConstants.primaryColor,
         child: const Icon(Icons.add, color: Colors.black),
       ),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xFFFFC107),
+        selectedItemColor: AppConstants.primaryColor,
         unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),

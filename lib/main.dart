@@ -45,8 +45,7 @@ class MyApp extends StatelessWidget {
             ),
             filled: true,
             fillColor: Colors.white,
-            labelStyle: TextStyle(color: Colors.grey[600]),
-            suffixStyle: TextStyle(color: Colors.grey[600]),
+            labelStyle: TextStyle(color: Colors.grey),
           ),
         ),
         initialRoute: '/home',
@@ -59,9 +58,12 @@ class MyApp extends StatelessWidget {
             medication: (ModalRoute.of(context)!.settings.arguments as Map)['medication'] as Medication,
           ),
           '/add_schedule': (context) => const AddScheduleScreen(),
-          '/medication_details': (context) => MedicationDetailsScreen(
-            medication: ModalRoute.of(context)!.settings.arguments as Medication,
-          ),
+          '/medication_details': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments;
+            return MedicationDetailsScreen(
+              medication: args is Medication ? args : null,
+            );
+          },
           '/reconstitute': (context) => ReconstitutionScreen(
             medication: ModalRoute.of(context)!.settings.arguments as Medication,
           ),

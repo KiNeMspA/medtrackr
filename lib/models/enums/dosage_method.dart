@@ -1,7 +1,22 @@
 enum DosageMethod {
-  subcutaneous,
-  intravenous,
   oral,
+  subcutaneous,
   intramuscular,
-  topical, unspecified,
+  intravenous,
+  unspecified;
+
+  String get displayName {
+    switch (this) {
+      case DosageMethod.oral:
+        return 'Oral';
+      case DosageMethod.subcutaneous:
+        return 'Subcutaneous';
+      case DosageMethod.intramuscular:
+        return 'Intramuscular';
+      case DosageMethod.intravenous:
+        return 'Intravenous';
+      case DosageMethod.unspecified:
+        return 'Unspecified';
+    }
+  }
 }

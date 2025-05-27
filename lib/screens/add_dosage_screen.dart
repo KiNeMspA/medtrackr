@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:medtrackr/models/dosage.dart';
 import 'package:medtrackr/models/medication.dart';
 import 'package:medtrackr/models/enums/dosage_method.dart';
+import 'package:medtrackr/models/enums/quantity_unit.dart';
 import 'package:medtrackr/widgets/forms/dosage_form_fields.dart';
 import 'package:medtrackr/widgets/navigation/app_bottom_navigation_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:medtrackr/constants/constants.dart';
 
 class AddDosageScreen extends StatefulWidget {
   final Medication medication;
@@ -30,16 +32,14 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
   void initState() {
     super.initState();
     final targetDose =
-        widget.medication.selectedReconstitution?['doseVolume']?.toDouble() ??
-            0;
+        widget.medication.selectedReconstitution?['doseVolume']?.toDouble() ?? 0;
     _nameController = TextEditingController(
       text: targetDose > 0 ? 'Dose ${targetDose * 1000}mcg' : 'Dose 1',
     );
-    _doseController =
-        TextEditingController(text: targetDose.toStringAsFixed(2));
+    _doseController = TextEditingController(text: targetDose.toStringAsFixed(2));
     _volumeController = TextEditingController();
     _insulinUnitsController = TextEditingController();
-    _doseUnit = widget.medication.quantityUnit;
+    _doseUnit = widget.medication.quantityUnit.displayName;
     _method = DosageMethod.oral;
   }
 
@@ -71,69 +71,58 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: const Text(
           'Confirm Dosage',
           style: TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
             fontSize: 22,
-            shadows: [Shadow(color: Color(0xFFFFC107), blurRadius: 2)],
           ),
         ),
         content: Padding(
           padding: const EdgeInsets.symmetric(vertical: 16.0),
           child: RichText(
             text: TextSpan(
-              style: const TextStyle(
-                  color: Colors.grey, fontSize: 16, height: 1.5),
+              style: AppConstants.cardBodyStyle,
               children: [
                 const TextSpan(
-                    text: 'Name: ',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.black)),
+                  text: 'Name: ',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 TextSpan(text: '${dosage.name}\n'),
                 const TextSpan(
-                    text: 'Dose: ',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.black)),
+                  text: 'Dose: ',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 TextSpan(
-                    text:
-                        '${dosage.totalDose.toStringAsFixed(2)} ${dosage.doseUnit}\n'),
+                    text: '${dosage.totalDose.toStringAsFixed(2)} ${dosage.doseUnit}\n'),
                 const TextSpan(
-                    text: 'Method: ',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.black)),
-                TextSpan(text: dosage.method.toString().split('.').last),
+                  text: 'Method: ',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                TextSpan(text: dosage.method.displayName),
               ],
             ),
           ),
         ),
+        actionsAlignment: MainAxisAlignment.center,
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: const Text(
               'Cancel',
               style: TextStyle(
-                  color: Color(0xFFFFC107),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16),
+                color: AppConstants.primaryColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
           ),
+          const SizedBox(width: 16),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFC107),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text(
-              'Confirm',
-              style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16),
-            ),
+            style: AppConstants.dialogButtonStyle,
+            child: const Text('Confirm'),
           ),
         ],
       ),
@@ -166,7 +155,7 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text('Add Dosage'),
-        backgroundColor: const Color(0xFFFFC107),
+        backgroundColor: AppConstants.primaryColor,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -182,25 +171,16 @@ class _AddDosageScreenState extends State<AddDosageScreen> {
                   volumeController: _volumeController,
                   insulinUnitsController: _insulinUnitsController,
                   doseUnit: _doseUnit,
-                  doseUnits: ['g', 'mg', 'mcg', 'mL', 'IU', ''],
+                  doseUnits: QuantityUnit.values.map((e) => e.displayName).toList(),
                   method: _method,
-                  onDoseUnitChanged: (value) =>
-                      setState(() => _doseUnit = value!),
+                  onDoseUnitChanged: (value) => setState(() => _doseUnit = value!),
                   onMethodChanged: (value) => setState(() => _method = value!),
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: () => _saveDosage(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFFC107),
-                    minimumSize: const Size(double.infinity, 50),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    elevation: 4,
-                  ),
-                  child: const Text('Save Dosage',
-                      style: TextStyle(
-                          color: Colors.black, fontWeight: FontWeight.bold)),
+                  style: AppConstants.actionButtonStyle,
+                  child: const Text('Save Dosage'),
                 ),
               ],
             ),

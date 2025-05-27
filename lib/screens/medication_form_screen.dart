@@ -30,7 +30,11 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
     super.initState();
     _nameController = TextEditingController(text: widget.medication?.name ?? '');
     _quantityController = TextEditingController(
-        text: widget.medication != null ? widget.medication!.quantity.toStringAsFixed(0) : '');
+        text: widget.medication != null
+            ? (widget.medication!.quantity % 1 == 0
+            ? widget.medication!.quantity.toInt().toString()
+            : widget.medication!.quantity.toStringAsFixed(2))
+            : '');
     _notesController = TextEditingController(text: widget.medication?.notes ?? '');
     if (widget.medication != null) {
       _type = widget.medication!.type;
@@ -73,18 +77,19 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
-        title: Text(
+        title: const Text(
           'Confirm Medication',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          style: TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
+            fontSize: 22,
           ),
         ),
         content: Padding(
           padding: const EdgeInsets.symmetric(vertical: 16.0),
           child: RichText(
             text: TextSpan(
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.black),
+              style: AppConstants.cardBodyStyle.copyWith(height: 1.8),
               children: [
                 const TextSpan(
                   text: 'Name: ',
@@ -100,7 +105,9 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                   text: '\nQuantity: ',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                TextSpan(text: '${medication.quantity.toStringAsFixed(0)} ${medication.quantityUnit.displayName}'),
+                TextSpan(
+                    text:
+                    '${medication.quantity % 1 == 0 ? medication.quantity.toInt() : medication.quantity.toStringAsFixed(2)} ${medication.quantityUnit.displayName}'),
                 const TextSpan(
                   text: '\nNotes: ',
                   style: TextStyle(fontWeight: FontWeight.bold),
@@ -112,10 +119,16 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
         ),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
-          ElevatedButton(
+          TextButton(
             onPressed: () => Navigator.pop(context, false),
-            style: AppConstants.cancelButtonStyle,
-            child: const Text('Cancel'),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                color: AppConstants.primaryColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
           ),
           const SizedBox(width: 16),
           ElevatedButton(
@@ -207,8 +220,8 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                     padding: const EdgeInsets.all(16.0),
                     child: Text(
                       _type == MedicationType.injection
-                          ? 'Next, configure dosages, reconstitution (if needed), and schedules in the Medication Overview.'
-                          : 'Next, configure dosages and schedules in the Medication Overview.',
+                          ? 'Proceed to the Medication Overview to set up dosages, reconstitution (if applicable), and schedules.'
+                          : 'Proceed to the Medication Overview to set up dosages and schedules.',
                       style: AppConstants.infoTextStyle,
                     ),
                   ),
@@ -217,9 +230,9 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                 ElevatedButton(
                   onPressed: () => _saveMedication(context),
                   style: AppConstants.actionButtonStyle,
-                  child: Text(
-                    widget.medication == null ? 'Add Medication' : 'Update Medication',
-                    style: const TextStyle(color: Colors.black),
+                  child: const Text(
+                    'Add Medication',
+                    style: TextStyle(color: Colors.black),
                   ),
                 ),
               ],

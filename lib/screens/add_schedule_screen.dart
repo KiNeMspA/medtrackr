@@ -1,4 +1,3 @@
-import 'package:medtrackr/models/enums/frequency_type.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/models/medication.dart';
@@ -6,6 +5,7 @@ import 'package:medtrackr/models/schedule.dart';
 import 'package:medtrackr/models/dosage.dart';
 import 'package:medtrackr/providers/data_provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:medtrackr/models/enums/frequency_type.dart';
 
 extension StringExtension on String {
   String capitalize() {
@@ -90,9 +90,7 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
     );
 
     try {
-      print('Saving schedule for medication: ${schedule.medicationId}');
       await dataProvider.addScheduleAsync(schedule);
-      print('Schedule saved successfully');
       if (context.mounted) {
         Navigator.pushReplacementNamed(
           context,
@@ -101,7 +99,6 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
         );
       }
     } catch (e) {
-      print('Error saving schedule: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error saving schedule: $e')),
@@ -141,7 +138,7 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
                   fillColor: Colors.white,
                 ),
                 items: medications
-                    .map((med) => DropdownMenuItem(
+                    .map<DropdownMenuItem<String>>((med) => DropdownMenuItem(
                   value: med.id,
                   child: Text(med.name),
                 ))
@@ -149,7 +146,7 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
                 onChanged: (value) {
                   setState(() {
                     _selectedMedicationId = value;
-                    _selectedDosageId = null; // Reset dosage when medication changes
+                    _selectedDosageId = null;
                   });
                 },
               ),
@@ -164,7 +161,7 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
                 ),
                 items: dataProvider.dosages
                     .where((dosage) => dosage.medicationId == _selectedMedicationId)
-                    .map((dosage) => DropdownMenuItem(
+                    .map<DropdownMenuItem<String>>((dosage) => DropdownMenuItem(
                   value: dosage.id,
                   child: Text(dosage.name),
                 ))
@@ -194,7 +191,10 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
                   fillColor: Colors.white,
                 ),
                 items: ['hourly', 'daily', 'weekly', 'monthly']
-                    .map((freq) => DropdownMenuItem(value: freq, child: Text(freq.capitalize())))
+                    .map<DropdownMenuItem<String>>((freq) => DropdownMenuItem(
+                  value: freq,
+                  child: Text(freq.capitalize()),
+                ))
                     .toList(),
                 onChanged: (value) {
                   setState(() {
@@ -220,9 +220,8 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
                   backgroundColor: const Color(0xFFFFC107),
                   minimumSize: const Size(double.infinity, 50),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 4,
                 ),
-                child: const Text('Save Schedule', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                child: const Text('Save Schedule', style: TextStyle(color: Colors.black)),
               ),
             ],
           ),
@@ -238,7 +237,7 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
         ],
-        currentIndex: 0, // Home selected
+        currentIndex: 0,
         onTap: (index) {
           if (index == 0) Navigator.pushReplacementNamed(context, '/home');
           if (index == 1) Navigator.pushReplacementNamed(context, '/calendar');

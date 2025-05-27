@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:medtrackr/constants/constants.dart';
 import 'package:medtrackr/models/medication.dart';
 import 'package:medtrackr/models/enums/syringe_size.dart';
+import 'package:medtrackr/models/enums/quantity_unit.dart';
 import 'package:medtrackr/utils/calculators/reconstitution_calculator.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/providers/data_provider.dart';
@@ -30,13 +31,22 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
   @override
   void initState() {
     super.initState();
-    _reconstitutionFluidController.text =
-    widget.medication.reconstitutionFluid.isNotEmpty
+    _reconstitutionFluidController.text = widget.medication.reconstitutionFluid.isNotEmpty
         ? widget.medication.reconstitutionFluid
         : 'Bacteriostatic Water';
-    _targetDose = 0;
+    _targetDose = widget.medication.selectedReconstitution?['targetDose']?.toDouble() ?? 0;
     _targetDoseController.text = _formatNumber(_targetDose);
-    _fluidAmountController.text = '1';
+    _fluidAmountController.text = widget.medication.reconstitutionVolume > 0
+        ? _formatNumber(widget.medication.reconstitutionVolume)
+        : '1';
+    _selectedReconstitution = widget.medication.selectedReconstitution;
+    _syringeSize = widget.medication.selectedReconstitution?['syringeSize'] != null
+        ? SyringeSize.values.firstWhere(
+          (e) => e.value == widget.medication.selectedReconstitution!['syringeSize'],
+      orElse: () => SyringeSize.size1_0,
+    )
+        : SyringeSize.size1_0;
+    _targetDoseUnit = widget.medication.selectedReconstitution?['targetDoseUnit'] ?? 'mcg';
     _calculateReconstitutionSuggestions();
   }
 
@@ -49,7 +59,7 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
   }
 
   String _formatNumber(double value) {
-    return value.toStringAsFixed(value.truncateToDouble() == value ? 0 : 2);
+    return value % 1 == 0 ? value.toInt().toString() : value.toStringAsFixed(2);
   }
 
   void _calculateReconstitutionSuggestions() {
@@ -57,7 +67,7 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
     final calculator = ReconstitutionCalculator(
       quantityController: TextEditingController(text: widget.medication.quantity.toString()),
       targetDoseController: _targetDoseController,
-      quantityUnit: widget.medication.quantityUnit,
+      quantityUnit: widget.medication.quantityUnit.displayName,
       targetDoseUnit: _targetDoseUnit,
       medicationName: widget.medication.name,
       syringeSize: _syringeSize.value,
@@ -94,7 +104,11 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
       reconstitutionVolume: _selectedReconstitution!['volume']?.toDouble() ?? 0,
       reconstitutionFluid: _reconstitutionFluidController.text,
       reconstitutionOptions: _reconstitutionSuggestions,
-      selectedReconstitution: _selectedReconstitution,
+      selectedReconstitution: {
+        ..._selectedReconstitution!,
+        'targetDoseUnit': _targetDoseUnit,
+        'syringeSize': _syringeSize.value,
+      },
     );
 
     final confirmed = await showDialog<bool>(
@@ -115,37 +129,36 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
           padding: const EdgeInsets.symmetric(vertical: 16.0),
           child: RichText(
             text: TextSpan(
-              style: const TextStyle(color: Colors.grey, fontSize: 16, height: 1.5),
+              style: AppConstants.cardBodyStyle.copyWith(height: 1.8),
               children: [
                 const TextSpan(
                     text: 'Reconstitution Fluid: ',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                    style: TextStyle(fontWeight: FontWeight.bold)),
                 TextSpan(text: '${_reconstitutionFluidController.text}\n'),
                 const TextSpan(
                     text: 'Fluid Amount: ',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                    style: TextStyle(fontWeight: FontWeight.bold)),
                 TextSpan(text: '${_formatNumber(_selectedReconstitution!['volume'])} mL\n'),
                 const TextSpan(
                     text: 'Concentration: ',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                    style: TextStyle(fontWeight: FontWeight.bold)),
                 TextSpan(text: '${_formatNumber(_selectedReconstitution!['concentration'])} mg/mL\n'),
                 const TextSpan(
                     text: 'Target Dose: ',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                    style: TextStyle(fontWeight: FontWeight.bold)),
                 TextSpan(text: '${_formatNumber(_targetDose)} $_targetDoseUnit\n'),
                 const TextSpan(
                     text: 'Administer ',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                    style: TextStyle(fontWeight: FontWeight.bold)),
                 TextSpan(
                   text: '${_formatNumber(_selectedReconstitution!['syringeUnits'])} IU',
-                  style: const TextStyle(color: Colors.black),
                 ),
                 const TextSpan(
                     text: ' via ',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                    style: TextStyle(fontWeight: FontWeight.bold)),
                 TextSpan(
                   text: _syringeSize.displayName,
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -160,20 +173,16 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
                 child: const Text(
                   'Cancel',
                   style: TextStyle(
-                      color: AppConstants.primaryColor, fontWeight: FontWeight.bold, fontSize: 16),
+                      color: AppConstants.primaryColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16),
                 ),
               ),
               const SizedBox(width: 16),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppConstants.primaryColor,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                child: const Text(
-                  'Confirm',
-                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
-                ),
+                style: AppConstants.dialogButtonStyle,
+                child: const Text('Confirm'),
               ),
             ],
           ),
@@ -200,7 +209,9 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final targetDoseUnits = widget.medication.quantityUnit == 'mg' ? ['mg', 'mcg'] : ['mcg', 'mg'];
+    final targetDoseUnits = widget.medication.quantityUnit == QuantityUnit.mg
+        ? ['mg', 'mcg']
+        : ['mcg', 'mg'];
 
     return Scaffold(
       backgroundColor: Colors.grey[200],
@@ -333,7 +344,7 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
                         style: TextStyle(color: Colors.grey[600], fontSize: 12),
                       ),
                       Text(
-                        'Calculation: ${_formatNumber(_targetDose * (_targetDoseUnit == 'mg' ? 1 : 1/1000))} mg / ${_formatNumber(_selectedReconstitution!['concentration'])} mg/mL * 100 = ${_formatNumber(_selectedReconstitution!['syringeUnits'])} IU',
+                        'Calculation: ${_formatNumber(_targetDose * (_targetDoseUnit == 'mg' ? 1 : 1 / 1000))} mg / ${_formatNumber(_selectedReconstitution!['concentration'])} mg/mL * 100 = ${_formatNumber(_selectedReconstitution!['syringeUnits'])} IU',
                         style: TextStyle(color: Colors.grey[600], fontSize: 12),
                       ),
                     ],
@@ -383,7 +394,7 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
                               text: _formatNumber(widget.medication.quantity),
                               style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
-                            const TextSpan(text: ' mg of '),
+                            TextSpan(text: ' ${widget.medication.quantityUnit.displayName} of '),
                             TextSpan(
                               text: widget.medication.name,
                               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -404,15 +415,16 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
                             ),
                             const TextSpan(text: '\nConcentration: '),
                             TextSpan(
-                              text: '${_formatNumber(_selectedReconstitution!['concentration'])} mg/mL',
-                              style: TextStyle(color: Colors.grey[600]),
+                              text:
+                              '${_formatNumber(_selectedReconstitution!['concentration'])} mg/mL',
+                              style: const TextStyle(color: Colors.grey),
                             ),
                           ],
                         ),
                       ),
                     ],
                   ),
-                )
+                ),
               ],
               if (_reconstitutionError != null)
                 Padding(
@@ -425,14 +437,8 @@ class _ReconstitutionScreenState extends State<ReconstitutionScreen> {
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () => _saveReconstitution(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppConstants.primaryColor,
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  elevation: 4,
-                ),
-                child: const Text('Save',
-                    style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                style: AppConstants.actionButtonStyle,
+                child: const Text('Save'),
               ),
             ],
           ),
