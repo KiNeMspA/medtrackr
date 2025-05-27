@@ -1,3 +1,4 @@
+// In lib/constants/constants.dart
 import 'package:flutter/material.dart';
 
 class AppConstants {
@@ -10,6 +11,7 @@ class AppConstants {
 
   static final cardDecoration = BoxDecoration(
     color: Colors.white,
+    border: Border.all(color: primaryColor, width: 1), // Add yellow border
     borderRadius: BorderRadius.circular(12),
     boxShadow: const [
       BoxShadow(

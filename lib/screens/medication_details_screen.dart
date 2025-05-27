@@ -1,3 +1,4 @@
+// In lib/screens/medication_details_screen.dart
 import 'package:flutter/material.dart';
 import 'package:medtrackr/constants/constants.dart';
 import 'package:medtrackr/constants/themes.dart';
@@ -109,27 +110,32 @@ class MedicationDetailsScreen extends StatelessWidget {
               style: AppConstants.cardTitleStyle.copyWith(fontSize: 20),
             ),
             const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Name: ${medication.name}', style: AppConstants.cardBodyStyle),
-                    Text('Type: ${medication.type.displayName}', style: AppConstants.cardBodyStyle),
-                    Text(
-                        'Quantity: ${medication.quantity % 1 == 0 ? medication.quantity.toInt() : medication.quantity.toStringAsFixed(2)} ${medication.quantityUnit.displayName}',
-                        style: AppConstants.cardBodyStyle),
-                    if (medication.dosePerTablet != null)
-                      Text('Dose per Tablet: ${medication.dosePerTablet} mg/mcg',
-                          style: AppConstants.cardBodyStyle),
-                    if (medication.reconstitutionVolume > 0)
+            Container(
+              decoration: AppConstants.cardDecoration, // Apply styling
+              child: Card(
+                elevation: 0, // Set to 0 since decoration handles shadow
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Name: ${medication.name}', style: AppConstants.cardBodyStyle),
+                      Text('Type: ${medication.type.displayName}', style: AppConstants.cardBodyStyle),
                       Text(
-                          'Reconstituted: ${medication.reconstitutionVolume} ${medication.reconstitutionVolumeUnit} ${medication.reconstitutionFluid}',
+                          'Quantity: ${medication.quantity % 1 == 0 ? medication.quantity.toInt() : medication.quantity.toStringAsFixed(2)} ${medication.quantityUnit.displayName}',
                           style: AppConstants.cardBodyStyle),
-                    Text('Notes: ${medication.notes.isNotEmpty ? medication.notes : 'None'}',
-                        style: AppConstants.cardBodyStyle),
-                  ],
+                      if (medication.dosePerTablet != null)
+                        Text('Dose per Tablet: ${medication.dosePerTablet} mg/mcg',
+                            style: AppConstants.cardBodyStyle),
+                      if (medication.reconstitutionVolume > 0)
+                        Text(
+                            'Reconstituted: ${medication.reconstitutionVolume} ${medication.reconstitutionVolumeUnit} ${medication.reconstitutionFluid}',
+                            style: AppConstants.cardBodyStyle),
+                      Text('Notes: ${medication.notes.isNotEmpty ? medication.notes : 'None'}',
+                          style: AppConstants.cardBodyStyle),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -143,14 +149,19 @@ class MedicationDetailsScreen extends StatelessWidget {
                 itemCount: dosages.length,
                 itemBuilder: (context, index) {
                   final dosage = dosages[index];
-                  return Card(
-                    child: ListTile(
-                      title: Text(dosage.name, style: AppConstants.cardTitleStyle),
-                      subtitle: Text(
-                          '${dosage.totalDose} ${dosage.doseUnit} (${dosage.method.displayName})',
-                          style: AppConstants.cardBodyStyle),
-                      onTap: () => Navigator.pushNamed(
-                          context, '/dosage_form', arguments: {'medication': medication, 'dosage': dosage}),
+                  return Container(
+                    decoration: AppConstants.cardDecoration, // Apply styling
+                    child: Card(
+                      elevation: 0, // Set to 0 since decoration handles shadow
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      child: ListTile(
+                        title: Text(dosage.name, style: AppConstants.cardTitleStyle),
+                        subtitle: Text(
+                            '${dosage.totalDose} ${dosage.doseUnit} (${dosage.method.displayName})',
+                            style: AppConstants.cardBodyStyle),
+                        onTap: () => Navigator.pushNamed(
+                            context, '/dosage_form', arguments: {'medication': medication, 'dosage': dosage}),
+                      ),
                     ),
                   );
                 },
