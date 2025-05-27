@@ -7,7 +7,7 @@ class AppConstants {
   static const appName = 'MedTrackr';
   static const cardDecoration = BoxDecoration(
     color: Colors.white,
-    border: Border.all(color: primaryColor, width: 2),
-    borderRadius: BorderRadius.circular(12),
+    border: Border.fromBorderSide(BorderSide(color: primaryColor, width: 2)),
+    borderRadius: BorderRadius.all(Radius.circular(12)),
   );
 }
