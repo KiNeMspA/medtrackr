@@ -88,7 +88,7 @@ To update this section:
   - Fixed cardDecoration constant in constants.dart to use const-compatible Border and BorderRadius, applied to MedicationCard and ReconstitutionScreen cards. Commit e8d779f0e2753d37f08977dc6e1edf021f6ff85e (May 27, 2025, 12:01 PM AEST):
   - Removed yellow highlight from MedicationCard and ReconstitutionScreen cards for cleaner styling (May 27, 2025, 12:11 PM AEST, commit <280b19dd8d7761f28638ecaa5dbc92f935f7a5ff>).- Enhanced card styling with National Geographic aesthetic (off-white background, shadow, yellow highlights, modern typography) in MedicationDetailsScreen and ReconstitutionScreen (May 27, 2025, 12:05 PM AEST, commit a8d86ec3f73600b57f3d6ce041d681f48387f61c).
   - Consolidated add/edit medication screens, added enums, made MedicationCard tappable, moved reconstitution option to button in MedicationDetailsScreen (May 27, 2025, 1:05 PM AEST, commit <new_commit_hash>).
-
+  - Consolidated add/edit medication screens, added enums, made MedicationCard tappable, moved reconstitution to MedicationDetailsScreen button, added styled help message, bolded confirmation dialog labels, centered dialog buttons, set injection default to mg, made MedicationDetailsScreen cards full-width with bold headers, renamed to Medication Overview, added stock message and dosage/reconstitution buttons, enhanced MedicationCard with reconstitution summary and stylized fields (May 27, 2025, 1:21 PM AEST, commit <new_commit_hash>).
 
 
 
