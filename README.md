@@ -101,7 +101,7 @@ Below is the restructured folder structure, detailing where each file type/opera
   - Ensured `routes.dart` uses `enums.dart` for routing logic.
 ### Folder Structure Restructuring (May 28, 2025, 19:45 PM AEST)
 - **Previous Commit**: `a6c07082fc6bf7904fc5cd22f1264b3dacd99dffd`
-- **New Commit**: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
+- **New Commit**: `8221e170c72b7656048de81f45a87aa655ad86f3`
 - **Details**:
   - Kept enums in `lib/app/enums.dart` for app-wide use (`MedicationType`, `QuantityUnit`, `DosageMethod`, `SyringeSize`, `FrequencyType`, `FluidUnit`, `TargetDoseUnit`). Added `toMLFactor` to `FluidUnit` and `displayName` to `SyringeSize`.
   - Ensured `lib/app/themes.dart` uses `AppThemes` for consistent styling of Information (blue), Warning (orange), and Error (red) cards/messages.
