@@ -2,130 +2,132 @@
 
 A Flutter-based medication tracking app to manage medications, dosages, schedules, and history.
 
-## Notes for Grok**: 
-- Always provide code snippets with clear instructions on where to paste them in the specified files. Do not include full file replacements unless explicitly requested. (May 27, 2025, 10:38 PM AEST)
-- Provide minimal code snippets targeting specific changes, avoiding full file replacements unless necessary, to save memory. Include precise placement instructions. (May 27, 2025, 11:18 PM AEST)
-- Information cards use `Themes.informationCardDecoration` for consistent styling (off-white, yellow border, shadow).
-- For numeric displays, drop trailing decimal zeros app-wide (e.g., 1.0 → 1) using a formatting function.
-- Ensure the Reconstitution button on `MedicationDetailsScreen` only appears for `Injection` medications. (May 28, 2025, 12:48 AM AEST)
+## Notes for Grok
+
+- **Date of Restructuring**: May 28, 2025
+- **Enums**: All enums are consolidated in `lib/core/enums/enums.dart` for app-wide calculations (e.g., `QuantityUnit` conversions). Do not split into feature-specific enum files.
+- **Themes**: General styling for Information, Warning, and Error cards/messages is in `lib/app/themes.dart`. Use `AppThemes.informationCardDecoration`, `AppThemes.warningBackgroundColor`, etc., for consistent UI across all files.
+- **Code Snippets**: When providing changes, include precise line numbers and code references to existing file content to ensure accuracy.
+- **Restructuring Completed**: Folder structure is modular with feature-specific directories (`medication`, `dosage`, `schedule`). `DataProvider` is split into `MedicationProvider`, `DosageProvider`, and `ScheduleProvider` with corresponding repositories.
+- **When reviewing and adding new code please make sure to utilise the new folder structure and place the required code , operations, functions and files in their respective directory for efficiency. 
+
+## Folder Structure
+
+Below is the restructured folder structure, detailing where each file type/operation is located and its purpose:
+
+- **lib/**
+  - **app/**
+    - `constants.dart`: Defines app-wide constants (e.g., `primaryColor`, `appName`, `cardTitleStyle`). Used for shared styling and configuration values across the app.
+    - `themes.dart`: Contains `AppThemes` with `ThemeData` and styling for Information, Warning, and Error cards/messages (e.g., `informationCardDecoration`, `warningBackgroundColor`). Provides general theme styling accessible app-wide.
+    - `routes.dart`: Defines navigation routes (`AppRoutes`) for all screens (e.g., `/home`, `/medication_form`). Centralizes routing logic.
+  - **core/**
+    - **enums/**
+      - `enums.dart`: Single file for all enums (`MedicationType`, `QuantityUnit`, `DosageMethod`, `SyringeSize`, `FrequencyType`, `FluidUnit`, `TargetDoseUnit`). Used for calculations and UI consistency across features.
+    - **utils/**
+      - `format_helper.dart`: Utility for number formatting (e.g., `formatNumber` to drop trailing zeros). Used for consistent numeric display.
+      - `validators.dart`: Input validation logic for forms (e.g., required fields). Supports form validation across features.
+    - **services/**
+      - `database_service.dart`: Handles JSON file persistence (`saveData`, `loadData`, `migrateData`). Manages data storage for medications, dosages, and schedules.
+      - `notification_service.dart`: Manages notification scheduling and cancellation. Used for schedule reminders.
+    - **widgets/**
+      - `app_bottom_navigation_bar.dart`: Bottom navigation bar widget for app-wide navigation (Home, Calendar, History, Settings).
+      - `confirm_medication_dialog.dart`: Dialog for confirming medication actions. Uses `AppThemes.informationCardDecoration`.
+      - `confirm_dosage_dialog.dart`: Dialog for confirming dosage actions. Uses `AppThemes.informationCardDecoration` or `AppThemes.warningCardDecoration`.
+      - `confirm_schedule_dialog.dart`: Dialog for confirming schedule actions. Uses `AppThemes.informationCardDecoration`.
+  - **features/**
+    - **medication/**
+      - **models/**
+        - `medication.dart`: `Medication` model defining medication data (e.g., name, type, quantity). Used for data storage and UI.
+      - **repositories/**
+        - `medication_repository.dart`: Data operations for medications (e.g., add, update, delete). Interacts with `DatabaseService`.
+      - **pages/**
+        - `medication_form_page.dart`: Screen for adding/editing medications. Uses `MedicationProvider` and `MedicationFormFields`.
+        - `medication_details_page.dart`: Screen for viewing medication details. Displays cards and reconstitution options.
+        - `reconstitution_page.dart`: Screen for calculating reconstitution for injections. Uses `Medication` model.
+      - **widgets/**
+        - `medication_card.dart`: Card widget for displaying medication info. Uses `AppThemes.informationCardDecoration`.
+        - `compact_medication_card.dart`: Compact card for medication summaries (e.g., on Home screen).
+        - `medication_form_fields.dart`: Form fields for medication input. Supports `medication_form_page.dart`.
+      - **providers/**
+        - `medication_provider.dart`: State management for medications (e.g., `addMedication`, `updateMedication`). Uses `MedicationRepository`.
+    - **dosage/**
+      - **models/**
+        - `dose.dart`: `Dosage` model defining dosage data (e.g., totalDose, method). Used for data storage and UI.
+      - **repositories/**
+        - `dosage_repository.dart`: Data operations for dosages (e.g., add, update, delete). Interacts with `DatabaseService`.
+      - **pages/**
+        - `dosage_form_page.dart`: Screen for adding/editing dosages. Uses `DosageProvider` and `DosageFormFields`.
+      - **widgets/**
+        - `dosage_form_fields.dart`: Form fields for dosage input. Supports `dosage_form_page.dart`.
+      - **providers/**
+        - `dosage_provider.dart`: State management for dosages (e.g., `addDosage`, `takeDose`). Uses `DosageRepository`.
+    - **schedule/**
+      - **models/**
+        - `schedule.dart`: `Schedule` model defining schedule data (e.g., time, frequencyType). Used for data storage and UI.
+      - **repositories/**
+        - `schedule_repository.dart`: Data operations for schedules (e.g., add, update, delete). Interacts with `DatabaseService`.
+      - **pages/**
+        - `schedule_form_page.dart`: Screen for adding/editing schedules. Uses `ScheduleProvider` and `ScheduleFormFields`.
+      - **widgets/**
+        - `schedule_form_fields.dart`: Form fields for schedule input. Supports `schedule_form_page.dart`.
+      - **providers/**
+        - `schedule_provider.dart`: State management for schedules (e.g., `addSchedule`, `upcomingDoses`). Uses `ScheduleRepository`.
+    - **home/**
+      - **pages/**
+        - `home_page.dart`: Home screen displaying medication summaries and navigation. Uses `MedicationProvider` and `ScheduleProvider`.
+      - **providers/**
+        - `home_provider.dart`: State management for home screen (if implemented). Coordinates data for display.
+    - **calendar/**
+      - **pages/**
+        - `calendar_page.dart`: Placeholder for calendar screen. Planned for schedule visualization.
+    - **history/**
+      - **pages/**
+        - `history_page.dart`: Placeholder for history screen. Planned for dosage tracking.
+    - **settings/**
+      - **pages/**
+        - `settings_page.dart`: Placeholder for settings screen. Planned for theme/notification settings.
+  - **main.dart**: App entry point. Sets up `MultiProvider` for `MedicationProvider`, `DosageProvider`, `ScheduleProvider`, `DatabaseService`, `NotificationService`, and initializes `AppRoutes` and `AppThemes`.
 
 ## Features Implemented
-To update this section:
-- Add new features or fixes under the relevant category.
-- Include date, time (AEST), and commit hash.
-- Commit changes with `git add README.md`, `git commit -m "Updated README with changes"`, `git push origin main`.
-- Retrieve commit hash with `git log -1 --pretty=%H`.
 
-### Features and Fixes
-- **Medication Management** (May 26, 2025)
-  - Add, edit, delete medications (Tablet, Capsule, Injection, Other).
-  - Quantity units (g, mg, mcg, mL, IU, Unit) with conversions.
-  - Reconstitution: syringe size dropdown (0.3, 0.5, 1, 3, 5 mL), peptide formula (C=p/V, V_d=d/C), rounded volumes, warning bypass.
-  - Helper text for stock entry.
-  - National Geographic-themed UI: yellow accents, white cards, rounded corners.
-  - Commit: `c75b6817a25d24c1e0813a6b52dd2e0cfb31d253`
+### Folder Structure Restructuring (May 28, 2025)
+- **Commit**: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
+- **Details**:
+  - Consolidated all enums into `lib/core/enums/enums.dart` for simplicity and shared calculations (e.g., `QuantityUnit` conversions). Renamed from `barrel_enums.dart`.
+  - Updated `app/themes.dart` to include general theme styling for Information, Warning, and Error cards/messages. Properties like `AppThemes.informationCardDecoration`, `AppThemes.warningBackgroundColor`, and `AppThemes.errorTitleStyle` are used app-wide for consistent UI.
+  - Fixed `Themes` error in `dosage_form_page.dart` and `schedule_form_page.dart` by replacing `Themes` with `AppThemes`.
+  - Split `DataProvider` into `MedicationProvider`, `DosageProvider`, and `ScheduleProvider` with corresponding repositories (`medication_repository.dart`, `dosage_repository.dart`, `schedule_repository.dart`) for modular data management.
+  - Moved JSON persistence to `database_service.dart` for centralized data storage.
+  - Updated `main.dart` to use `MultiProvider` and `AppRoutes` for navigation.
+  - Ensured `routes.dart` uses `enums.dart` for routing logic.
+- **Commit Instructions**:
+  ```bash
+  
+  git commit -m "Restructured folder structure, consolidated enums, updated themes"
+  git push origin main
+  git log -1 --pretty=%H
+Planned Features
+Schedules: Cycle period calculations, multi-dose schedules.
+Calendar Screen: View using table_calendar.
+History: Track dosages with CSV export.
+Settings: Themes, notifications.
+Build Instructions
+Clone: git clone https://github.com/kinemspa/MedTrackr.git
+Install dependencies: flutter pub get
+Run: flutter run
+Development Environment
+Flutter: Latest stable version
+IDE: Android Studio
+OS: Windows 11
+Emulator: sdk gphone64 x86 64
+About
+A Medicine Tracking App
 
-- **Dosage Management** (May 27, 2025)
-  - Add, edit, delete dosages (e.g., "BPC157 Dose of 100mcg").
-  - Dynamic summary card per dose.
-  - Units: mcg, syringe units for reconstituted injections.
-  - Form-based add/edit with validation, map-based arguments.
-  - Dosage name field with dynamic defaults, reconstitution defaults, syringe size for injections.
-  - Recent dosages in MedicationCard on MedicationDetailsScreen.
-  - Commits: `c75b6817a25d24c1e0813a6b52dd2e0cfb31d253`, `ca43f038c3f484596b9a6e6a919182d0933a32ef`
+Releases
+No releases published
 
-- **Home Screen** (May 26, 2025)
-  - FAB for adding medications.
-  - "No medications added" message.
-  - Next scheduled dose display.
-  - Medication tiles with "Remaining X/Y" (mL for reconstituted).
-  - Schedule creation button.
-  - Commit: `f1b5971aa29a8a2f225f227f857e7d54ba8956c4`
+Packages
+No packages published
 
-- **Schedules** (May 26, 2025)
-  - Pre-populate medication/dosage, optional cycle period.
-  - Frequency: hourly, daily, weekly, monthly.
-  - Navigate to MedicationDetailsScreen after saving.
-  - Notifications with details, supporting daily/weekly recurrence.
-  - Commit: `96ac5411efb7b0986842f089765275b443caf76c`
-
-- **Navigation** (May 26, 2025)
-  - Bottom navigation bar on all screens (Home, Calendar, History, Settings).
-  - Protected navigation stack with `WillPopScope`.
-  - Commit: `42337984b04a1649c3229cd13d64832540a598a2`
-
-- **UI Enhancements** (May 27, 2025)
-  - Created CompactMedicationCard for HomeScreen.
-  - Improved MedicationCard styling (gradient, spacing).
-  - Moved medication name into MedicationCard.
-  - Card styling: off-white background, shadow, yellow highlights, modern typography.
-  - Commit: `ca43f038c3f484596b9a6e6a919182d0933a32ef`
-
-- **Build Fixes** (May 27, 2025)
-  - Fixed `selectedIU` in `main.dart`, `dosageUnit`, `frequencyType`, `notificationTime` in screens.
-  - Fixed type mismatches in `data_provider.dart`, `notification_service.dart`.
-  - Fixed `dosage_form_screen.dart`: removed invalid `importPlaylist`, added null check for `recon['syringeSize']`, corrected `_tabletCountController`, moved `isReconstituted` to class level.
-  - Fixed `medication_form_screen.dart`: added `tabletCountController`, `volumeController`.
-  - Created `lib/models/enums.dart` barrel file for enum imports.
-  - Commits: `f74b6601948f0062a0ee54b47de2bad9b9ba8a89`, `ca43f038c3f484596b9a6e6a919182d0933a32ef`
-  - Fixed `CompactMedicationCard` navigation to `MedicationDetailsScreen` by adding `/medication_details` route in `main.dart`.
-  - Commit: `f7fafe15093810cd531c9b8c6cebaffd5235b5e0` (May 27, 2025, 10:25 PM AEST)
-  - Restored card styling in `MedicationDetailsScreen` with `AppConstants.cardDecoration` (yellow border, off-white background, shadow, rounded corners).
-  - Updated `constants.dart` to include yellow border in `cardDecoration`.
-  - Commit: <new_commit_hash> (May 27, 2025, 10:31 PM AEST)
-  - Fixed `MedicationDetailsScreen` layout issues causing stacked cards and unresponsiveness.
-  - Added `ConstrainedBox` and adjusted `Column` sizing to ensure proper rendering.
-  - Commit: `6bc1f8304e16f476bff016b63f978cab00e4e155` (May 27, 2025, 10:58 PM AEST)
-  - Added help text for `MedicationType` dropdown and `Total Units` in `MedicationFormScreen`.
-  - Made `Dose per Tablet` unit dropdown functional (g, mg, mcg).
-  - Fixed confirmation dialog text display issue.
-  - Commit: <new_commit_hash> (May 27, 2025, 11:18 PM AEST)
-  - Added help text for `MedicationType` dropdown and `Total Units` in `MedicationFormScreen`.
-  - Made `Dose per Tablet` unit dropdown functional (g, mg, mcg).
-  - Fixed confirmation dialog text display issue.
-  - Commit: `ea39b884e4591f7c682d7f42940f55177a23cfdd` (May 27, 2025, 11:18 PM AEST)
-  - - **UI Enhancements** (May 27, 2025)
-  - Updated `MedicationType` dropdown label to "Select a Medication Type" and removed helper text.
-  - Changed `Total Units` label to "Total Number of Tablets" or "Total Number of Capsules".
-  - Updated confirmation dialog to show selected unit for `Dose per Tablet` (g, mg, mcg).
-  - Implemented app-wide number formatting to drop trailing decimal zeros using `formatNumber` in `format_helper.dart`.
-  - Commit: `9ef01b11373a3dd5d60624e2c8540d5fec89424a` (May 27, 2025, 11:39 PM AEST)
-  - - **Fixes** (May 28, 2025)
-  - Added missing `_showAddDosageDialog` method to `MedicationDetailsScreen` to handle injection dosage prompts.
-  - Commit: <new_commit_hash> (May 28, 2025, 12:36 AM AEST)
-  - **Fixes** (May 28, 2025)
-    - Added missing `_showAddDosageDialog` method to `MedicationDetailsScreen` to handle injection dosage prompts.
-    - Commit: `228d31d1e53ee17a1846230af7d9f14e4940c4e1` (May 28, 2025, 12:36 AM AEST)
-  - Removed `_getSelectedUnit` from `MedicationDetailsScreen` and used `dosePerTabletUnit`/`dosePerCapsuleUnit`.
-  - Restored Reconstitution button for injections on `MedicationDetailsScreen`.
-  - Commit: `5e24bc62e7e174f1459c05597b96d30046b26467` (May 28, 2025, 12:53 AM AEST)
-  - 
-## Workflow Preservation
-To maintain development workflow with Grok:
-1. Provide latest commit hash from https://github.com/kinemspa/MedTrackr.
-2. Share UI/UX feedback, functionality issues, bugs, console logs.
-3. Include missing files if referenced.
-4. Specify desired changes with examples.
-5. Grok will:
-  - Analyze commit and feedback.
-  - Provide updated code with explanations.
-  - Include commit instructions.
-  - Update README with progress.
-  - Request test results and priorities.
-
-## Planned Features
-- Schedules: Cycle period calculations, multi-dose schedules.
-- Calendar Screen: View using `table_calendar`.
-- History: Track dosages with CSV export.
-- Settings: Themes, notifications.
-
-## Build Instructions
-1. Clone: `git clone https://github.com/kinemspa/MedTrackr.git`
-2. Install dependencies: `flutter pub get`
-3. Run: `flutter run`
-
-## Development Environment
-- Flutter: Latest stable version
-- IDE: Android Studio
-- OS: Windows 11
-- Emulator: sdk gphone64 x86 64
+Footer
+© 2025 GitHub, Inc.
