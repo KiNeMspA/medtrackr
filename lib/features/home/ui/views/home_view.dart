@@ -11,8 +11,38 @@ import 'package:medtrackr/features/schedule/presenters/schedule_presenter.dart';
 import 'package:medtrackr/features/medication/models/medication.dart';
 import 'package:medtrackr/features/schedule/models/schedule.dart';
 
-class HomeView extends StatelessWidget {
+class HomeView extends StatefulWidget {
   const HomeView({super.key});
+
+  @override
+  _HomeViewState createState() => _HomeViewState();
+}
+
+class _HomeViewState extends State<HomeView> {
+  final ScrollController _scheduleScrollController = ScrollController();
+  final ScrollController _medicationScrollController = ScrollController();
+  bool _isMounted = true;
+
+  @override
+  void initState() {
+    super.initState();
+    final medicationPresenter = Provider.of<MedicationPresenter>(context, listen: false);
+    final schedulePresenter = Provider.of<SchedulePresenter>(context, listen: false);
+    medicationPresenter.loadMedications().then((_) {
+      if (_isMounted) setState(() {});
+    });
+    schedulePresenter.loadSchedules().then((_) {
+      if (_isMounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _isMounted = false;
+    _scheduleScrollController.dispose();
+    _medicationScrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,15 +50,6 @@ class HomeView extends StatelessWidget {
     final schedulePresenter = Provider.of<SchedulePresenter>(context);
     final medications = medicationPresenter.medications;
     final upcomingDoses = schedulePresenter.upcomingDoses;
-
-    Map<String, dynamic>? nextDose;
-    if (upcomingDoses.isNotEmpty) {
-      nextDose = upcomingDoses.firstWhere(
-            (dose) => dose['schedule'] != null,
-        orElse: () => {},
-      );
-      schedulePresenter.loadSchedules(); // Sync with calendar
-    }
 
     return Scaffold(
       backgroundColor: AppConstants.backgroundColor,
@@ -57,104 +78,107 @@ class HomeView extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: medications.isEmpty
             ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      'No medications added. Add one now.',
-                      style: TextStyle(fontSize: 18, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/medication_form');
-                      },
-                      style: AppConstants.actionButtonStyle,
-                      child: const Text('Add Medication'),
-                    ),
-                  ],
-                ),
-              )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Next Scheduled Doses',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
-                  ),
-                  const SizedBox(height: 16),
-                  upcomingDoses.isEmpty
-                      ? const Text(
-                    'No upcoming doses scheduled.',
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
-                  )
-                      : SizedBox(
-                    height: 150,
-                    child: ListView.builder(
-                      itemCount: upcomingDoses.length,
-                      itemBuilder: (context, index) {
-                        final dose = upcomingDoses[index];
-                        if (dose['schedule'] == null) return const SizedBox.shrink();
-                        final schedule = dose['schedule'] as Schedule;
-                        return Card(
-                          elevation: 6,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.all(24),
-                            title: Text(
-                              '${medications.firstWhere((m) => m.id == schedule.medicationId, orElse: () => Medication(id: '', name: 'Unknown', type: MedicationType.other, quantityUnit: QuantityUnit.mg, quantity: 0, remainingQuantity: 0, reconstitutionVolumeUnit: '', reconstitutionVolume: 0, reconstitutionFluid: '', notes: '')).name} (${schedule.dosageName})',
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
-                            ),
-                            subtitle: Text(
-                              'Time: ${schedule.time.format(context)}\nDose: ${formatNumber(schedule.dosageAmount)} ${schedule.dosageUnit}',
-                              style: const TextStyle(fontSize: 14, color: Colors.grey),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                    const Text(
-                      'No upcoming doses scheduled.',
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Medications',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black),
-                  ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: Scrollbar(
-                      thumbVisibility: true,
-                      trackVisibility: true,
-                      thickness: 6,
-                      radius: const Radius.circular(8),
-                      child: ListView.builder(
-                        itemCount: medications.length,
-                        itemBuilder: (context, index) {
-                          final medication = medications[index];
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: CompactMedicationCard(medication: medication),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ],
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                'No medications added. Add one now.',
+                style: TextStyle(fontSize: 18, color: Colors.grey),
               ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/medication_form');
+                },
+                style: AppConstants.actionButtonStyle,
+                child: const Text('Add Medication'),
+              ),
+            ],
+          ),
+        )
+            : Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Next Scheduled Doses',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+            ),
+            const SizedBox(height: 16),
+            upcomingDoses.isEmpty
+                ? const Text(
+              'No upcoming doses scheduled.',
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+            )
+                : SizedBox(
+              height: 150,
+              child: Scrollbar(
+                controller: _scheduleScrollController,
+                thumbVisibility: true,
+                trackVisibility: true,
+                thickness: 6,
+                radius: const Radius.circular(8),
+                child: ListView.builder(
+                  controller: _scheduleScrollController,
+                  itemCount: upcomingDoses.length,
+                  itemBuilder: (context, index) {
+                    final dose = upcomingDoses[index];
+                    if (dose['schedule'] == null) return const SizedBox.shrink();
+                    final schedule = dose['schedule'] as Schedule;
+                    return Card(
+                      elevation: 6,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(24),
+                        title: Text(
+                          '${medications.firstWhere((m) => m.id == schedule.medicationId, orElse: () => Medication(id: '', name: 'Unknown', type: MedicationType.other, quantityUnit: QuantityUnit.mg, quantity: 0, remainingQuantity: 0, reconstitutionVolumeUnit: '', reconstitutionVolume: 0, reconstitutionFluid: '', notes: '')).name} (${schedule.dosageName})',
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+                        ),
+                        subtitle: Text(
+                          'Time: ${schedule.time.format(context)}\nDose: ${formatNumber(schedule.dosageAmount)} ${schedule.dosageUnit}',
+                          style: const TextStyle(fontSize: 14, color: Colors.grey),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Medications',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: Scrollbar(
+                controller: _medicationScrollController,
+                thumbVisibility: true,
+                trackVisibility: true,
+                thickness: 6,
+                radius: const Radius.circular(8),
+                child: ListView.builder(
+                  controller: _medicationScrollController,
+                  itemCount: medications.length,
+                  itemBuilder: (context, index) {
+                    final medication = medications[index];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: CompactMedicationCard(medication: medication),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
       bottomNavigationBar: AppBottomNavigationBar(
         currentIndex: 0,
         onTap: (index) {
           if (index == 0) Navigator.pushReplacementNamed(context, '/home');
-          if (index == 1) Navigator.pushReplacementNamed(context, '/calendar');
-          if (index == 2) Navigator.pushReplacementNamed(context, '/history');
-          if (index == 3) Navigator.pushReplacementNamed(context, '/settings');
+          if (index == 1) Navigator.pushNamed(context, '/calendar');
+          if (index == 2) Navigator.pushNamed(context, '/history');
+          if (index == 3) Navigator.pushNamed(context, '/settings');
         },
       ),
     );

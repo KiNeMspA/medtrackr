@@ -1,6 +1,7 @@
 // lib/features/calendar/ui/views/calendar_view.dart
 import 'package:flutter/material.dart';
 import 'package:medtrackr/app/constants.dart';
+import 'package:medtrackr/app/enums.dart';
 import 'package:medtrackr/core/widgets/app_bottom_navigation_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -46,6 +47,10 @@ class _CalendarViewState extends State<CalendarView> {
       appBar: AppBar(
         title: const Text('Calendar'),
         backgroundColor: AppConstants.primaryColor,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pushReplacementNamed(context, '/home'),
+        ),
       ),
       body: Column(
         children: [

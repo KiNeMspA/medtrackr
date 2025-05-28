@@ -135,6 +135,16 @@ Below is the restructured folder structure, detailing where each file type/opera
   - Updated `home_view.dart` to display all upcoming schedules in a ListView.
   - Finalized styling audit by centralizing scrollbar styles in `themes.dart`.
   - Progressed verification checklist: verified dosage tracking, scheduling, calendar sync, settings, and data persistence testing.
+
+### Runtime and Build Error Fixes, Checklist Progress (May 28, 2025, 8:45 PM AEST)
+- **Commit**: `8221e170c72b7656048de81f45a87aa655ad86f3`
+- **Details**:
+  - Fixed calendar screen back button to use `Navigator.pop` in `calendar_view.dart`.
+  - Resolved `PrimaryScrollController` conflict by converting `HomeView` to `StatefulWidget` with dedicated `ScrollController`s.
+  - Fixed `DosagePresenter` and `SchedulePresenter` disposal errors with lifecycle management in `home_view.dart`.
+  - Removed non-constant `scrollbarTheme` from `themes.dart` to fix build errors.
+  - Enhanced `schedule_form_view.dart` for proper schedule editing initialization.
+  - Progressed verification checklist: confirmed data persistence, fixed dosage labels, notifications toggle, multiple schedules display, and scheduling functionality.
   
   
   

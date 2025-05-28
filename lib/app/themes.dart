@@ -296,10 +296,4 @@ class AppThemes {
     color: Colors.blue.shade50,
   );
 
-  static const ScrollbarThemeData scrollbarTheme = ScrollbarThemeData(
-    thumbVisibility: MaterialStateProperty.all(true),
-    trackVisibility: MaterialStateProperty.all(true),
-    thickness: MaterialStateProperty.all(6),
-    radius: Radius.circular(8),
-  );
 }

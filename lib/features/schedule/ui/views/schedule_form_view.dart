@@ -36,13 +36,19 @@ class _ScheduleFormViewState extends State<ScheduleFormView> {
   @override
   void initState() {
     super.initState();
+    if (widget.medication == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, '/home');
+      });
+      return;
+    }
     final dosagePresenter = Provider.of<DosagePresenter>(context, listen: false);
     final dosages = dosagePresenter.getDosagesForMedication(widget.medication.id);
     _dosageNameController = TextEditingController(text: widget.schedule?.dosageName ?? '');
     _selectedDosage = widget.schedule != null && dosages.isNotEmpty
         ? dosages.firstWhere(
           (d) => d.id == widget.schedule!.dosageId,
-      orElse: () => dosages.first,
+      orElse: () => dosages.isNotEmpty ? dosages.first : null,
     )
         : dosages.isNotEmpty
         ? dosages.first
