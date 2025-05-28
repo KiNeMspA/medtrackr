@@ -1,5 +1,4 @@
-// In lib/features/medication/models/medication.dart
-
+// lib/features/medication/models/medication.dart
 import 'package:medtrackr/app/enums.dart';
 
 class Medication {
@@ -109,8 +108,7 @@ class Medication {
         quantityUnit: quantityUnit ?? this.quantityUnit,
         quantity: quantity ?? this.quantity,
         remainingQuantity: remainingQuantity ?? this.remainingQuantity,
-        reconstitutionVolumeUnit:
-        reconstitutionVolumeUnit ?? this.reconstitutionVolumeUnit,
+        reconstitutionVolumeUnit: reconstitutionVolumeUnit ?? this.reconstitutionVolumeUnit,
         reconstitutionVolume: reconstitutionVolume ?? this.reconstitutionVolume,
         reconstitutionFluid: reconstitutionFluid ?? this.reconstitutionFluid,
         notes: notes ?? this.notes,
@@ -118,7 +116,6 @@ class Medication {
         dosePerCapsule: dosePerCapsule ?? this.dosePerCapsule,
         dosePerTabletUnit: dosePerTabletUnit ?? this.dosePerTabletUnit,
         dosePerCapsuleUnit: dosePerCapsuleUnit ?? this.dosePerCapsuleUnit,
-        selectedReconstitution:
-        selectedReconstitution ?? this.selectedReconstitution,
+        selectedReconstitution: selectedReconstitution ?? this.selectedReconstitution,
       );
 }

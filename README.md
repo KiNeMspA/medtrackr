@@ -99,8 +99,21 @@ Below is the restructured folder structure, detailing where each file type/opera
   - Moved JSON persistence to `database_service.dart` for centralized data storage.
   - Updated `main.dart` to use `MultiProvider` and `AppRoutes` for navigation.
   - Ensured `routes.dart` uses `enums.dart` for routing logic.
-- **Commit Instructions**:
-  ```bash
+### Folder Structure Restructuring (May 28, 2025, 19:45 PM AEST)
+- **Previous Commit**: `a6c07082fc6bf7904fc5cd22f1264b3dacd99dffd`
+- **New Commit**: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
+- **Details**:
+  - Kept enums in `lib/app/enums.dart` for app-wide use (`MedicationType`, `QuantityUnit`, `DosageMethod`, `SyringeSize`, `FrequencyType`, `FluidUnit`, `TargetDoseUnit`). Added `toMLFactor` to `FluidUnit` and `displayName` to `SyringeSize`.
+  - Ensured `lib/app/themes.dart` uses `AppThemes` for consistent styling of Information (blue), Warning (orange), and Error (red) cards/messages.
+  - Replaced `DataProvider` with feature-specific presenters (`MedicationPresenter`, `DosagePresenter`, `SchedulePresenter`) in `lib/features/*/presenters/*.dart`.
+  - Moved `main.dart` to `lib/` and kept `constants.dart`, `themes.dart`, `routes.dart`, `enums.dart` in `lib/app/`.
+  - Organized core utilities in `lib/core/utils/` (`format_helper.dart`, `validators.dart`), services in `lib/core/services/` (`database_service.dart`, `notification_service.dart`), and widgets in `lib/core/widgets/` (e.g., `app_bottom_navigation_bar.dart`, `confirm_medication_dialog.dart`).
+  - Structured features into `lib/features/*/`: `models/`, `data/repos/`, `ui/views/`, `ui/widgets/`, `presenters/` for `medication`, `dosage`, `schedule`, `home`, `calendar`, `history`, `settings`.
+  - Moved `reconstitution_calculator.dart` to `lib/features/medication/utils/` and widgets like `compact_medication_card.dart` to `lib/features/*/ui/widgets/`.
+  - Renamed screens to `*_view.dart` (e.g., `medication_form_view.dart`) and providers to `*_presenter.dart` (e.g., `medication_presenter.dart`).
+  - Deleted obsolete files: `storage_service.dart`, `data_provider.dart`, `database_service.dart` (in `data/repositories`), `date_utils.dart`, `dosage_form_pageOLD.dart`, `medication_form_pageOLD.dart`.
+  - Created new files: `calendar_view.dart`, `confirm_dosage_dialog.dart`, `validators.dart`.
+  - Updated all imports to use `app/enums.dart` and new paths, ensuring no deprecated `DataProvider` or `Themes` references remain.
   
   
   

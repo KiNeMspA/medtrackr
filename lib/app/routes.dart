@@ -1,15 +1,17 @@
-// In lib/app/rout.dart
-
+// lib/app/routes.dart
 import 'package:flutter/material.dart';
 import 'package:medtrackr/app/enums.dart';
 import 'package:medtrackr/features/dosage/models/dosage.dart';
-import 'package:medtrackr/features/dosage/pages/dosage_form_page.dart';
-import 'package:medtrackr/features/home/pages/home_page.dart';
+import 'package:medtrackr/features/dosage/ui/views/dosage_form_view.dart';
+import 'package:medtrackr/features/home/ui/views/home_view.dart';
 import 'package:medtrackr/features/medication/models/medication.dart';
-import 'package:medtrackr/features/medication/pages/medication_overview_page.dart';
-import 'package:medtrackr/features/medication/pages/medication_form_page.dart';
-import 'package:medtrackr/features/medication/pages/reconstitution_page.dart';
-import 'package:medtrackr/features/schedule/pages/schedule_form_page.dart';
+import 'package:medtrackr/features/medication/ui/views/medication_details_view.dart';
+import 'package:medtrackr/features/medication/ui/views/medication_form_view.dart';
+import 'package:medtrackr/features/medication/ui/views/reconstitution_view.dart';
+import 'package:medtrackr/features/schedule/ui/views/schedule_form_view.dart';
+import 'package:medtrackr/features/calendar/ui/views/calendar_view.dart';
+import 'package:medtrackr/features/history/ui/views/history_view.dart';
+import 'package:medtrackr/features/settings/ui/views/settings_view.dart';
 
 class AppRoutes {
   static const String home = '/home';
@@ -26,29 +28,29 @@ class AppRoutes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case home:
-        return MaterialPageRoute(builder: (_) => const HomePage());
+        return MaterialPageRoute(builder: (_) => const HomeView());
       case medicationForm:
         final medication = settings.arguments as Medication?;
         return MaterialPageRoute(
-            builder: (_) => MedicationFormPage(medication: medication));
+            builder: (_) => MedicationFormView(medication: medication));
       case medicationDetails:
         final medication = settings.arguments as Medication;
         return MaterialPageRoute(
-            builder: (_) => MedicationDetailsPage(medication: medication));
+            builder: (_) => MedicationDetailsView(medication: medication));
       case dosageForm:
         if (settings.arguments is Medication) {
           final medication = settings.arguments as Medication;
           return MaterialPageRoute(
-              builder: (_) => DosageFormPage(medication: medication));
+              builder: (_) => DosageFormView(medication: medication));
         } else if (settings.arguments is Map<String, dynamic>) {
           final args = settings.arguments as Map<String, dynamic>;
           return MaterialPageRoute(
-              builder: (_) => DosageFormPage(
+              builder: (_) => DosageFormView(
                 medication: args['medication'] as Medication,
                 dosage: args['dosage'] as Dosage?,
               ));
         }
-        return MaterialPageRoute(builder: (_) => const HomePage());
+        return MaterialPageRoute(builder: (_) => const HomeView());
       case scheduleForm:
       case addSchedule:
         final medication = settings.arguments as Medication? ??
@@ -65,15 +67,17 @@ class AppRoutes {
               notes: '',
             );
         return MaterialPageRoute(
-            builder: (_) => ScheduleFormPage(medication: medication));
+            builder: (_) => ScheduleFormView(medication: medication));
       case reconstitute:
         final medication = settings.arguments as Medication;
         return MaterialPageRoute(
-            builder: (_) => ReconstitutionPage(medication: medication));
+            builder: (_) => ReconstitutionView(medication: medication));
       case calendar:
+        return MaterialPageRoute(builder: (_) => const CalendarView());
       case history:
+        return MaterialPageRoute(builder: (_) => const HistoryView());
       case settings:
-        return MaterialPageRoute(builder: (_) => const Placeholder());
+        return MaterialPageRoute(builder: (_) => const SettingsView());
       default:
         return MaterialPageRoute(
             builder: (_) =>

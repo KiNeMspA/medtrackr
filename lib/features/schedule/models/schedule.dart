@@ -1,5 +1,4 @@
-// In lib/features/schedule/models/schedule.dart
-
+// lib/features/schedule/models/schedule.dart
 import 'package:flutter/material.dart';
 import 'package:medtrackr/app/enums.dart';
 
@@ -43,8 +42,7 @@ class Schedule {
     medicationId: json['medicationId'],
     dosageId: json['dosageId'],
     dosageName: json['dosageName'],
-    time: TimeOfDay(
-        hour: json['time']['hour'], minute: json['time']['minute']),
+    time: TimeOfDay(hour: json['time']['hour'], minute: json['time']['minute']),
     dosageAmount: json['dosageAmount'].toDouble(),
     dosageUnit: json['dosageUnit'],
     frequencyType: FrequencyType.values.firstWhere(

@@ -1,5 +1,4 @@
-// In lib/app/enums.dart
-
+// lib/app/enums.dart
 enum MedicationType {
   tablet,
   capsule,
@@ -73,6 +72,10 @@ enum SyringeSize {
   final double value;
 
   const SyringeSize({required this.value});
+
+  String get displayName {
+    return '${value.toStringAsFixed(1)} mL';
+  }
 }
 
 enum FrequencyType {
@@ -105,6 +108,15 @@ enum FluidUnit {
         return 'mL';
       case FluidUnit.L:
         return 'L';
+    }
+  }
+
+  double get toMLFactor {
+    switch (this) {
+      case FluidUnit.mL:
+        return 1.0;
+      case FluidUnit.L:
+        return 1000.0;
     }
   }
 }
