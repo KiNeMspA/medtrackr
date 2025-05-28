@@ -8,7 +8,6 @@ import 'package:medtrackr/features/schedule/models/schedule.dart';
 import 'package:medtrackr/features/medication/ui/widgets/compact_medication_card.dart';
 import 'package:medtrackr/core/widgets/app_bottom_navigation_bar.dart';
 import 'package:provider/provider.dart';
-import 'package:medtrackr/data/data_sources/local/data_provider.dart';
 
 
 class HomeScreen extends StatelessWidget {

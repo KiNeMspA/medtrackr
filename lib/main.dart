@@ -6,11 +6,11 @@ import 'package:medtrackr/app/routes.dart';
 import 'package:medtrackr/app/themes.dart';
 import 'package:medtrackr/core/services/database_service.dart';
 import 'package:medtrackr/core/services/notification_service.dart';
-import 'package:medtrackr/features/medication/presenter/medication_presenter.dart';
+import 'package:medtrackr/features/medication/presenters/medication_presenter.dart';
 import 'package:medtrackr/features/medication/data/repos/medication_repository.dart';
 import 'package:medtrackr/features/dosage/presenters/dosage_presenter.dart';
 import 'package:medtrackr/features/dosage/data/repos/dosage_repository.dart';
-import 'package:medtrackr/features/schedule/providers/schedule_presenter.dart';
+import 'package:medtrackr/features/schedule/presenters/schedule_presenter.dart';
 import 'package:medtrackr/features/schedule/data/repos/schedule_repository.dart';
 
 void main() {

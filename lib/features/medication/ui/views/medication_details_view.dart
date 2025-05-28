@@ -6,7 +6,7 @@ import 'package:medtrackr/app/enums.dart';
 import 'package:medtrackr/core/utils/format_helper.dart';
 import 'package:medtrackr/core/widgets/app_bottom_navigation_bar.dart';
 import 'package:medtrackr/core/widgets/animated_action_button.dart';
-import 'package:medtrackr/core/widgets/medication_card.dart';
+import 'package:medtrackr/features/medication/ui/widgets/medication_card.dart';
 import 'package:medtrackr/core/widgets/dosage_edit_dialog.dart';
 import 'package:medtrackr/features/medication/models/medication.dart';
 import 'package:provider/provider.dart';

@@ -7,7 +7,7 @@ import 'package:medtrackr/core/utils/format_helper.dart';
 import 'package:medtrackr/features/medication/models/medication.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/features/dosage/presenters/dosage_presenter.dart';
-import 'package:medtrackr/features/schedule/providers/schedule_presenter.dart';
+import 'package:medtrackr/features/schedule/presenters/schedule_presenter.dart';
 
 class MedicationCard extends StatelessWidget {
   final Medication medication;
