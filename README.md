@@ -20,9 +20,8 @@ Below is the restructured folder structure, detailing where each file type/opera
     - `constants.dart`: Defines app-wide constants (e.g., `primaryColor`, `appName`, `cardTitleStyle`). Used for shared styling and configuration values across the app.
     - `themes.dart`: Contains `AppThemes` with `ThemeData` and styling for Information, Warning, and Error cards/messages (e.g., `informationCardDecoration`, `warningBackgroundColor`). Provides general theme styling accessible app-wide.
     - `routes.dart`: Defines navigation routes (`AppRoutes`) for all screens (e.g., `/home`, `/medication_form`). Centralizes routing logic.
+    - `enums.dart`: Single file for all enums (`MedicationType`, `QuantityUnit`, `DosageMethod`, `SyringeSize`, `FrequencyType`, `FluidUnit`, `TargetDoseUnit`). Used for calculations and UI consistency across features.
   - **core/**
-    - **enums/**
-      - `enums.dart`: Single file for all enums (`MedicationType`, `QuantityUnit`, `DosageMethod`, `SyringeSize`, `FrequencyType`, `FluidUnit`, `TargetDoseUnit`). Used for calculations and UI consistency across features.
     - **utils/**
       - `format_helper.dart`: Utility for number formatting (e.g., `formatNumber` to drop trailing zeros). Used for consistent numeric display.
       - `validators.dart`: Input validation logic for forms (e.g., required fields). Supports form validation across features.
@@ -103,31 +102,17 @@ Below is the restructured folder structure, detailing where each file type/opera
 - **Commit Instructions**:
   ```bash
   
-  git commit -m "Restructured folder structure, consolidated enums, updated themes"
-  git push origin main
-  git log -1 --pretty=%H
-Planned Features
-Schedules: Cycle period calculations, multi-dose schedules.
-Calendar Screen: View using table_calendar.
-History: Track dosages with CSV export.
-Settings: Themes, notifications.
-Build Instructions
-Clone: git clone https://github.com/kinemspa/MedTrackr.git
-Install dependencies: flutter pub get
-Run: flutter run
-Development Environment
-Flutter: Latest stable version
-IDE: Android Studio
-OS: Windows 11
-Emulator: sdk gphone64 x86 64
-About
-A Medicine Tracking App
-
-Releases
-No releases published
-
-Packages
-No packages published
-
-Footer
-© 2025 GitHub, Inc.
+  
+  
+  
+## Planned Features
+- Schedules: Cycle period calculations, multi-dose schedules.
+- Calendar Screen: View using table_calendar.
+- History: Track dosages with CSV export.
+- Settings: Themes, notifications.
+- Icons: Add Icons for various things.
+- Free vs Paid versions
+- Medication Information
+- Estimated Expected time of Run out of stock
+- 
+- 
