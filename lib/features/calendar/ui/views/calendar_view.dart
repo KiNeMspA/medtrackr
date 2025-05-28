@@ -27,8 +27,16 @@ class _CalendarViewState extends State<CalendarView> {
     for (var dose in upcomingDoses) {
       if (dose['schedule'] != null) {
         final schedule = dose['schedule'] as Schedule;
-        final date = dose['nextTime'] as DateTime; // Use nextTime for date
-        final key = DateTime(date.year, date.month, date.day);
+        DateTime nextTime = dose['nextTime'] as DateTime;
+        if (schedule.frequencyType == FrequencyType.daily) {
+          // Use nextTime directly
+        } else if (schedule.frequencyType == FrequencyType.weekly) {
+          // Adjust to next weekly occurrence
+          while (nextTime.weekday != 1) {
+            nextTime = nextTime.add(const Duration(days: 1));
+          }
+        }
+        final key = DateTime(nextTime.year, nextTime.month, nextTime.day);
         events[key] = events[key] ?? [];
         events[key]!.add(schedule);
       }
@@ -80,12 +88,6 @@ class _CalendarViewState extends State<CalendarView> {
               ),
             ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.pushNamed(context, '/medication_form'),
-        backgroundColor: AppConstants.primaryColor,
-        tooltip: 'Add a new medication',
-        child: const Icon(Icons.add, color: Colors.black),
       ),
       bottomNavigationBar: AppBottomNavigationBar(
         currentIndex: 1,

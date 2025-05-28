@@ -44,7 +44,8 @@ class MedicationDetailsView extends StatelessWidget {
     );
 
     if (confirmed == true) {
-      final medicationPresenter = Provider.of<MedicationPresenter>(context, listen: false);
+      final medicationPresenter =
+          Provider.of<MedicationPresenter>(context, listen: false);
       await medicationPresenter.deleteMedication(medication.id);
       if (context.mounted) {
         Navigator.pushReplacementNamed(context, '/home');
@@ -60,17 +61,48 @@ class MedicationDetailsView extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         contentPadding: EdgeInsets.zero,
         content: Container(
-          decoration: AppThemes.informationCardDecoration,
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          decoration: AppThemes.formCardDecoration,
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              Text('Add Dosage', style: AppThemes.informationTitleStyle),
-              const SizedBox(height: 16),
-              const Text(
-                'Please set a volume (mL) or reconstitute the medication before adding a dosage.',
-                style: TextStyle(color: Colors.black87, fontSize: 14),
+              Expanded(
+                child: AnimatedActionButton(
+                  label: 'Add Dosage',
+                  icon: Icons.add_circle,
+                  onPressed: () => Navigator.pushNamed(context, '/dosage_form', arguments: medication),
+                ),
               ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: AnimatedActionButton(
+                  label: 'Add Schedule',
+                  icon: Icons.schedule,
+                  onPressed: () => dosages.isEmpty
+                      ? _showNoDosageDialog(context)
+                      : Navigator.pushNamed(context, '/add_schedule', arguments: medication),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: AnimatedActionButton(
+                  label: 'Edit Schedule',
+                  icon: Icons.edit_calendar,
+                  onPressed: () => dosages.isEmpty
+                      ? _showNoDosageDialog(context)
+                      : Navigator.pushNamed(context, '/schedule_form', arguments: {'medication': medication, 'schedule': schedulePresenter.getScheduleForMedication(medication.id)}),
+                ),
+              ),
+              if (medication.type == MedicationType.injection) ...[
+                const SizedBox(width: 8),
+                Expanded(
+                  child: AnimatedActionButton(
+                    label: 'Reconstitute',
+                    icon: Icons.science,
+                    onPressed: () => Navigator.pushNamed(context, '/reconstitute', arguments: medication),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -78,14 +110,16 @@ class MedicationDetailsView extends StatelessWidget {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              Navigator.pushNamed(context, '/medication_form', arguments: medication);
+              Navigator.pushNamed(context, '/medication_form',
+                  arguments: medication);
             },
             child: const Text('Edit Volume'),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              Navigator.pushNamed(context, '/reconstitute', arguments: medication);
+              Navigator.pushNamed(context, '/reconstitute',
+                  arguments: medication);
             },
             style: AppConstants.dialogButtonStyle,
             child: const Text('Reconstitute'),
@@ -108,7 +142,8 @@ class MedicationDetailsView extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('No Dosage Available', style: AppThemes.informationTitleStyle),
+              Text('No Dosage Available',
+                  style: AppThemes.informationTitleStyle),
               const SizedBox(height: 16),
               const Text(
                 'You must create at least one dosage before adding a schedule.',
@@ -125,7 +160,8 @@ class MedicationDetailsView extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              Navigator.pushNamed(context, '/dosage_form', arguments: medication);
+              Navigator.pushNamed(context, '/dosage_form',
+                  arguments: medication);
             },
             style: AppConstants.dialogButtonStyle,
             child: const Text('Add Dosage'),
@@ -152,7 +188,10 @@ class MedicationDetailsView extends StatelessWidget {
       body: SingleChildScrollView(
         child: ConstrainedBox(
           constraints: BoxConstraints(
-            minHeight: MediaQuery.of(context).size.height - kToolbarHeight - kBottomNavigationBarHeight - 60,
+            minHeight: MediaQuery.of(context).size.height -
+                kToolbarHeight -
+                kBottomNavigationBarHeight -
+                60,
           ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -173,42 +212,50 @@ class MedicationDetailsView extends StatelessWidget {
                 ),
                 dosages.isEmpty
                     ? const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text(
-                    'No dosages added.',
-                    style: AppConstants.secondaryTextStyle,
-                  ),
-                )
-                    : Column(
-                  children: dosages.map((dosage) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                      child: Card(
-                        elevation: 6,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        child: ListTile(
-                          title: Text(dosage.name, style: AppConstants.cardTitleStyle),
-                          subtitle: Text(
-                              '${formatNumber(dosage.totalDose)} ${dosage.doseUnit} (${dosage.method.displayName})',
-                              style: AppConstants.cardBodyStyle),
-                          onTap: () => showDialog(
-                            context: context,
-                            builder: (context) => DosageEditDialog(
-                              dosage: dosage,
-                              medication: medication,
-                              onSave: (updatedDosage) async {
-                                await dosagePresenter.updateDosage(dosage.id, updatedDosage);
-                              },
-                              isInjection: medication.type == MedicationType.injection,
-                              isTabletOrCapsule: medication.type == MedicationType.tablet || medication.type == MedicationType.capsule,
-                              isReconstituted: medication.reconstitutionVolume > 0,
-                            ),
-                          ),
+                        padding: EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text(
+                          'No dosages added.',
+                          style: AppConstants.secondaryTextStyle,
                         ),
+                      )
+                    : Column(
+                        children: dosages.map((dosage) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4.0),
+                            child: Card(
+                              elevation: 6,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                              child: ListTile(
+                                title: Text(dosage.name,
+                                    style: AppConstants.cardTitleStyle),
+                                subtitle: Text(
+                                    '${formatNumber(dosage.totalDose)} ${dosage.doseUnit} (${dosage.method.displayName})',
+                                    style: AppConstants.cardBodyStyle),
+                                onTap: () => showDialog(
+                                  context: context,
+                                  builder: (context) => DosageEditDialog(
+                                    dosage: dosage,
+                                    medication: medication,
+                                    onSave: (updatedDosage) async {
+                                      await dosagePresenter.updateDosage(
+                                          dosage.id, updatedDosage);
+                                    },
+                                    isInjection: medication.type ==
+                                        MedicationType.injection,
+                                    isTabletOrCapsule: medication.type ==
+                                            MedicationType.tablet ||
+                                        medication.type ==
+                                            MedicationType.capsule,
+                                    isReconstituted:
+                                        medication.reconstitutionVolume > 0,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
                       ),
-                    );
-                  }).toList(),
-                ),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -217,8 +264,9 @@ class MedicationDetailsView extends StatelessWidget {
                       child: AnimatedActionButton(
                         label: 'Add Dosage',
                         icon: Icons.add_circle,
-                        onPressed: () =>
-                            Navigator.pushNamed(context, '/dosage_form', arguments: medication),
+                        onPressed: () => Navigator.pushNamed(
+                            context, '/dosage_form',
+                            arguments: medication),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -228,7 +276,8 @@ class MedicationDetailsView extends StatelessWidget {
                         icon: Icons.schedule,
                         onPressed: () => dosages.isEmpty
                             ? _showNoDosageDialog(context)
-                            : Navigator.pushNamed(context, '/add_schedule', arguments: medication),
+                            : Navigator.pushNamed(context, '/add_schedule',
+                                arguments: medication),
                       ),
                     ),
                     if (medication.type == MedicationType.injection) ...[
@@ -237,8 +286,9 @@ class MedicationDetailsView extends StatelessWidget {
                         child: AnimatedActionButton(
                           label: 'Reconstitute',
                           icon: Icons.science,
-                          onPressed: () =>
-                              Navigator.pushNamed(context, '/reconstitute', arguments: medication),
+                          onPressed: () => Navigator.pushNamed(
+                              context, '/reconstitute',
+                              arguments: medication),
                         ),
                       ),
                     ],
@@ -249,14 +299,6 @@ class MedicationDetailsView extends StatelessWidget {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: canAddDosage
-            ? () => Navigator.pushNamed(context, '/dosage_form', arguments: medication)
-            : () => _showAddDosageDialog(context),
-        backgroundColor: AppConstants.primaryColor,
-        tooltip: canAddDosage ? 'Add a new dosage' : 'Set volume or reconstitute to add dosage',
-        child: Icon(canAddDosage ? Icons.add : Icons.info, color: Colors.black),
-      ),
       bottomSheet: Container(
         color: AppConstants.backgroundColor,
         padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
@@ -265,7 +307,9 @@ class MedicationDetailsView extends StatelessWidget {
           children: [
             Expanded(
               child: ElevatedButton(
-                onPressed: () => Navigator.pushNamed(context, '/medication_form', arguments: medication),
+                onPressed: () => Navigator.pushNamed(
+                    context, '/medication_form',
+                    arguments: medication),
                 style: AppConstants.actionButtonStyle,
                 child: const Text('Edit'),
               ),

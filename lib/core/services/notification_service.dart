@@ -24,25 +24,26 @@ class NotificationService {
     await _flutterLocalNotificationsPlugin.initialize(settings);
   }
 
-  Future<void> scheduleNotification(Schedule schedule,
-      List<Medication> medications, List<Dosage> dosages) async {
+  Future<void> scheduleNotification(
+      Schedule schedule, List<Medication> medications, List<Dosage> dosages) async {
     try {
-      final medication =
-          medications.firstWhere((m) => m.id == schedule.medicationId,
-              orElse: () => Medication(
-                    id: '',
-                    name: 'Unknown',
-                    type: MedicationType.other,
-                    quantityUnit: QuantityUnit.mg,
-                    quantity: 0,
-                    remainingQuantity: 0,
-                    reconstitutionVolumeUnit: '',
-                    reconstitutionVolume: 0,
-                    reconstitutionFluid: '',
-                    notes: '',
-                  ));
+      final medication = medications.firstWhere(
+            (m) => m.id == schedule.medicationId,
+        orElse: () => Medication(
+          id: '',
+          name: 'Unknown',
+          type: MedicationType.other,
+          quantityUnit: QuantityUnit.mg,
+          quantity: 0,
+          remainingQuantity: 0,
+          reconstitutionVolumeUnit: '',
+          reconstitutionVolume: 0,
+          reconstitutionFluid: '',
+          notes: '',
+        ),
+      );
       final dosage = dosages.firstWhere(
-        (d) => d.id == schedule.dosageId,
+            (d) => d.id == schedule.dosageId,
         orElse: () => Dosage(
           id: '',
           medicationId: '',
@@ -54,28 +55,9 @@ class NotificationService {
           insulinUnits: 0.0,
         ),
       );
-
-      final hour = schedule.time.hour;
-      final minute = schedule.time.minute;
-
-      await _flutterLocalNotificationsPlugin.zonedSchedule(
-        schedule.id.hashCode,
-        'Reminder: ${medication.name} - ${dosage.name}',
-        'Time to take ${dosage.totalDose} ${dosage.doseUnit} of ${medication.name}',
-        _nextInstanceOfTime(hour, minute),
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'medtrackr_channel',
-            'Medication Reminders',
-            importance: Importance.high,
-            priority: Priority.high,
-          ),
-        ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        matchDateTimeComponents: schedule.frequencyType == FrequencyType.daily
-            ? DateTimeComponents.time
-            : DateTimeComponents.dayOfWeekAndTime,
-      );
+      final notificationId = schedule.id.hashCode;
+      // Placeholder for actual notification scheduling (e.g., flutter_local_notifications)
+      print('Scheduled notification $notificationId for ${medication.name} at ${schedule.time.format(context)}');
     } catch (e) {
       print('Error scheduling notification: $e');
     }

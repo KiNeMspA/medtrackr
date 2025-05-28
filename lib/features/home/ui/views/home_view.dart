@@ -27,6 +27,7 @@ class HomeView extends StatelessWidget {
             (dose) => dose['schedule'] != null,
         orElse: () => {},
       );
+      schedulePresenter.loadSchedules(); // Sync with calendar
     }
 
     return Scaffold(
@@ -34,6 +35,7 @@ class HomeView extends StatelessWidget {
       appBar: AppBar(
         title: const Text('MedTrackr'),
         backgroundColor: AppConstants.primaryColor,
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.schedule, color: Colors.black),
@@ -48,80 +50,88 @@ class HomeView extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: medications.isEmpty
             ? Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'No medications added. Add one now.',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/medication_form');
-                },
-                style: AppConstants.actionButtonStyle,
-                child: const Text('Add Medication'),
-              ),
-            ],
-          ),
-        )
-            : Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Next Scheduled Dose',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
-            ),
-            const SizedBox(height: 16),
-            if (nextDose != null && nextDose['schedule'] != null)
-              Card(
-                elevation: 6,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(24),
-                  title: Text(
-                    '${medications.firstWhere((m) => m.id == (nextDose!['schedule'] as Schedule).medicationId, orElse: () => Medication(id: '', name: 'Unknown', type: MedicationType.other, quantityUnit: QuantityUnit.mg, quantity: 0, remainingQuantity: 0, reconstitutionVolumeUnit: '', reconstitutionVolume: 0, reconstitutionFluid: '', notes: '')).name} (${(nextDose['schedule'] as Schedule).dosageName})',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
-                  ),
-                  subtitle: Text(
-                    'Time: ${(nextDose['schedule'] as Schedule).time.format(context)}\nDose: ${formatNumber((nextDose['schedule'] as Schedule).dosageAmount)} ${(nextDose['schedule'] as Schedule).dosageUnit}',
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'No medications added. Add one now.',
+                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/medication_form');
+                      },
+                      style: AppConstants.actionButtonStyle,
+                      child: const Text('Add Medication'),
+                    ),
+                  ],
                 ),
               )
-            else
-              const Text(
-                'No upcoming doses scheduled.',
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Next Scheduled Dose',
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black),
+                  ),
+                  const SizedBox(height: 16),
+                  if (nextDose != null && nextDose['schedule'] != null)
+                    Card(
+                      elevation: 6,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(24),
+                        title: Text(
+                          '${medications.firstWhere((m) => m.id == (nextDose!['schedule'] as Schedule).medicationId, orElse: () => Medication(id: '', name: 'Unknown', type: MedicationType.other, quantityUnit: QuantityUnit.mg, quantity: 0, remainingQuantity: 0, reconstitutionVolumeUnit: '', reconstitutionVolume: 0, reconstitutionFluid: '', notes: '')).name} (${(nextDose['schedule'] as Schedule).dosageName})',
+                          style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black),
+                        ),
+                        subtitle: Text(
+                          'Time: ${(nextDose['schedule'] as Schedule).time.format(context)}\nDose: ${formatNumber((nextDose['schedule'] as Schedule).dosageAmount)} ${(nextDose['schedule'] as Schedule).dosageUnit}',
+                          style:
+                              const TextStyle(fontSize: 14, color: Colors.grey),
+                        ),
+                      ),
+                    )
+                  else
+                    const Text(
+                      'No upcoming doses scheduled.',
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Medications',
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black),
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: Scrollbar(
+                      thumbVisibility: true,
+                      child: ListView.builder(
+                        itemCount: medications.length,
+                        itemBuilder: (context, index) {
+                          final medication = medications[index];
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child:
+                                CompactMedicationCard(medication: medication),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            const SizedBox(height: 16),
-            const Text(
-              'Medications',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: ListView.builder(
-                itemCount: medications.length,
-                itemBuilder: (context, index) {
-                  final medication = medications[index];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: CompactMedicationCard(medication: medication),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.pushNamed(context, '/medication_form');
-        },
-        backgroundColor: AppConstants.primaryColor,
-        child: const Icon(Icons.add, color: Colors.black),
       ),
       bottomNavigationBar: AppBottomNavigationBar(
         currentIndex: 0,

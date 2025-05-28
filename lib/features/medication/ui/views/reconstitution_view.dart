@@ -30,6 +30,7 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
   Map<String, dynamic>? _selectedReconstitution;
   List<Map<String, dynamic>> _reconstitutionSuggestions = [];
   bool _isSaving = false;
+  String? _calculationError;
 
   @override
   void initState() {
@@ -84,8 +85,68 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
       return;
     }
 
-    setState(() => _isSaving = true);
     final fluidAmount = double.parse(_fluidAmountController.text) * _fluidVolumeUnit.toMLFactor;
+    final totalDoses = (widget.medication.quantity * 1000) / (_selectedReconstitution!['targetDose'] ?? 1);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        contentPadding: EdgeInsets.zero,
+        content: Container(
+          decoration: AppThemes.dialogCardDecoration,
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Confirm Reconstitution',
+                style: AppThemes.dialogTitleStyle,
+              ),
+              const SizedBox(height: 16),
+              const Icon(Icons.science, size: 40, color: AppConstants.primaryColor),
+              const SizedBox(height: 8),
+              Text(
+                'Syringe: ${formatNumber(_selectedReconstitution!['syringeUnits'])} IU (${formatNumber(_selectedReconstitution!['volume'])} mL)',
+                style: AppThemes.dialogContentStyle,
+              ),
+              Text(
+                'Total Doses Available: ${totalDoses.floor()}',
+                style: AppThemes.dialogContentStyle,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Please verify settings are correct before saving.',
+                style: AppThemes.dialogContentStyle.copyWith(color: Colors.red),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: AppConstants.primaryColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: AppConstants.dialogButtonStyle,
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _isSaving = true);
     final updatedMedication = widget.medication.copyWith(
       reconstitutionVolume: fluidAmount,
       reconstitutionVolumeUnit: _fluidVolumeUnit.displayName,
@@ -109,6 +170,15 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
   }
 
   void _calculateReconstitutionSuggestions() {
+    final fluidAmount = double.tryParse(_fluidAmountController.text) ?? 0;
+    if (fluidAmount < 0.5 || fluidAmount > 10) {
+      setState(() {
+        _calculationError = 'Fluid amount must be between 0.5 and 10 mL. Adjust the value.';
+      });
+      return;
+    }
+    setState(() => _calculationError = null);
+
     final calculator = ReconstitutionCalculator(
       quantityController: TextEditingController(text: widget.medication.quantity.toString()),
       targetDoseController: _targetDoseController,
@@ -120,7 +190,7 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
           : _syringeSize == SyringeSize.size0_5
           ? 0.5
           : 1.0,
-      fixedVolume: double.tryParse(_fluidAmountController.text),
+      fixedVolume: fluidAmount,
       fixedVolumeUnit: _fluidVolumeUnit,
     );
     final result = calculator.calculate();
@@ -128,7 +198,7 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
       _reconstitutionSuggestions = result['suggestions'];
       _selectedReconstitution = result['selectedReconstitution'];
       if (result['error'] != null && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['error'])));
+        _calculationError = result['error'];
       }
     });
   }
@@ -163,177 +233,227 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
             children: [
               Text(
                 'Reconstitute ${widget.medication.name}',
-                style: AppConstants.cardTitleStyle.copyWith(fontSize: 20),
+                style: AppThemes.reconstitutionTitleStyle,
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _reconstitutionFluidController,
-                decoration: AppConstants.formFieldDecoration.copyWith(
-                  labelText: 'Reconstitution Fluid *',
-                ),
-                validator: (value) => value == null || value.isEmpty ? 'Please enter a fluid' : null,
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _targetDoseController,
-                      decoration: AppConstants.formFieldDecoration.copyWith(
-                        labelText: 'Target Dose *',
+              Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                child: Container(
+                  decoration: AppThemes.reconstitutionCardDecoration,
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextFormField(
+                        controller: _reconstitutionFluidController,
+                        decoration: AppConstants.formFieldDecoration.copyWith(
+                          labelText: 'Reconstitution Fluid *',
+                          labelStyle: AppThemes.formLabelStyle,
+                        ),
+                        validator: (value) => value == null || value.isEmpty ? 'Please enter a fluid' : null,
                       ),
-                      keyboardType: TextInputType.number,
-                      onChanged: (value) => _calculateReconstitutionSuggestions(),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) return 'Please enter a dose';
-                        if (double.tryParse(value) == null || double.parse(value)! <= 0) {
-                          return 'Please enter a valid positive number';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  SizedBox(
-                    width: 120,
-                    child: DropdownButtonFormField<TargetDoseUnit>(
-                      value: _targetDoseUnit,
-                      decoration: AppConstants.formFieldDecoration.copyWith(
-                        labelText: 'Unit',
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _targetDoseController,
+                              decoration: AppConstants.formFieldDecoration.copyWith(
+                                labelText: 'Target Dose *',
+                                labelStyle: AppThemes.formLabelStyle,
+                              ),
+                              keyboardType: TextInputType.number,
+                              onChanged: (value) => _calculateReconstitutionSuggestions(),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) return 'Please enter a dose';
+                                if (double.tryParse(value) == null || double.parse(value)! <= 0) {
+                                  return 'Please enter a valid positive number';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          SizedBox(
+                            width: 120,
+                            child: DropdownButtonFormField<TargetDoseUnit>(
+                              value: _targetDoseUnit,
+                              decoration: AppConstants.formFieldDecoration.copyWith(
+                                labelText: 'Unit',
+                                labelStyle: AppThemes.formLabelStyle,
+                              ),
+                              items: TargetDoseUnit.values
+                                  .map((unit) => DropdownMenuItem(value: unit, child: Text(unit.displayName)))
+                                  .toList(),
+                              onChanged: (value) {
+                                if (value != null) {
+                                  setState(() {
+                                    _targetDoseUnit = value;
+                                    _calculateReconstitutionSuggestions();
+                                  });
+                                }
+                              },
+                            ),
+                          ),
+                        ],
                       ),
-                      items: TargetDoseUnit.values
-                          .map((unit) => DropdownMenuItem(value: unit, child: Text(unit.displayName)))
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            _targetDoseUnit = value;
-                            _calculateReconstitutionSuggestions();
-                          });
-                        }
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _fluidAmountController,
-                      decoration: AppConstants.formFieldDecoration.copyWith(
-                        labelText: 'Fluid Amount *',
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _fluidAmountController,
+                              decoration: AppConstants.formFieldDecoration.copyWith(
+                                labelText: 'Fluid Amount *',
+                                labelStyle: AppThemes.formLabelStyle,
+                                suffixIcon: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.remove),
+                                      onPressed: () => _adjustFluidVolume(-0.5),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.add),
+                                      onPressed: () => _adjustFluidVolume(0.5),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              keyboardType: TextInputType.number,
+                              onChanged: (value) => _calculateReconstitutionSuggestions(),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) return 'Please enter an amount';
+                                if (double.tryParse(value) == null || double.parse(value)! <= 0) {
+                                  return 'Please enter a valid positive number';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          SizedBox(
+                            width: 120,
+                            child: DropdownButtonFormField<FluidUnit>(
+                              value: _fluidVolumeUnit,
+                              decoration: AppConstants.formFieldDecoration.copyWith(
+                                labelText: 'Unit',
+                                labelStyle: AppThemes.formLabelStyle,
+                              ),
+                              items: FluidUnit.values
+                                  .map((unit) => DropdownMenuItem(value: unit, child: Text(unit.displayName)))
+                                  .toList(),
+                              onChanged: (value) {
+                                if (value != null) {
+                                  setState(() {
+                                    _fluidVolumeUnit = value;
+                                    _calculateReconstitutionSuggestions();
+                                  });
+                                }
+                              },
+                            ),
+                          ),
+                        ],
                       ),
-                      keyboardType: TextInputType.number,
-                      onChanged: (value) => _calculateReconstitutionSuggestions(),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) return 'Please enter an amount';
-                        if (double.tryParse(value) == null || double.parse(value)! <= 0) {
-                          return 'Please enter a valid positive number';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  SizedBox(
-                    width: 120,
-                    child: DropdownButtonFormField<FluidUnit>(
-                      value: _fluidVolumeUnit,
-                      decoration: AppConstants.formFieldDecoration.copyWith(
-                        labelText: 'Unit',
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<SyringeSize>(
+                        value: _syringeSize,
+                        decoration: AppConstants.formFieldDecoration.copyWith(
+                          labelText: 'Syringe Size',
+                          labelStyle: AppThemes.formLabelStyle,
+                        ),
+                        items: SyringeSize.values
+                            .map((size) => DropdownMenuItem(value: size, child: Text(size.displayName)))
+                            .toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _syringeSize = value;
+                              _calculateReconstitutionSuggestions();
+                            });
+                          }
+                        },
                       ),
-                      items: FluidUnit.values
-                          .map((unit) => DropdownMenuItem(value: unit, child: Text(unit.displayName)))
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            _fluidVolumeUnit = value;
-                            _calculateReconstitutionSuggestions();
-                          });
-                        }
-                      },
-                    ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Formula: (${formatNumber(widget.medication.quantity)} ${widget.medication.quantityUnit.displayName} * 1000) / ${_fluidAmountController.text} ${_fluidVolumeUnit.displayName} = ${formatNumber((widget.medication.quantity * 1000) / ((double.tryParse(_fluidAmountController.text) ?? 1) * _fluidVolumeUnit.toMLFactor))} mcg/mL',
+                        style: AppThemes.compactMedicationCardContentStyle.copyWith(color: Colors.grey),
+                      ),
+                      if (_calculationError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            _calculationError!,
+                            style: AppThemes.reconstitutionErrorStyle,
+                          ),
+                        ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Reconstitution Options',
+                        style: AppThemes.reconstitutionTitleStyle,
+                      ),
+                      Text(
+                        'Choose based on desired concentration:',
+                        style: AppThemes.reconstitutionOptionSubtitleStyle,
+                      ),
+                      const SizedBox(height: 8),
+                      ..._reconstitutionSuggestions.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final suggestion = entry.value;
+                        final isSelected = _selectedReconstitution == suggestion;
+                        final label = index == 0
+                            ? 'Target (Balanced)'
+                            : index == 1
+                            ? 'Lower (More Diluted)'
+                            : 'Higher (More Concentrated)';
+                        return Container(
+                          decoration: isSelected
+                              ? AppThemes.reconstitutionSelectedOptionCardDecoration
+                              : AppThemes.reconstitutionOptionCardDecoration,
+                          margin: const EdgeInsets.symmetric(vertical: 4),
+                          child: ListTile(
+                            title: Text(
+                              '$label: ${formatNumber(suggestion['syringeUnits'])} IU',
+                              style: AppThemes.reconstitutionOptionTitleStyle.copyWith(
+                                color: isSelected ? AppConstants.primaryColor : Colors.black,
+                              ),
+                            ),
+                            subtitle: Text(
+                              'Volume: ${formatNumber(suggestion['volume'])} mL\nConcentration: ${formatNumber(suggestion['concentration'])} mcg/mL',
+                              style: AppThemes.reconstitutionOptionSubtitleStyle,
+                            ),
+                            trailing: isSelected ? const Icon(Icons.check_circle, color: Colors.green) : null,
+                            onTap: () {
+                              setState(() {
+                                _selectedReconstitution = suggestion;
+                                _fluidAmountController.text = formatNumber(suggestion['volume']);
+                                _targetDoseController.text = formatNumber(suggestion['targetDose']);
+                                _targetDoseUnit = TargetDoseUnit.values.firstWhere(
+                                      (e) => e.displayName == suggestion['targetDoseUnit'],
+                                  orElse: () => TargetDoseUnit.mcg,
+                                );
+                                _syringeSize = SyringeSize.values.firstWhere(
+                                      (e) => e.value == suggestion['syringeSize'],
+                                  orElse: () => SyringeSize.size1_0,
+                                );
+                              });
+                            },
+                          ),
+                        );
+                      }),
+                      const SizedBox(height: 24),
+                      Center(
+                        child: ElevatedButton(
+                          onPressed: _isSaving ? null : () => _saveReconstitution(context),
+                          style: AppConstants.actionButtonStyle,
+                          child: _isSaving
+                              ? const CircularProgressIndicator(color: Colors.white)
+                              : const Text('Save'),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.remove),
-                    onPressed: () => _adjustFluidVolume(-0.5),
-                  ),
-                  Text('${_fluidAmountController.text} mL', style: AppConstants.cardBodyStyle),
-                  IconButton(
-                    icon: const Icon(Icons.add),
-                    onPressed: () => _adjustFluidVolume(0.5),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<SyringeSize>(
-                value: _syringeSize,
-                decoration: AppConstants.formFieldDecoration.copyWith(
-                  labelText: 'Syringe Size',
-                ),
-                items: SyringeSize.values
-                    .map((size) => DropdownMenuItem(value: size, child: Text(size.displayName)))
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      _syringeSize = value;
-                      _calculateReconstitutionSuggestions();
-                    });
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Formula: (${widget.medication.quantity} mg * 1000) / ${_fluidAmountController.text} mL = ${formatNumber((widget.medication.quantity * 1000) / (double.tryParse(_fluidAmountController.text) ?? 2))} mcg/mL',
-                style: const TextStyle(color: Colors.grey),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Formula: (${formatNumber(widget.medication.quantity)} ${widget.medication.quantityUnit.displayName} * 1000) / ${_fluidAmountController.text} ${_fluidVolumeUnit.displayName} = ${formatNumber((widget.medication.quantity * 1000) / ((double.tryParse(_fluidAmountController.text) ?? 1) * _fluidVolumeUnit.toMLFactor))} mcg/mL',
-                style: const TextStyle(color: Colors.grey),
-              ),
-              const SizedBox(height: 8),
-              ..._reconstitutionSuggestions.asMap().entries.map((entry) {
-                final index = entry.key;
-                final suggestion = entry.value;
-                final isSelected = _selectedReconstitution == suggestion;
-                final label = index == 0 ? 'Target Dose' : index == 1 ? 'Lower Dose' : 'Higher Dose';
-                return Card(
-                  elevation: isSelected ? 4 : 1,
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  child: ListTile(
-                    title: Text(
-                      '$label: ${formatNumber(suggestion['syringeUnits'])} IU (${formatNumber(suggestion['targetDose'])} ${suggestion['targetDoseUnit']})',
-                      style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
-                    ),
-                    subtitle: Text(
-                      'Volume: ${formatNumber(suggestion['volume'])} mL, Concentration: ${formatNumber(suggestion['concentration'])} mcg/mL',
-                    ),
-                    trailing: isSelected ? const Icon(Icons.check_circle, color: Colors.green) : null,
-                    onTap: () {
-                      setState(() => _selectedReconstitution = suggestion);
-                    },
-                  ),
-                );
-              }),
-              const SizedBox(height: 24),
-              Center(
-                child: ElevatedButton(
-                  onPressed: _isSaving ? null : () => _saveReconstitution(context),
-                  style: AppConstants.actionButtonStyle,
-                  child: _isSaving
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Save'),
                 ),
               ),
             ],

@@ -142,7 +142,7 @@ class AppThemes {
     height: 1.5,
   );
 
-  // New Decorations for CompactMedicationCard
+  // CompactMedicationCard Styles
   static final BoxDecoration compactMedicationCardDecoration = BoxDecoration(
     gradient: LinearGradient(
       colors: [Colors.blue.shade50, Colors.white],
@@ -173,5 +173,125 @@ class AppThemes {
   static const TextStyle compactMedicationCardActionStyle = TextStyle(
     fontSize: 12,
     color: AppConstants.primaryColor,
+  );
+
+  // ReconstitutionView Styles
+  static final BoxDecoration reconstitutionCardDecoration = BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(16),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.grey.withOpacity(0.2),
+        blurRadius: 8,
+        offset: const Offset(0, 4),
+      ),
+    ],
+  );
+
+  static final BoxDecoration reconstitutionOptionCardDecoration = BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(12),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.grey.withOpacity(0.2),
+        blurRadius: 6,
+        offset: const Offset(0, 2),
+      ),
+    ],
+  );
+
+  static final BoxDecoration reconstitutionSelectedOptionCardDecoration = BoxDecoration(
+    color: Colors.blue.shade50,
+    borderRadius: BorderRadius.circular(12),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.blue.shade200.withOpacity(0.4),
+        blurRadius: 8,
+        offset: const Offset(0, 3),
+      ),
+    ],
+  );
+
+  static const TextStyle reconstitutionTitleStyle = TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.bold,
+    color: Colors.blueGrey,
+  );
+
+  static const TextStyle reconstitutionOptionTitleStyle = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    color: Colors.black87,
+  );
+
+  static const TextStyle reconstitutionOptionSubtitleStyle = TextStyle(
+    fontSize: 14,
+    color: Colors.black54,
+  );
+
+  static const TextStyle reconstitutionErrorStyle = TextStyle(
+    fontSize: 14,
+    color: Colors.red,
+  );
+
+  // Dialog Styles
+  static final BoxDecoration dialogCardDecoration = BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(16),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.grey.withOpacity(0.2),
+        blurRadius: 8,
+        offset: const Offset(0, 4),
+      ),
+    ],
+  );
+
+  static const TextStyle dialogTitleStyle = TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.bold,
+    color: Colors.black,
+  );
+
+  static const TextStyle dialogContentStyle = TextStyle(
+    fontSize: 16,
+    color: Colors.black87,
+    height: 1.5,
+  );
+
+  // Form and Action Button Styles
+  static final BoxDecoration formCardDecoration = BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(12),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.grey.withOpacity(0.2),
+        blurRadius: 6,
+        offset: const Offset(0, 2),
+      ),
+    ],
+  );
+
+  static const TextStyle formLabelStyle = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w500,
+    color: Colors.blueGrey,
+  );
+
+  static final BoxDecoration dosageCardDecoration = BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(12),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.grey.withOpacity(0.2),
+        blurRadius: 6,
+        offset: const Offset(0, 2),
+      ),
+    ],
+  );
+
+  static final BoxDecoration actionButtonDecoration = BoxDecoration(
+    borderRadius: BorderRadius.circular(8),
+    color: Colors.blue.shade50,
   );
 }

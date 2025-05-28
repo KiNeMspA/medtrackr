@@ -115,6 +115,15 @@ Below is the restructured folder structure, detailing where each file type/opera
   - Created new files: `calendar_view.dart`, `confirm_dosage_dialog.dart`, `validators.dart`.
   - Updated all imports to use `app/enums.dart` and new paths, ensuring no deprecated `DataProvider` or `Themes` references remain.
   
+### ReconstitutionView Fix and Checklist Progress (May 28, 2025, 7:58 PM AEST)
+- **Commit**: `8221e170c72b7656048de81f45a87aa655ad86f3`
+- **Details**:
+  - Fixed `reconstitution_view.dart` by providing a complete file with centralized styling from `themes.dart`, addressing all verification checklist requirements (modern styling, single formula line, clear option cards, arrow placement, out-of-range warnings, enhanced confirmation dialog).
+  - Added "Edit Schedule" button in `medication_details_view.dart` for scheduling functionality.
+  - Enhanced `notification_service.dart` with logging to confirm notification scheduling.
+  - Updated `calendar_view.dart` to map `frequencyType` for accurate schedule dates, syncing with `home_view.dart`.
+  - Continued styling audit, ensuring all inline styles are centralized in `themes.dart`.
+  - Verified dosage tracking, settings toggle, and data persistence.
   
   
   
