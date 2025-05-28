@@ -12,9 +12,10 @@ import 'package:timezone/timezone.dart' as tz;
 class NotificationService {
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin;
 
-  NotificationService({FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin})
-      : _flutterLocalNotificationsPlugin =
-      flutterLocalNotificationsPlugin ?? FlutterLocalNotificationsPlugin();
+  NotificationService(
+      {FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin})
+      : _flutterLocalNotificationsPlugin = flutterLocalNotificationsPlugin ??
+            FlutterLocalNotificationsPlugin();
 
   Future<void> init() async {
     tz_data.initializeTimeZones();
@@ -23,26 +24,25 @@ class NotificationService {
     await _flutterLocalNotificationsPlugin.initialize(settings);
   }
 
-  Future<void> scheduleNotification(
-      Schedule schedule, List<Medication> medications, List<Dosage> dosages) async {
+  Future<void> scheduleNotification(Schedule schedule,
+      List<Medication> medications, List<Dosage> dosages) async {
     try {
-      final medication = medications.firstWhere(
-            (m) => m.id == schedule.medicationId,
-        orElse: () => Medication(
-          id: '',
-          name: 'Unknown',
-          type: MedicationType.other,
-          quantityUnit: QuantityUnit.mg,
-          quantity: 0,
-          remainingQuantity: 0,
-          reconstitutionVolumeUnit: '',
-          reconstitutionVolume: 0,
-          reconstitutionFluid: '',
-          notes: '',
-        )
-      );
+      final medication =
+          medications.firstWhere((m) => m.id == schedule.medicationId,
+              orElse: () => Medication(
+                    id: '',
+                    name: 'Unknown',
+                    type: MedicationType.other,
+                    quantityUnit: QuantityUnit.mg,
+                    quantity: 0,
+                    remainingQuantity: 0,
+                    reconstitutionVolumeUnit: '',
+                    reconstitutionVolume: 0,
+                    reconstitutionFluid: '',
+                    notes: '',
+                  ));
       final dosage = dosages.firstWhere(
-            (d) => d.id == schedule.dosageId,
+        (d) => d.id == schedule.dosageId,
         orElse: () => Dosage(
           id: '',
           medicationId: '',
@@ -52,7 +52,6 @@ class NotificationService {
           totalDose: 0.0,
           volume: 0.0,
           insulinUnits: 0.0,
-          time: TimeOfDay.now(),
         ),
       );
 
@@ -90,8 +89,8 @@ class NotificationService {
     await _flutterLocalNotificationsPlugin.cancelAll();
   }
 
-  Future<void> rescheduleAllNotifications(
-      List<Schedule> schedules, List<Medication> medications, List<Dosage> dosages) async {
+  Future<void> rescheduleAllNotifications(List<Schedule> schedules,
+      List<Medication> medications, List<Dosage> dosages) async {
     await cancelAllNotifications();
     for (final schedule in schedules) {
       await scheduleNotification(schedule, medications, dosages);
@@ -100,7 +99,8 @@ class NotificationService {
 
   tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
     final now = tz.TZDateTime.now(tz.local);
-    var scheduledDate = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+    var scheduledDate =
+        tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
     if (scheduledDate.isBefore(now)) {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
     }

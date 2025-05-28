@@ -21,16 +21,18 @@ class _CalendarViewState extends State<CalendarView> {
   @override
   Widget build(BuildContext context) {
     final schedulePresenter = Provider.of<SchedulePresenter>(context);
-    final schedules = schedulePresenter.schedules;
+    final upcomingDoses = schedulePresenter.upcomingDoses;
 
     Map<DateTime, List<Schedule>> events = {};
-    for (var schedule in schedules) {
-      final date = DateTime.now(); // Placeholder: Map to actual schedule date
-      final key = DateTime(date.year, date.month, date.day);
-      events[key] = events[key] ?? [];
-      events[key]!.add(schedule);
+    for (var dose in upcomingDoses) {
+      if (dose['schedule'] != null) {
+        final schedule = dose['schedule'] as Schedule;
+        final date = dose['nextTime'] as DateTime; // Use nextTime for date
+        final key = DateTime(date.year, date.month, date.day);
+        events[key] = events[key] ?? [];
+        events[key]!.add(schedule);
+      }
     }
-
     return Scaffold(
       backgroundColor: AppConstants.backgroundColor,
       appBar: AppBar(
@@ -50,7 +52,8 @@ class _CalendarViewState extends State<CalendarView> {
                 _focusedDay = focusedDay;
               });
             },
-            eventLoader: (day) => events[DateTime(day.year, day.month, day.day)] ?? [],
+            eventLoader: (day) =>
+                events[DateTime(day.year, day.month, day.day)] ?? [],
             calendarStyle: CalendarStyle(
               todayDecoration: BoxDecoration(
                 color: AppConstants.primaryColor.withOpacity(0.5),
@@ -65,11 +68,14 @@ class _CalendarViewState extends State<CalendarView> {
           if (_selectedDay != null)
             Expanded(
               child: ListView(
-                children: (events[DateTime(_selectedDay!.year, _selectedDay!.month, _selectedDay!.day)] ?? [])
+                children: (events[DateTime(_selectedDay!.year,
+                            _selectedDay!.month, _selectedDay!.day)] ??
+                        [])
                     .map((schedule) => ListTile(
-                  title: Text(schedule.dosageName),
-                  subtitle: Text('${schedule.time.format(context)} - ${schedule.dosageAmount} ${schedule.dosageUnit}'),
-                ))
+                          title: Text(schedule.dosageName),
+                          subtitle: Text(
+                              '${schedule.time.format(context)} - ${schedule.dosageAmount} ${schedule.dosageUnit}'),
+                        ))
                     .toList(),
               ),
             ),

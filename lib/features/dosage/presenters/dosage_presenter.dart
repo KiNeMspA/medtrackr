@@ -1,8 +1,10 @@
 // lib/features/dosage/presenters/dosage_presenter.dart
 import 'package:flutter/material.dart';
+import 'package:medtrackr/app/enums.dart';
 import 'package:medtrackr/core/services/notification_service.dart';
 import 'package:medtrackr/features/dosage/models/dosage.dart';
 import 'package:medtrackr/features/dosage/data/repos/dosage_repository.dart';
+import 'package:medtrackr/features/medication/models/medication.dart';
 import 'package:medtrackr/features/medication/presenters/medication_presenter.dart';
 
 class DosagePresenter with ChangeNotifier {
@@ -11,7 +13,16 @@ class DosagePresenter with ChangeNotifier {
   final NotificationService _notificationService;
   List<Dosage> _dosages = [];
 
-  DosagePresenter(this._repository, this._medicationPresenter, this._notificationService);
+  DosagePresenter({
+    required DosageRepository repository,
+    required MedicationPresenter medicationPresenter,
+    required NotificationService notificationService,
+  })  : _repository = repository,
+        _medicationPresenter = medicationPresenter,
+        _notificationService = notificationService;
+
+  List<Dosage> get dosages => _dosages;
+  MedicationPresenter get medicationPresenter => _medicationPresenter; // Add this
 
   List<Dosage> getDosagesForMedication(String medicationId) {
     return _dosages.where((d) => d.medicationId == medicationId).toList();

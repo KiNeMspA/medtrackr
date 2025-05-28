@@ -8,6 +8,7 @@ import 'package:medtrackr/features/medication/models/medication.dart';
 
 class DosageEditDialog extends StatefulWidget {
   final Dosage dosage;
+  final Medication medication;
   final Function(Dosage) onSave;
   final bool isInjection;
   final bool isTabletOrCapsule;
@@ -16,6 +17,7 @@ class DosageEditDialog extends StatefulWidget {
   const DosageEditDialog({
     super.key,
     required this.dosage,
+    required this.medication,
     required this.onSave,
     required this.isInjection,
     required this.isTabletOrCapsule,
@@ -101,12 +103,12 @@ class _DosageEditDialogState extends State<DosageEditDialog> {
               doseUnit: _doseUnit,
               totalDose: amount,
               volume: widget.isInjection
-                  ? (widget.isReconstituted && widget.dosage.selectedReconstitution != null
-                  ? amount / (widget.dosage.selectedReconstitution!['concentration']?.toDouble() ?? 1.0)
+                  ? (widget.isReconstituted && widget.medication.selectedReconstitution != null
+                  ? amount / (widget.medication.selectedReconstitution!['concentration']?.toDouble() ?? 1.0)
                   : amount)
                   : 0.0,
-              insulinUnits: widget.isReconstituted && widget.dosage.selectedReconstitution != null
-                  ? (widget.dosage.selectedReconstitution!['syringeUnits'] as num?)?.toDouble() ?? 0.0
+              insulinUnits: widget.isReconstituted && widget.medication.selectedReconstitution != null
+                  ? (widget.medication.selectedReconstitution!['syringeUnits'] as num?)?.toDouble() ?? 0.0
                   : 0.0,
               method: _method,
             );

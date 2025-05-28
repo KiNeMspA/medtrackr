@@ -13,7 +13,10 @@ import 'package:medtrackr/features/dosage/data/repos/dosage_repository.dart';
 import 'package:medtrackr/features/schedule/presenters/schedule_presenter.dart';
 import 'package:medtrackr/features/schedule/data/repos/schedule_repository.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final notificationService = NotificationService();
+  await notificationService.init();
   runApp(const MyApp());
 }
 
@@ -37,27 +40,32 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProxyProvider2<MedicationRepository, NotificationService, MedicationPresenter>(
           create: (_) => MedicationPresenter(MedicationRepository(DatabaseService()), NotificationService()),
-          update: (_, repo, notif, provider) =>
-          MedicationPresenter(repo, notif).._medications = provider?._medications ?? [],
+          update: (_, repo, notif, __) => MedicationPresenter(repo, notif)..loadMedications(),
         ),
         ChangeNotifierProxyProvider3<DosageRepository, MedicationPresenter, NotificationService, DosagePresenter>(
           create: (_) => DosagePresenter(
-              DosageRepository(DatabaseService()),
-              MedicationPresenter(MedicationRepository(DatabaseService()), NotificationService()),
-              NotificationService()),
-          update: (_, repo, medPresenter, notif, provider) =>
-          DosagePresenter(repo, medPresenter, notif).._dosages = provider?._dosages ?? [],
+            repository: DosageRepository(DatabaseService()),
+            medicationPresenter: MedicationPresenter(MedicationRepository(DatabaseService()), NotificationService()),
+            notificationService: NotificationService(),
+          ),
+          update: (_, repo, medPresenter, notif, __) => DosagePresenter(
+            repository: repo,
+            medicationPresenter: medPresenter,
+            notificationService: notif,
+          )..loadDosages(),
         ),
-        ChangeNotifierProxyProvider2<ScheduleRepository, NotificationService, SchedulePresenter>(
+        ChangeNotifierProxyProvider3<ScheduleRepository, NotificationService, DosagePresenter, SchedulePresenter>(
           create: (_) => SchedulePresenter(ScheduleRepository(DatabaseService()), NotificationService()),
-          update: (_, repo, notif, provider) => SchedulePresenter(repo, notif)
-            .._schedules = provider?._schedules ?? []
-            .._dosages = provider?._dosages ?? []
-            .._medications = provider?._medications ?? [],
+          update: (_, repo, notif, dosagePresenter, __) {
+            final presenter = SchedulePresenter(repo, notif);
+            presenter.setDependencies(dosagePresenter.medicationPresenter.medications, dosagePresenter.dosages);
+            presenter.loadSchedules();
+            return presenter;
+          },
         ),
       ],
       child: MaterialApp(
-        title: AppConstants.appName,
+        title: 'MedTrackr',
         theme: AppThemes.themeData,
         initialRoute: AppRoutes.home,
         onGenerateRoute: AppRoutes.generateRoute,

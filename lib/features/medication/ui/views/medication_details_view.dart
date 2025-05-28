@@ -195,6 +195,7 @@ class MedicationDetailsView extends StatelessWidget {
                             context: context,
                             builder: (context) => DosageEditDialog(
                               dosage: dosage,
+                              medication: medication,
                               onSave: (updatedDosage) async {
                                 await dosagePresenter.updateDosage(dosage.id, updatedDosage);
                               },

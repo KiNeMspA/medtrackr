@@ -76,7 +76,7 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const CalendarView());
       case history:
         return MaterialPageRoute(builder: (_) => const HistoryView());
-      case settings:
+      case AppRoutes.settings:
         return MaterialPageRoute(builder: (_) => const SettingsView());
       default:
         return MaterialPageRoute(

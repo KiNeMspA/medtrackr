@@ -6,6 +6,7 @@ import 'package:medtrackr/core/services/notification_service.dart';
 import 'package:medtrackr/features/medication/presenters/medication_presenter.dart';
 import 'package:medtrackr/features/dosage/presenters/dosage_presenter.dart';
 import 'package:medtrackr/features/schedule/presenters/schedule_presenter.dart';
+import 'package:medtrackr/features/schedule/models/schedule.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
@@ -25,10 +26,14 @@ class _SettingsViewState extends State<SettingsView> {
     if (!enabled) {
       await notificationService.cancelAllNotifications();
     } else {
+      final schedules = schedulePresenter.upcomingDoses
+          .where((dose) => dose['schedule'] != null)
+          .map((dose) => dose['schedule'] as Schedule)
+          .toList();
       await notificationService.rescheduleAllNotifications(
-        schedulePresenter.schedules,
+        schedules,
         medicationPresenter.medications,
-        dosagePresenter.getDosagesForMedication(''), // Placeholder for all dosages
+        dosagePresenter.dosages,
       );
     }
     setState(() {

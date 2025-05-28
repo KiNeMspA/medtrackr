@@ -8,6 +8,8 @@ import 'package:medtrackr/core/widgets/app_bottom_navigation_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/features/medication/presenters/medication_presenter.dart';
 import 'package:medtrackr/features/schedule/presenters/schedule_presenter.dart';
+import 'package:medtrackr/features/medication/models/medication.dart';
+import 'package:medtrackr/features/schedule/models/schedule.dart';
 
 class HomeView extends StatelessWidget {
   const HomeView({super.key});
@@ -17,21 +19,14 @@ class HomeView extends StatelessWidget {
     final medicationPresenter = Provider.of<MedicationPresenter>(context);
     final schedulePresenter = Provider.of<SchedulePresenter>(context);
     final medications = medicationPresenter.medications;
-    final schedules = schedulePresenter.schedules;
+    final upcomingDoses = schedulePresenter.upcomingDoses;
 
-    Schedule? nextSchedule;
-    if (schedules.isNotEmpty) {
-      nextSchedule = schedules.reduce((a, b) {
-        final now = TimeOfDay.now();
-        final aTime = a.time;
-        final bTime = b.time;
-        final aMinutes = aTime.hour * 60 + aTime.minute;
-        final bMinutes = bTime.hour * 60 + bTime.minute;
-        final nowMinutes = now.hour * 60 + now.minute;
-        final aDiff = aMinutes >= nowMinutes ? aMinutes - nowMinutes : 1440 + aMinutes - nowMinutes;
-        final bDiff = bMinutes >= nowMinutes ? bMinutes - nowMinutes : 1440 + bMinutes - nowMinutes;
-        return aDiff < bDiff ? a : b;
-      });
+    Map<String, dynamic>? nextDose;
+    if (upcomingDoses.isNotEmpty) {
+      nextDose = upcomingDoses.firstWhere(
+            (dose) => dose['schedule'] != null,
+        orElse: () => {},
+      );
     }
 
     return Scaffold(
@@ -79,18 +74,18 @@ class HomeView extends StatelessWidget {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
             ),
             const SizedBox(height: 16),
-            if (nextSchedule != null)
+            if (nextDose != null && nextDose['schedule'] != null)
               Card(
                 elevation: 6,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(24),
                   title: Text(
-                    '${medications.firstWhere((m) => m.id == nextSchedule!.medicationId, orElse: () => Medication(id: '', name: 'Unknown', type: MedicationType.other, quantityUnit: QuantityUnit.mg, quantity: 0, remainingQuantity: 0, reconstitutionVolumeUnit: '', reconstitutionVolume: 0, reconstitutionFluid: '', notes: '')).name} (${nextSchedule.dosageName})',
+                    '${medications.firstWhere((m) => m.id == (nextDose!['schedule'] as Schedule).medicationId, orElse: () => Medication(id: '', name: 'Unknown', type: MedicationType.other, quantityUnit: QuantityUnit.mg, quantity: 0, remainingQuantity: 0, reconstitutionVolumeUnit: '', reconstitutionVolume: 0, reconstitutionFluid: '', notes: '')).name} (${(nextDose['schedule'] as Schedule).dosageName})',
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
                   ),
                   subtitle: Text(
-                    'Time: ${nextSchedule.time.format(context)}\nDose: ${formatNumber(nextSchedule.dosageAmount)} ${nextSchedule.dosageUnit}',
+                    'Time: ${(nextDose['schedule'] as Schedule).time.format(context)}\nDose: ${formatNumber((nextDose['schedule'] as Schedule).dosageAmount)} ${(nextDose['schedule'] as Schedule).dosageUnit}',
                     style: const TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                 ),
