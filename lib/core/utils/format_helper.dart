@@ -1,8 +1,10 @@
 // In lib/core/utils/format_helper.dart
 
 String formatNumber(double value) {
-  if (value % 1 == 0) {
-    return value.toInt().toString();
+  if (value == value.truncateToDouble()) {
+    return value.toInt().toString(); // No decimals for whole numbers
+  } else {
+    String formatted = value.toStringAsFixed(2).replaceAll(RegExp(r'0+$'), '');
+    return formatted.endsWith('.') ? formatted.substring(0, formatted.length - 1) : formatted;
   }
-  return value.toStringAsFixed(2).replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
 }

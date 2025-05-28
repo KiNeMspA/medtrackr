@@ -200,7 +200,8 @@ class AppThemes {
     ],
   );
 
-  static final BoxDecoration reconstitutionSelectedOptionCardDecoration = BoxDecoration(
+  static final BoxDecoration reconstitutionSelectedOptionCardDecoration =
+      BoxDecoration(
     color: Colors.blue.shade50,
     borderRadius: BorderRadius.circular(12),
     boxShadow: [
@@ -293,5 +294,12 @@ class AppThemes {
   static final BoxDecoration actionButtonDecoration = BoxDecoration(
     borderRadius: BorderRadius.circular(8),
     color: Colors.blue.shade50,
+  );
+
+  static const ScrollbarThemeData scrollbarTheme = ScrollbarThemeData(
+    thumbVisibility: MaterialStateProperty.all(true),
+    trackVisibility: MaterialStateProperty.all(true),
+    thickness: MaterialStateProperty.all(6),
+    radius: Radius.circular(8),
   );
 }

@@ -44,6 +44,13 @@ class HomeView extends StatelessWidget {
             },
             tooltip: 'Add Schedule',
           ),
+          IconButton(
+            icon: const Icon(Icons.add, color: Colors.black),
+            onPressed: () {
+              Navigator.pushNamed(context, '/medication_form');
+            },
+            tooltip: 'Add Medication',
+          ),
         ],
       ),
       body: Padding(
@@ -72,35 +79,41 @@ class HomeView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Next Scheduled Dose',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black),
+                    'Next Scheduled Doses',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
                   ),
                   const SizedBox(height: 16),
-                  if (nextDose != null && nextDose['schedule'] != null)
-                    Card(
-                      elevation: 6,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.all(24),
-                        title: Text(
-                          '${medications.firstWhere((m) => m.id == (nextDose!['schedule'] as Schedule).medicationId, orElse: () => Medication(id: '', name: 'Unknown', type: MedicationType.other, quantityUnit: QuantityUnit.mg, quantity: 0, remainingQuantity: 0, reconstitutionVolumeUnit: '', reconstitutionVolume: 0, reconstitutionFluid: '', notes: '')).name} (${(nextDose['schedule'] as Schedule).dosageName})',
-                          style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black),
-                        ),
-                        subtitle: Text(
-                          'Time: ${(nextDose['schedule'] as Schedule).time.format(context)}\nDose: ${formatNumber((nextDose['schedule'] as Schedule).dosageAmount)} ${(nextDose['schedule'] as Schedule).dosageUnit}',
-                          style:
-                              const TextStyle(fontSize: 14, color: Colors.grey),
-                        ),
-                      ),
-                    )
-                  else
+                  upcomingDoses.isEmpty
+                      ? const Text(
+                    'No upcoming doses scheduled.',
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                  )
+                      : SizedBox(
+                    height: 150,
+                    child: ListView.builder(
+                      itemCount: upcomingDoses.length,
+                      itemBuilder: (context, index) {
+                        final dose = upcomingDoses[index];
+                        if (dose['schedule'] == null) return const SizedBox.shrink();
+                        final schedule = dose['schedule'] as Schedule;
+                        return Card(
+                          elevation: 6,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.all(24),
+                            title: Text(
+                              '${medications.firstWhere((m) => m.id == schedule.medicationId, orElse: () => Medication(id: '', name: 'Unknown', type: MedicationType.other, quantityUnit: QuantityUnit.mg, quantity: 0, remainingQuantity: 0, reconstitutionVolumeUnit: '', reconstitutionVolume: 0, reconstitutionFluid: '', notes: '')).name} (${schedule.dosageName})',
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+                            ),
+                            subtitle: Text(
+                              'Time: ${schedule.time.format(context)}\nDose: ${formatNumber(schedule.dosageAmount)} ${schedule.dosageUnit}',
+                              style: const TextStyle(fontSize: 14, color: Colors.grey),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                     const Text(
                       'No upcoming doses scheduled.',
                       style: TextStyle(fontSize: 14, color: Colors.grey),
@@ -117,14 +130,16 @@ class HomeView extends StatelessWidget {
                   Expanded(
                     child: Scrollbar(
                       thumbVisibility: true,
+                      trackVisibility: true,
+                      thickness: 6,
+                      radius: const Radius.circular(8),
                       child: ListView.builder(
                         itemCount: medications.length,
                         itemBuilder: (context, index) {
                           final medication = medications[index];
                           return Padding(
                             padding: const EdgeInsets.symmetric(vertical: 8),
-                            child:
-                                CompactMedicationCard(medication: medication),
+                            child: CompactMedicationCard(medication: medication),
                           );
                         },
                       ),

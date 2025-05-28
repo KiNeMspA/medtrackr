@@ -124,6 +124,17 @@ Below is the restructured folder structure, detailing where each file type/opera
   - Updated `calendar_view.dart` to map `frequencyType` for accurate schedule dates, syncing with `home_view.dart`.
   - Continued styling audit, ensuring all inline styles are centralized in `themes.dart`.
   - Verified dosage tracking, settings toggle, and data persistence.
+
+### Issue Fixes and Checklist Completion (May 28, 2025, 8:19 PM AEST)
+- **Commit**: `8221e170c72b7656048de81f45a87aa655ad86f3`
+- **Details**:
+  - Restored "Add Medication" button in `home_view.dart` AppBar.
+  - Fixed tablet dosage form in `dosage_form_fields.dart` to show correct "Tablets" label.
+  - Updated `format_helper.dart` to remove trailing zeros in total dose display.
+  - Enhanced `settings_view.dart` notification toggle with logging and error handling.
+  - Updated `home_view.dart` to display all upcoming schedules in a ListView.
+  - Finalized styling audit by centralizing scrollbar styles in `themes.dart`.
+  - Progressed verification checklist: verified dosage tracking, scheduling, calendar sync, settings, and data persistence testing.
   
   
   

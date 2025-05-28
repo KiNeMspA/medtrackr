@@ -23,22 +23,31 @@ class _SettingsViewState extends State<SettingsView> {
     final medicationPresenter = Provider.of<MedicationPresenter>(context, listen: false);
     final dosagePresenter = Provider.of<DosagePresenter>(context, listen: false);
     final schedulePresenter = Provider.of<SchedulePresenter>(context, listen: false);
-    if (!enabled) {
-      await notificationService.cancelAllNotifications();
-    } else {
-      final schedules = schedulePresenter.upcomingDoses
-          .where((dose) => dose['schedule'] != null)
-          .map((dose) => dose['schedule'] as Schedule)
-          .toList();
-      await notificationService.rescheduleAllNotifications(
-        schedules,
-        medicationPresenter.medications,
-        dosagePresenter.dosages,
+    try {
+      if (!enabled) {
+        await notificationService.cancelAllNotifications();
+        print('Notifications disabled');
+      } else {
+        final schedules = schedulePresenter.upcomingDoses
+            .where((dose) => dose['schedule'] != null)
+            .map((dose) => dose['schedule'] as Schedule)
+            .toList();
+        await notificationService.rescheduleAllNotifications(
+          schedules,
+          medicationPresenter.medications,
+          dosagePresenter.dosages,
+        );
+        print('Notifications enabled and rescheduled');
+      }
+      setState(() {
+        _notificationsEnabled = enabled;
+      });
+    } catch (e) {
+      print('Error toggling notifications: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error toggling notifications: $e')),
       );
     }
-    setState(() {
-      _notificationsEnabled = enabled;
-    });
   }
 
   @override
@@ -48,6 +57,10 @@ class _SettingsViewState extends State<SettingsView> {
       appBar: AppBar(
         title: const Text('Settings'),
         backgroundColor: AppConstants.primaryColor,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context), // Ensure pop
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -60,7 +73,8 @@ class _SettingsViewState extends State<SettingsView> {
             ),
             const SizedBox(height: 16),
             Card(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
               elevation: 4,
               child: ListTile(
                 title: const Text('Enable Notifications'),
@@ -73,7 +87,8 @@ class _SettingsViewState extends State<SettingsView> {
             ),
             const SizedBox(height: 8),
             Card(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
               elevation: 4,
               child: ListTile(
                 title: const Text('Dark Mode'),

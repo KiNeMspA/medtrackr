@@ -1,6 +1,7 @@
 // lib/core/widgets/dosage_form_fields.dart
 import 'package:flutter/material.dart';
 import 'package:medtrackr/app/constants.dart';
+import 'package:medtrackr/app/themes.dart';
 import 'package:medtrackr/app/enums.dart';
 import 'package:medtrackr/features/medication/models/medication.dart';
 
@@ -59,12 +60,15 @@ class DosageFormFields extends StatelessWidget {
           TextFormField(
             controller: tabletCountController,
             decoration: AppConstants.formFieldDecoration.copyWith(
-              labelText: 'Number of Tablets/Capsules',
+              labelText: isTabletOrCapsule
+                  ? (medication.type == MedicationType.tablet ? 'Number of Tablets' : 'Number of Capsules')
+                  : null,
+              labelStyle: AppThemes.formLabelStyle,
             ),
             keyboardType: TextInputType.number,
             validator: (value) {
-              if (value == null || value.isEmpty) return 'Please enter the number of tablets';
-              if (double.tryParse(value) == null || double.parse(value)! <= 0) {
+              if (isTabletOrCapsule && (value == null || value.isEmpty)) return 'Please enter the number';
+              if (isTabletOrCapsule && (double.tryParse(value!) == null || double.parse(value)! <= 0)) {
                 return 'Please enter a valid positive number';
               }
               return null;
