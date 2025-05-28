@@ -1,3 +1,4 @@
+// lib/app/themes.dart
 import 'package:flutter/material.dart';
 import 'package:medtrackr/app/constants.dart';
 
@@ -69,20 +70,19 @@ class AppThemes {
     ),
   );
 
-  // Information Card Styling (e.g., confirmation messages, info dialogs)
+  // Existing Decorations
   static final BoxDecoration informationCardDecoration = BoxDecoration(
-    color: Colors.blue[50],
-    border: Border.all(color: Colors.blue[200]!, width: 1),
-    borderRadius: BorderRadius.circular(12),
-    boxShadow: const [
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(16),
+    boxShadow: [
       BoxShadow(
-        color: Colors.black12,
-        blurRadius: 6,
-        offset: Offset(0, 3),
+        color: Colors.grey.withOpacity(0.2),
+        blurRadius: 8,
+        offset: const Offset(0, 4),
       ),
     ],
   );
-  static final Color informationBackgroundColor = Colors.blue[50]!;
+  static final Color informationBackgroundColor = Colors.white;
   static const TextStyle informationTitleStyle = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.bold,
@@ -94,7 +94,6 @@ class AppThemes {
     height: 1.5,
   );
 
-  // Warning Card Styling (e.g., alerts, caution messages)
   static final BoxDecoration warningCardDecoration = BoxDecoration(
     color: Colors.orange[50],
     border: Border.all(color: Colors.orange[200]!, width: 1),
@@ -119,7 +118,6 @@ class AppThemes {
     height: 1.5,
   );
 
-  // Error Card Styling (e.g., error notifications, failure dialogs)
   static final BoxDecoration errorCardDecoration = BoxDecoration(
     color: Colors.red[50],
     border: Border.all(color: Colors.red[200]!, width: 1),
@@ -142,5 +140,38 @@ class AppThemes {
     fontSize: 16,
     color: Colors.black87,
     height: 1.5,
+  );
+
+  // New Decorations for CompactMedicationCard
+  static final BoxDecoration compactMedicationCardDecoration = BoxDecoration(
+    gradient: LinearGradient(
+      colors: [Colors.blue.shade50, Colors.white],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ),
+    borderRadius: BorderRadius.circular(16),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.blue.shade100.withOpacity(0.3),
+        blurRadius: 10,
+        offset: const Offset(0, 4),
+      ),
+    ],
+  );
+
+  static const TextStyle compactMedicationCardTitleStyle = TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.bold,
+    color: Colors.blueGrey,
+  );
+
+  static const TextStyle compactMedicationCardContentStyle = TextStyle(
+    fontSize: 14,
+    color: Colors.black87,
+  );
+
+  static const TextStyle compactMedicationCardActionStyle = TextStyle(
+    fontSize: 12,
+    color: AppConstants.primaryColor,
   );
 }
