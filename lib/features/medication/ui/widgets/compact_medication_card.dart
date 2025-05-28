@@ -1,5 +1,4 @@
-// In lib/core/widgets/cards/compact_medication_card.dart
-
+// lib/features/medication/ui/widgets/compact_medication_card.dart
 import 'package:flutter/material.dart';
 import 'package:medtrackr/app/constants.dart';
 import 'package:medtrackr/app/enums.dart';
@@ -16,26 +15,20 @@ class CompactMedicationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dosageProvider = Provider.of<DosageProvider>(context);
-    final scheduleProvider = Provider.of<ScheduleProvider>(context);
-    final dosages = dosageProvider.getDosagesForMedication(medication.id);
-    final schedule = scheduleProvider.getScheduleForMedication(medication.id);
+    final dosagePresenter = Provider.of<DosagePresenter>(context);
+    final schedulePresenter = Provider.of<SchedulePresenter>(context);
+    final dosages = dosagePresenter.getDosagesForMedication(medication.id);
+    final schedule = schedulePresenter.getScheduleForMedication(medication.id);
     final isReconstituted = medication.reconstitutionVolume > 0;
     final reconVolumeUnit = medication.reconstitutionVolumeUnit.isNotEmpty
         ? medication.reconstitutionVolumeUnit
         : 'mL';
     final isInjection = dosages.isNotEmpty &&
-        [
-          DosageMethod.subcutaneous,
-        ].contains(dosages.first.method);
+        [DosageMethod.subcutaneous].contains(dosages.first.method);
 
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(
-          context,
-          '/medication_details',
-          arguments: medication,
-        );
+        Navigator.pushNamed(context, '/medication_details', arguments: medication);
       },
       child: Container(
         width: double.infinity,
@@ -58,8 +51,7 @@ class CompactMedicationCard extends StatelessWidget {
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   TextSpan(
-                      text:
-                      '${formatNumber(medication.remainingQuantity)}/${formatNumber(medication.quantity)} ${medication.quantityUnit.displayName}'),
+                      text: '${formatNumber(medication.remainingQuantity)}/${formatNumber(medication.quantity)} ${medication.quantityUnit.displayName}'),
                   if (isReconstituted) ...[
                     const TextSpan(text: ', '),
                     TextSpan(
@@ -104,24 +96,12 @@ class CompactMedicationCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildActionButton(
-                  context,
-                  'Refill',
-                  Icons.refresh,
-                      () => Navigator.pushNamed(context, '/medication_form', arguments: medication),
-                ),
-                _buildActionButton(
-                  context,
-                  'Add Dosage',
-                  Icons.add_circle,
-                      () => Navigator.pushNamed(context, '/dosage_form', arguments: medication),
-                ),
-                _buildActionButton(
-                  context,
-                  'Add Schedule',
-                  Icons.schedule,
-                      () => Navigator.pushNamed(context, '/add_schedule', arguments: medication),
-                ),
+                _buildActionButton(context, 'Refill', Icons.refresh,
+                        () => Navigator.pushNamed(context, '/medication_form', arguments: medication)),
+                _buildActionButton(context, 'Add Dosage', Icons.add_circle,
+                        () => Navigator.pushNamed(context, '/dosage_form', arguments: medication)),
+                _buildActionButton(context, 'Add Schedule', Icons.schedule,
+                        () => Navigator.pushNamed(context, '/add_schedule', arguments: medication)),
               ],
             ),
           ],

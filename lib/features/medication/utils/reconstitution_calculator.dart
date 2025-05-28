@@ -1,6 +1,7 @@
 // In lib/core/utils/reconstitution_calculator.dart
 
 import 'package:flutter/material.dart';
+import 'package:medtrackr/core/utils/format_helper.dart';
 import 'package:medtrackr/core/utils/logger.dart';
 import 'package:medtrackr/app/enums.dart';
 
@@ -24,10 +25,6 @@ class ReconstitutionCalculator {
     this.fixedVolume,
     this.fixedVolumeUnit = FluidUnit.mL,
   });
-
-  String _formatNumber(double value) {
-    return value.toStringAsFixed(value.truncateToDouble() == value ? 0 : 2);
-  }
 
   double _convertToMg(String unit, double value) {
     try {
@@ -118,7 +115,7 @@ class ReconstitutionCalculator {
             'totalAmount': pMg,
             'targetDose': dMg,
             'medicationName': medicationName.isNotEmpty ? medicationName : 'Medication',
-            'error': 'Dose volume or IU (${_formatNumber(U)}) exceeds syringe capacity (${_formatNumber(maxIU.toDouble())} IU).',
+            'error': 'Dose volume or IU (${formatNumber(U)}) exceeds syringe capacity (${formatNumber(maxIU.toDouble())} IU).',
           };
         }
       } else {
@@ -170,13 +167,13 @@ class ReconstitutionCalculator {
         final syringeUnits = selectedReconstitution['syringeUnits'] as double;
         final maxIU = S == 0.3 ? 30 : S == 0.5 ? 50 : S == 1.0 ? 100 : 300;
         if (syringeUnits < 5) {
-          warning = 'Warning: IU (${_formatNumber(syringeUnits)}) is too low. Increase fluid amount.';
+          warning = 'Warning: IU (${formatNumber(syringeUnits)}) is too low. Increase fluid amount.';
         } else if (syringeUnits > maxIU) {
-          warning = 'Warning: IU (${_formatNumber(syringeUnits)}) exceeds syringe capacity (${_formatNumber(maxIU.toDouble())} IU).';
+          warning = 'Warning: IU (${formatNumber(syringeUnits)}) exceeds syringe capacity (${formatNumber(maxIU.toDouble())} IU).';
         } else if (concentration < 0.1) {
-          warning = 'Warning: Concentration is ${_formatNumber(concentration)} mg/mL, too low.';
+          warning = 'Warning: Concentration is ${formatNumber(concentration)} mg/mL, too low.';
         } else if (concentration > 10) {
-          warning = 'Warning: Concentration is ${_formatNumber(concentration)} mg/mL, too high.';
+          warning = 'Warning: Concentration is ${formatNumber(concentration)} mg/mL, too high.';
         }
       }
 

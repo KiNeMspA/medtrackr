@@ -35,26 +35,22 @@ class MyApp extends StatelessWidget {
         ProxyProvider<DatabaseService, ScheduleRepository>(
           update: (_, db, __) => ScheduleRepository(db),
         ),
-        ChangeNotifierProxyProvider2<MedicationRepository, NotificationService, MedicationProvider>(
-          create: (_) => MedicationProvider(
-              MedicationRepository(DatabaseService()), NotificationService()),
+        ChangeNotifierProxyProvider2<MedicationRepository, NotificationService, MedicationPresenter>(
+          create: (_) => MedicationPresenter(MedicationRepository(DatabaseService()), NotificationService()),
           update: (_, repo, notif, provider) =>
-          MedicationProvider(repo, notif).._medications = provider?._medications ?? [],
+          MedicationPresenter(repo, notif).._medications = provider?._medications ?? [],
         ),
-        ChangeNotifierProxyProvider3<DosageRepository, MedicationProvider, NotificationService, DosageProvider>(
-          create: (_) => DosageProvider(
+        ChangeNotifierProxyProvider3<DosageRepository, MedicationPresenter, NotificationService, DosagePresenter>(
+          create: (_) => DosagePresenter(
               DosageRepository(DatabaseService()),
-              MedicationProvider(
-                  MedicationRepository(DatabaseService()), NotificationService()),
+              MedicationPresenter(MedicationRepository(DatabaseService()), NotificationService()),
               NotificationService()),
-          update: (_, repo, medProvider, notif, provider) =>
-          DosageProvider(repo, medProvider, notif)
-            .._dosages = provider?._dosages ?? [],
+          update: (_, repo, medPresenter, notif, provider) =>
+          DosagePresenter(repo, medPresenter, notif).._dosages = provider?._dosages ?? [],
         ),
-        ChangeNotifierProxyProvider2<ScheduleRepository, NotificationService, ScheduleProvider>(
-          create: (_) => ScheduleProvider(
-              ScheduleRepository(DatabaseService()), NotificationService()),
-          update: (_, repo, notif, provider) => ScheduleProvider(repo, notif)
+        ChangeNotifierProxyProvider2<ScheduleRepository, NotificationService, SchedulePresenter>(
+          create: (_) => SchedulePresenter(ScheduleRepository(DatabaseService()), NotificationService()),
+          update: (_, repo, notif, provider) => SchedulePresenter(repo, notif)
             .._schedules = provider?._schedules ?? []
             .._dosages = provider?._dosages ?? []
             .._medications = provider?._medications ?? [],

@@ -31,7 +31,6 @@ class _DosageFormViewState extends State<DosageFormView> {
   late bool isReconstituted;
   String _doseUnit = 'mg';
   DosageMethod _method = DosageMethod.oral;
-  SyringeSize? _syringeSize;
   bool _isSaving = false;
   int _doseCount = 0;
 
@@ -48,8 +47,8 @@ class _DosageFormViewState extends State<DosageFormView> {
     final isInjection = widget.medication!.type == MedicationType.injection;
     final isTabletOrCapsule = widget.medication!.type == MedicationType.tablet || widget.medication!.type == MedicationType.capsule;
     final recon = widget.medication!.selectedReconstitution;
-    final dosageProvider = Provider.of<DosageProvider>(context, listen: false);
-    _doseCount = dosageProvider.getDosagesForMedication(widget.medication!.id).length + 1;
+    final dosagePresenter = Provider.of<DosagePresenter>(context, listen: false);
+    _doseCount = dosagePresenter.getDosagesForMedication(widget.medication!.id).length + 1;
 
     if (widget.dosage != null) {
       _amountController.text = widget.dosage!.totalDose.toString();
@@ -58,12 +57,6 @@ class _DosageFormViewState extends State<DosageFormView> {
       _nameController.text = widget.dosage!.name;
       _tabletCountController.text = isTabletOrCapsule ? widget.dosage!.totalDose.toInt().toString() : '';
       _iuController.text = isInjection && isReconstituted ? widget.dosage!.insulinUnits.toString() : '';
-      _syringeSize = recon != null && recon['syringeSize'] != null
-          ? SyringeSize.values.firstWhere(
-            (e) => e.value == recon['syringeSize'],
-        orElse: () => SyringeSize.size1_0,
-      )
-          : null;
     } else {
       if (isInjection && isReconstituted && recon != null) {
         final targetDose = recon['targetDose']?.toDouble() ?? 0;
@@ -71,12 +64,6 @@ class _DosageFormViewState extends State<DosageFormView> {
         _amountController.text = formatNumber(targetDose);
         _iuController.text = formatNumber(syringeUnits);
         _doseUnit = recon['targetDoseUnit'] ?? 'mcg';
-        _syringeSize = recon['syringeSize'] != null
-            ? SyringeSize.values.firstWhere(
-              (e) => e.value == recon['syringeSize'],
-          orElse: () => SyringeSize.size1_0,
-        )
-            : SyringeSize.size1_0;
         _nameController.text = '$syringeUnits IU containing $targetDose $_doseUnit';
         _method = DosageMethod.subcutaneous;
       } else if (isTabletOrCapsule) {
@@ -203,12 +190,12 @@ class _DosageFormViewState extends State<DosageFormView> {
       return;
     }
 
-    final dosageProvider = Provider.of<DosageProvider>(context, listen: false);
+    final dosagePresenter = Provider.of<DosagePresenter>(context, listen: false);
     try {
       if (widget.dosage == null) {
-        await dosageProvider.addDosage(dosage);
+        await dosagePresenter.addDosage(dosage);
       } else {
-        await dosageProvider.updateDosage(dosage.id, dosage);
+        await dosagePresenter.updateDosage(dosage.id, dosage);
       }
       if (context.mounted) {
         Navigator.pop(context);
@@ -256,18 +243,21 @@ class _DosageFormViewState extends State<DosageFormView> {
                   iuController: _iuController,
                   doseUnit: _doseUnit,
                   method: _method,
-                  syringeSize: _syringeSize,
+                  syringeSize: widget.medication!.selectedReconstitution?['syringeSize'] != null
+                      ? SyringeSize.values.firstWhere(
+                        (e) => e.value == widget.medication!.selectedReconstitution!['syringeSize'],
+                    orElse: () => SyringeSize.size1_0,
+                  )
+                      : null,
                   isInjection: isInjection,
                   isTabletOrCapsule: isTabletOrCapsule,
                   isReconstituted: isReconstituted,
                   medication: widget.medication!,
                   onDoseUnitChanged: (value) {
-                    if (value != null) {
-                      setState(() => _doseUnit = value);
-                    }
+                    if (value != null) setState(() => _doseUnit = value);
                   },
                   onMethodChanged: (value) => setState(() => _method = value ?? _method),
-                  onSyringeSizeChanged: (value) => setState(() => _syringeSize = value),
+                  onSyringeSizeChanged: (_) {}, // No-op, handled by Medication
                 ),
                 const SizedBox(height: 24),
                 Center(

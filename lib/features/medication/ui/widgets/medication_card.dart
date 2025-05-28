@@ -1,5 +1,4 @@
-// In lib/core/widgets/cards/medication_card.dart
-
+// lib/features/medication/ui/widgets/medication_card.dart
 import 'package:flutter/material.dart';
 import 'package:medtrackr/app/constants.dart';
 import 'package:medtrackr/app/enums.dart';
@@ -16,23 +15,18 @@ class MedicationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dosageProvider = Provider.of<DosageProvider>(context);
-    final scheduleProvider = Provider.of<ScheduleProvider>(context);
-    final dosages = dosageProvider.getDosagesForMedication(medication.id);
-    final schedule = scheduleProvider.getScheduleForMedication(medication.id);
+    final dosagePresenter = Provider.of<DosagePresenter>(context);
+    final schedulePresenter = Provider.of<SchedulePresenter>(context);
+    final dosages = dosagePresenter.getDosagesForMedication(medication.id);
+    final schedule = schedulePresenter.getScheduleForMedication(medication.id);
     final isReconstituted = medication.reconstitutionVolume > 0;
-    final remainingFraction =
-        '${formatNumber(medication.remainingQuantity)}/${formatNumber(medication.quantity)} ${medication.quantityUnit.displayName}';
     final reconVolumeUnit = medication.reconstitutionVolumeUnit.isNotEmpty
         ? medication.reconstitutionVolumeUnit
         : 'mL';
+    final remainingFraction =
+        '${formatNumber(medication.remainingQuantity)}/${formatNumber(medication.quantity)} ${medication.quantityUnit.displayName}';
     final reconRemaining = isReconstituted
-        ? _formatFraction(
-      medication.remainingQuantity /
-          (medication.quantity / medication.reconstitutionVolume),
-      medication.reconstitutionVolume,
-      reconVolumeUnit,
-    )
+        ? '${formatNumber(medication.remainingQuantity / (medication.quantity / medication.reconstitutionVolume))}/${formatNumber(medication.reconstitutionVolume)} $reconVolumeUnit'
         : '';
 
     return GestureDetector(
@@ -105,26 +99,21 @@ class MedicationCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              Consumer<DataProvider>(
-                builder: (context, dataProvider, child) {
-                  final schedule = dataProvider.getScheduleForMedication(medication.id);
-                  return RichText(
-                    text: TextSpan(
-                      style: AppConstants.cardBodyStyle.copyWith(fontSize: 14),
-                      children: [
-                        const TextSpan(
-                          text: 'Next Dose: ',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        TextSpan(
-                          text: schedule != null && dosages.isNotEmpty
-                              ? '${formatNumber(dosages.first.totalDose)} ${dosages.first.doseUnit} at ${schedule.time.format(context)}'
-                              : 'None scheduled',
-                        ),
-                      ],
+              RichText(
+                text: TextSpan(
+                  style: AppConstants.cardBodyStyle.copyWith(fontSize: 14),
+                  children: [
+                    const TextSpan(
+                      text: 'Next Dose: ',
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                  );
-                },
+                    TextSpan(
+                      text: schedule != null && dosages.isNotEmpty
+                          ? '${formatNumber(dosages.first.totalDose)} ${dosages.first.doseUnit} at ${schedule.time.format(context)}'
+                          : 'None scheduled',
+                    ),
+                  ],
+                ),
               ),
             ],
             if (isReconstituted) ...[
@@ -144,8 +133,7 @@ class MedicationCard extends StatelessWidget {
                   ],
                 ),
               ),
-              if (medication.selectedReconstitution != null &&
-                  medication.selectedReconstitution!.isNotEmpty) ...[
+              if (medication.selectedReconstitution != null && medication.selectedReconstitution!.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 RichText(
                   text: TextSpan(

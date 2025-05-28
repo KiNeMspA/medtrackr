@@ -40,7 +40,7 @@ class DatabaseService {
         };
       }
     } catch (e) {
-      print('Error loading data: $e');
+      throw Exception('Failed to load data: $e');
     }
     return {'medications': [], 'schedules': [], 'dosages': []};
   }

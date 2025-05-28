@@ -45,18 +45,6 @@ class DosagePresenter with ChangeNotifier {
   }
 
   Future<void> deleteDosage(String id) async {
-    await _repository.updateDosage(id, dosage);
-    final index = _dosages.indexWhere((d) => d.id == id);
-    if (index != -1) {
-      _dosages[index] = dosage;
-      if (dosage.takenTime != null) {
-        await _updateMedicationQuantity(dosage);
-      }
-      notifyListeners();
-    }
-  }
-
-  Future<void> deleteDosage(String id) async {
     await _repository.deleteDosage(id);
     _dosages.removeWhere((d) => d.id == id);
     _notificationService.cancelNotification(id.hashCode);
@@ -65,17 +53,18 @@ class DosagePresenter with ChangeNotifier {
 
   Future<void> takeDose(String medicationId, String scheduleId, String dosageId) async {
     final dosage = _dosages.firstWhere(
-            (d) => d.id == dosageId,
-        orElse: () => Dosage(
-          id: '',
-          medicationId: '',
-          name: '',
-          method: DosageMethod.subcutaneous,
-          doseUnit: '',
-          totalDose: 0.0,
-          volume: 0.0,
-          insulinUnits: 0.0,
-        ));
+          (d) => d.id == dosageId,
+      orElse: () => Dosage(
+        id: '',
+        medicationId: '',
+        name: '',
+        method: DosageMethod.subcutaneous,
+        doseUnit: '',
+        totalDose: 0.0,
+        volume: 0.0,
+        insulinUnits: 0.0,
+      ),
+    );
     if (dosage.id.isNotEmpty) {
       final updatedDosage = dosage.copyWith(takenTime: DateTime.now());
       await addDosage(updatedDosage);

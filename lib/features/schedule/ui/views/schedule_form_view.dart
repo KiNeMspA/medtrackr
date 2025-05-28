@@ -6,6 +6,7 @@ import 'package:medtrackr/app/enums.dart';
 import 'package:medtrackr/core/widgets/app_bottom_navigation_bar.dart';
 import 'package:medtrackr/core/widgets/schedule_form_fields.dart';
 import 'package:medtrackr/core/widgets/schedule_edit_dialog.dart';
+import 'package:medtrackr/core/widgets/confirm_schedule_dialog.dart';
 import 'package:medtrackr/features/schedule/models/schedule.dart';
 import 'package:medtrackr/features/medication/models/medication.dart';
 import 'package:medtrackr/features/dosage/models/dosage.dart';
@@ -84,9 +85,8 @@ class _ScheduleFormViewState extends State<ScheduleFormView> {
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => ScheduleEditDialog(
+      builder: (context) => ConfirmScheduleDialog(
         schedule: schedule,
-        onSave: (updatedSchedule) {},
         onConfirm: () => Navigator.pop(context, true),
         onCancel: () => Navigator.pop(context, false),
       ),

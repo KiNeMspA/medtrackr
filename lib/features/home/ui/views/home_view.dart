@@ -1,27 +1,23 @@
-// In lib/features/home/views/home_view.dart
-
+// lib/features/home/ui/views/home_view.dart
 import 'package:flutter/material.dart';
 import 'package:medtrackr/app/constants.dart';
 import 'package:medtrackr/app/enums.dart';
-import 'package:medtrackr/features/medication/models/medication.dart';
-import 'package:medtrackr/features/schedule/models/schedule.dart';
+import 'package:medtrackr/core/utils/format_helper.dart';
 import 'package:medtrackr/features/medication/ui/widgets/compact_medication_card.dart';
 import 'package:medtrackr/core/widgets/app_bottom_navigation_bar.dart';
 import 'package:provider/provider.dart';
+import 'package:medtrackr/features/medication/presenters/medication_presenter.dart';
+import 'package:medtrackr/features/schedule/presenters/schedule_presenter.dart';
 
-
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  String _formatNumber(double value) {
-    return value % 1 == 0 ? value.toInt().toString() : value.toStringAsFixed(2);
-  }
+class HomeView extends StatelessWidget {
+  const HomeView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final dataProvider = Provider.of<DataProvider>(context);
-    final medications = dataProvider.medications;
-    final schedules = dataProvider.schedules;
+    final medicationPresenter = Provider.of<MedicationPresenter>(context);
+    final schedulePresenter = Provider.of<SchedulePresenter>(context);
+    final medications = medicationPresenter.medications;
+    final schedules = schedulePresenter.schedules;
 
     Schedule? nextSchedule;
     if (schedules.isNotEmpty) {
@@ -91,11 +87,10 @@ class HomeScreen extends StatelessWidget {
                   contentPadding: const EdgeInsets.all(24),
                   title: Text(
                     '${medications.firstWhere((m) => m.id == nextSchedule!.medicationId, orElse: () => Medication(id: '', name: 'Unknown', type: MedicationType.other, quantityUnit: QuantityUnit.mg, quantity: 0, remainingQuantity: 0, reconstitutionVolumeUnit: '', reconstitutionVolume: 0, reconstitutionFluid: '', notes: '')).name} (${nextSchedule.dosageName})',
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
                   ),
                   subtitle: Text(
-                    'Time: ${nextSchedule.time.format(context)}\nDose: ${_formatNumber(nextSchedule.dosageAmount)} ${nextSchedule.dosageUnit}',
+                    'Time: ${nextSchedule.time.format(context)}\nDose: ${formatNumber(nextSchedule.dosageAmount)} ${nextSchedule.dosageUnit}',
                     style: const TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                 ),

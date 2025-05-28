@@ -99,9 +99,9 @@ Below is the restructured folder structure, detailing where each file type/opera
   - Moved JSON persistence to `database_service.dart` for centralized data storage.
   - Updated `main.dart` to use `MultiProvider` and `AppRoutes` for navigation.
   - Ensured `routes.dart` uses `enums.dart` for routing logic.
-### Folder Structure Restructuring (May 28, 2025, 19:45 PM AEST)
-- **Previous Commit**: `a6c07082fc6bf7904fc5cd22f1264b3dacd99dffd`
-- **New Commit**: `8221e170c72b7656048de81f45a87aa655ad86f3`
+  
+### Folder Structure Restructuring (May 28, 2025, 17:51 PM AEST)
+- **Commit**: `8221e170c72b7656048de81f45a87aa655ad86f3`
 - **Details**:
   - Kept enums in `lib/app/enums.dart` for app-wide use (`MedicationType`, `QuantityUnit`, `DosageMethod`, `SyringeSize`, `FrequencyType`, `FluidUnit`, `TargetDoseUnit`). Added `toMLFactor` to `FluidUnit` and `displayName` to `SyringeSize`.
   - Ensured `lib/app/themes.dart` uses `AppThemes` for consistent styling of Information (blue), Warning (orange), and Error (red) cards/messages.

@@ -4,6 +4,7 @@ import 'package:medtrackr/app/constants.dart';
 import 'package:medtrackr/app/enums.dart';
 import 'package:medtrackr/features/dosage/models/dosage.dart';
 import 'package:medtrackr/core/widgets/dosage_form_fields.dart';
+import 'package:medtrackr/features/medication/models/medication.dart';
 
 class DosageEditDialog extends StatefulWidget {
   final Dosage dosage;
@@ -31,7 +32,6 @@ class _DosageEditDialogState extends State<DosageEditDialog> {
   late TextEditingController _tabletCountController;
   late String _doseUnit;
   late DosageMethod _method;
-  late SyringeSize? _syringeSize;
 
   @override
   void initState() {
@@ -42,7 +42,6 @@ class _DosageEditDialogState extends State<DosageEditDialog> {
         text: widget.isTabletOrCapsule ? widget.dosage.totalDose.toInt().toString() : '');
     _doseUnit = widget.dosage.doseUnit;
     _method = widget.dosage.method;
-    _syringeSize = widget.dosage.syringeSize;
   }
 
   @override
@@ -63,10 +62,10 @@ class _DosageEditDialogState extends State<DosageEditDialog> {
           nameController: _nameController,
           amountController: _doseController,
           tabletCountController: _tabletCountController,
-          iuController: TextEditingController(), // Placeholder, not used
+          iuController: TextEditingController(), // Placeholder for IU input
           doseUnit: _doseUnit,
           method: _method,
-          syringeSize: _syringeSize,
+          syringeSize: null, // Not stored in Dosage model
           isInjection: widget.isInjection,
           isTabletOrCapsule: widget.isTabletOrCapsule,
           isReconstituted: widget.isReconstituted,
@@ -81,10 +80,10 @@ class _DosageEditDialogState extends State<DosageEditDialog> {
             reconstitutionVolume: 0,
             reconstitutionFluid: '',
             notes: '',
-          ), // Placeholder
+          ),
           onDoseUnitChanged: (value) => setState(() => _doseUnit = value ?? _doseUnit),
           onMethodChanged: (value) => setState(() => _method = value ?? _method),
-          onSyringeSizeChanged: (value) => setState(() => _syringeSize = value),
+          onSyringeSizeChanged: (_) {}, // No-op, syringeSize not used
         ),
       ),
       actions: [
@@ -110,7 +109,6 @@ class _DosageEditDialogState extends State<DosageEditDialog> {
                   ? (widget.dosage.selectedReconstitution!['syringeUnits'] as num?)?.toDouble() ?? 0.0
                   : 0.0,
               method: _method,
-              syringeSize: _syringeSize,
             );
             widget.onSave(updatedDosage);
             Navigator.pop(context);

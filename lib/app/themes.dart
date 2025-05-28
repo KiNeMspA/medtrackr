@@ -4,7 +4,7 @@ import 'package:medtrackr/app/constants.dart';
 class AppThemes {
   static final ThemeData themeData = ThemeData(
     primarySwatch: Colors.blue,
-    scaffoldBackgroundColor: Colors.grey[200],
+    scaffoldBackgroundColor: AppConstants.backgroundColor,
     textSelectionTheme: TextSelectionThemeData(
       cursorColor: AppConstants.primaryColor,
       selectionColor: AppConstants.primaryColor.withOpacity(0.5),
