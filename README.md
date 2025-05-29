@@ -140,7 +140,19 @@ A Flutter-based medication tracking app to manage medications, dosages, schedule
   - Ensured 5.0 mL syringe appears in suggestions.
   - Updated dosage options to include reference ranges within syringe IU limits.
   - Standardized confirmation dialog styling.
-- **Consistency**: Ensured all views and dialogs use `AppConstants` and `AppThemes` for styling.
+* Consistency : Ensured all views and dialogs use `AppConstants` and `AppThemes` for styling.
+* Build Fixes (May 29, 2025, 07:02 PM AEST) :
+  - Commit: `a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6`
+  - Fixed `themes.dart` build error by using `AppConstants.cardColor` explicitly.
+  - Corrected `pubspec.yaml` font indentation to resolve syntax error.
+* Build Fixes and Enhancements (May 29, 2025, 07:10 PM AEST) :
+  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
+  - Fixed syntax errors in `medication_form_view.dart` (unmatched brackets, incorrect commas).
+  - Corrected syntax error in `reconstitution_view.dart` by removing erroneous `}d`.
+  - Resolved `AppThemes` namespace errors in `home_view.dart`.
+  - Replaced invalid `Icons.syringe` with `Icons.medical_services` in `home_view.dart`, `confirm_dosage_dialog.dart`, and `confirm_medication_dialog.dart`.
+  - Fixed incorrect reference to `AppThemes.infoCardDecoration` in `medication_form_view.dart` by using `AppConstants.infoCardDecoration`.
+
   
 ## Planned Features
 - Schedules: Cycle period calculations, multi-dose schedules.

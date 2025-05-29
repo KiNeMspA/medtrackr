@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:medtrackr/app/constants.dart';
 import 'package:medtrackr/app/enums.dart';
+import 'package:medtrackr/app/themes.dart';
 import 'package:medtrackr/core/services/navigation_service.dart';
 import 'package:medtrackr/core/utils/format_helper.dart';
 import 'package:medtrackr/core/services/theme_provider.dart';
@@ -320,7 +321,7 @@ class _HomeViewState extends State<HomeView> {
             Row(
               children: [
                 Icon(
-                  isTablet ? Icons.tablet : Icons.syringe,
+                  isTablet ? Icons.tablet : Icons.medical_services,
                   color: AppConstants.primaryColor,
                   size: 20,
                 ),

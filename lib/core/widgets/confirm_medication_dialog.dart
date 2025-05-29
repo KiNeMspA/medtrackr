@@ -43,7 +43,7 @@ class ConfirmMedicationDialog extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Icon(
-              isTabletOrCapsule ? Icons.tablet : Icons.syringe,
+              isTabletOrCapsule ? Icons.tablet : Icons.medical_services,
               size: 36,
               color: AppConstants.primaryColor,
             ),
