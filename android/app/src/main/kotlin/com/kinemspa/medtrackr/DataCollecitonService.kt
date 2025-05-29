@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
+import android.os.Binder
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -18,10 +19,16 @@ import java.util.TimerTask
 
 class DataCollectionService : Service() {
     private lateinit var methodChannel: MethodChannel
+    private var isMethodChannelInitialized = false // Track initialization state
     private lateinit var handler: Handler
     private lateinit var timer: Timer
     private val dataRepository = DataRepository()
     private var counter = 0
+    private val binder = LocalBinder()
+
+    inner class LocalBinder : Binder() {
+        fun getService(): DataCollectionService = this@DataCollectionService
+    }
 
     companion object {
         const val CHANNEL_ID = "DataCollectionChannel"
@@ -34,7 +41,6 @@ class DataCollectionService : Service() {
         handler = Handler(Looper.getMainLooper())
         timer = Timer()
 
-        // Create notification channel for Android O and above
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
@@ -45,7 +51,6 @@ class DataCollectionService : Service() {
             manager.createNotificationChannel(channel)
         }
 
-        // Start foreground service with a notification
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("MedTrackr Data Collection")
             .setContentText("Collecting data in the background")
@@ -56,25 +61,26 @@ class DataCollectionService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // Schedule periodic data collection every 15 minutes
         timer.scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
                 counter++
                 val data = "Data point $counter at ${System.currentTimeMillis()}"
                 dataRepository.addData(data)
 
-                // Send data to Flutter via MethodChannel
                 handler.post {
-                    methodChannel.invokeMethod("onDataCollected", data)
+                    // Only invoke if methodChannel is initialized
+                    if (isMethodChannelInitialized) {
+                        methodChannel.invokeMethod("onDataCollected", data)
+                    }
                 }
             }
-        }, 0, 15 * 60 * 1000) // 15 minutes in milliseconds
+        }, 0, 15 * 60 * 1000)
 
         return START_STICKY
     }
 
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
+    override fun onBind(intent: Intent?): IBinder {
+        return binder
     }
 
     override fun onDestroy() {
@@ -83,13 +89,12 @@ class DataCollectionService : Service() {
         stopForeground(true)
     }
 
-    // Method to set the MethodChannel from Flutter
     fun setMethodChannel(channel: MethodChannel) {
         this.methodChannel = channel
+        this.isMethodChannelInitialized = true
     }
 }
 
-// Repository to store collected data
 class DataRepository {
     private val dataList = mutableListOf<String>()
 
@@ -102,21 +107,28 @@ class DataRepository {
     }
 }
 
-// Flutter plugin to handle communication between Kotlin and Flutter
 class DataCollectionPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     private lateinit var channel: MethodChannel
     private var service: DataCollectionService? = null
+    private val serviceConnection = object : android.content.ServiceConnection {
+        override fun onServiceConnected(name: android.content.ComponentName?, service: IBinder?) {
+            val binder = service as DataCollectionService.LocalBinder
+            this@DataCollectionPlugin.service = binder.getService()
+            this@DataCollectionPlugin.service?.setMethodChannel(channel)
+        }
+
+        override fun onServiceDisconnected(name: android.content.ComponentName?) {
+            this@DataCollectionPlugin.service = null
+        }
+    }
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(binding.binaryMessenger, DataCollectionService.METHOD_CHANNEL)
         channel.setMethodCallHandler(this)
 
-        // Start the service
         val intent = Intent(binding.applicationContext, DataCollectionService::class.java)
         binding.applicationContext.startForegroundService(intent)
-
-        // Set the MethodChannel on the service (requires service instance access)
-        // For simplicity, we're assuming the service is already running; in a real app, you'd need a more robust way to bind to the service
+        binding.applicationContext.bindService(intent, serviceConnection, BIND_AUTO_CREATE)
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
@@ -131,5 +143,7 @@ class DataCollectionPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
+        binding.applicationContext.unbindService(serviceConnection)
+        service = null
     }
 }

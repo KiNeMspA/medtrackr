@@ -157,75 +157,54 @@ A Flutter-based medication tracking app to manage medications, dosages, schedule
   - Replaced invalid `Icons.syringe` with `Icons.medical_services` in `home_view.dart`, `confirm_dosage_dialog.dart`, and `confirm_medication_dialog.dart`.
   - Fixed incorrect reference to `AppThemes.infoCardDecoration` in `medication_form_view.dart` by using `AppConstants.infoCardDecoration`.
 * Build Fixes for Medication Form (May 29, 2025, 07:22 PM AEST) :
-  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
   - Fixed syntax errors in `medication_form_view.dart` related to unmatched brackets, incorrect commas, and missing semicolons in the `Column` widget.
 * Additional Build Fixes for Medication Form (May 29, 2025, 07:28 PM AEST) :
-  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
   - Removed duplicate `TextFormField` and `ElevatedButton` widgets in `medication_form_view.dart` to fix syntax errors in the `Column` widget.
 * Reapplied Build Fixes for Medication Form (May 29, 2025, 07:48 PM AEST) :
-  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
   - Reapplied fix for duplicate `TextFormField` and `ElevatedButton` widgets in `medication_form_view.dart` to resolve syntax errors in the `Column` widget.
 * Reapplied Build Fixes for Medication Form Syntax (May 29, 2025, 07:51 PM AEST) :
-  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
   - Reapplied fix for duplicate `TextFormField` and `ElevatedButton` widgets in `medication_form_view.dart`, and corrected `Scaffold` closure syntax.
 * Fixed Scaffold Closure in Medication Form (May 29, 2025, 07:55 PM AEST) :
-  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
   - Fixed `Scaffold` closure syntax in `medication_form_view.dart` by adding a comma before `bottomNavigationBar` and removing an extra parenthesis.
 * Added SingleChildScrollView in Medication Form (May 29, 2025, 08:08 PM AEST) :
-  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
   - Added `SingleChildScrollView` between `Form` and `Column` in `medication_form_view.dart` to fix bracket mismatch and ensure proper scrolling.
 * Reapplied SingleChildScrollView Fix in Medication Form (May 29, 2025, 08:25 PM AEST) :
-  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
   - Reapplied the addition of `SingleChildScrollView` between `Form` and `Column` in `medication_form_view.dart` to fix bracket mismatch and ensure proper scrolling.
 * Fixed Class Closure in Medication Form (May 29, 2025, 08:43 PM AEST) :
-  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
   - Removed extra closing parenthesis at the end of `_MedicationFormViewState` class in `medication_form_view.dart`, replacing it with a proper closing brace to fix syntax error.
 * Reapplied SingleChildScrollView Fix in Medication Form (May 29, 2025, 08:49 PM AEST) :
-  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
   - Reapplied the addition of `SingleChildScrollView` between `Form` and `Column` in `medication_form_view.dart` to fix bracket mismatch and ensure proper scrolling.
 * Fixed Truncated Widget and Typo in Medication Form (May 29, 2025, 09:00 PM AEST) :
   - Commit: `7ab6e83b9e6c96e579d5e8db950967cc2ec98386`
   - Completed the truncated `DropdownButtonFormField` widget in the dose per tablet/capsule block and fixed a typo in `_saveMedication` (changed `medicine` to `medication`) in `medication_form_view.dart` to resolve syntax errors.
 * Extracted Widgets in Medication Form (May 29, 2025, 09:10 PM AEST) :
-  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
   - Extracted widgets from `medication_form_view.dart` into separate files in `lib/core/widgets/` (e.g., `medication_type_dropdown.dart`, `medication_name_field.dart`, etc.) for better modularity and reusability.
 * Fixed Font Reference in pubspec.yaml (May 29, 2025, 09:03 PM AEST) :
-  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
   - Corrected font file reference in `pubspec.yaml` from `Inter-SemiBold.tff` to `Inter-SemiBold.ttf` to resolve asset loading error during build.
 * Fixed Workmanager Compilation Issue (May 29, 2025, 09:04 PM AEST) :
-  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
   - Updated `workmanager` package to the latest version to resolve Kotlin compilation errors due to deprecated Flutter plugin APIs, and cleared build cache to fix incremental cache issues.
 * Adjusted Workmanager Version in pubspec.yaml (May 29, 2025, 09:31 PM AEST) :
-  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
   - Adjusted `workmanager` version constraint in `pubspec.yaml` to a compatible version (`^0.5.14`) to resolve dependency resolution failure.
 * Replaced Workmanager with Flutter Background Service (May 29, 2025, 09:34 PM AEST) :
-  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
   - Removed `workmanager` package due to version incompatibility and replaced it with `flutter_background_service` for scheduling background tasks, updating `main.dart` and `medication_form_view.dart` accordingly.
 * Fixed Package Name Typo in pubspec.yaml (May 29, 2025, 09:44 PM AEST) :
-  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
   - Corrected package name in `pubspec.yaml` from `flutter_background_services` to `flutter_background_service` to resolve dependency resolution failure.
 * Fixed Background Service Configuration and Imports in main.dart (May 29, 2025, 09:45 PM AEST) :
-  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
   - Updated `main.dart` to use `foregroundNotificationConfig` instead of `notificationTitle` and added missing import for `MedicationFormView` to resolve build errors.
 * Corrected Background Service Configuration in main.dart (May 29, 2025, 09:48 PM AEST) :
-  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
   - Corrected `AndroidConfiguration` in `main.dart` to use `notificationTitle` and `notificationContent` directly instead of `foregroundNotificationConfig` to match `flutter_background_service` version 5.1.0 API.
 * Updated Background Service Notification Setup in main.dart (May 29, 2025, 09:51 PM AEST) :
-  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
   - Updated `main.dart` to use `setForegroundNotificationInfo` in the `onStart` callback for `flutter_background_service` version 5.1.2, removing incorrect `notificationTitle` parameter from `AndroidConfiguration`.
 * Fixed Kotlin Compilation Cache Issue and Java Compatibility (May 29, 2025, 09:53 PM AEST) :
-  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
   - Cleared build cache to fix Kotlin incremental cache corruption in `shared_preferences_android`, updated Kotlin Gradle plugin to 1.9.24, and set Java source/target compatibility to Java 11 in `android/app/build.gradle` to suppress obsolete warnings.
 * Fixed Background Service Initialization and Provider Setup (May 29, 2025, 09:57 PM AEST) :
-  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
   - Added `WidgetsFlutterBinding.ensureInitialized()` before `initializeService()` and wrapped `MaterialApp` with `Provider<ThemeProvider>` in `main.dart` to fix runtime exceptions; deferred service initialization to improve performance.
 * Fixed NavigationService Provider and Foreground Service Type (May 29, 2025, 10:03 PM AEST) :
-  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
   - Added `NavigationService` to `MultiProvider` in `main.dart` to fix `ProviderNotFoundException`; updated `AndroidManifest.xml` to specify `foregroundServiceType="dataSync"` for `flutter_background_service` to resolve `MissingForegroundServiceTypeException`.
 * Fixed Background Service Package Name in AndroidManifest (May 29, 2025, 10:06 PM AEST) :
-  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
   - Corrected the package name for `flutter_background_service` in `AndroidManifest.xml` from `io.flutter.plugins.flutterbackgroundservice.BackgroundService` to `id.flutter.flutter_background_service.BackgroundService` to resolve class not found error.  
-
+  - Added FOREGROUND_SERVICE_DATA_SYNC Permission (May 30, 2025, 01:01 AM AEST)
+  - Fixed Uninitialized MethodChannel in DataCollectionService (May 30, 2025, 01:05 AM AEST)
   
 ## Planned Features
 - Schedules: Cycle period calculations, multi-dose schedules.
