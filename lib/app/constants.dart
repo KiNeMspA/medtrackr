@@ -1,112 +1,114 @@
-// In lib/app/constants.dart
-
+// lib/app/constants.dart
 import 'package:flutter/material.dart';
 
 class AppConstants {
   static const String appName = 'MedTrackr';
-  static const Color primaryColor = Color(0xFFFFC107); // Amber
-  static const Color kLightGrey = Color(0xFFCCCCCC);
-  static const Color secondaryColor = Colors.blue; // For info message
-  static const Color cancelColor = Colors.grey; // For cancel button
-  static const Color backgroundColor = Colors.white;
+  static const Color primaryColor = Color(0xFFFFA726); // Orange-yellow highlight
+  static const Color backgroundColor = Color(0xFFF5F5F5); // Light grey
+  static const Color cardColor = Colors.white;
+  static const Color textPrimary = Color(0xFF212121); // Dark grey
+  static const Color textSecondary = Color(0xFF757575); // Medium grey
+  static const Color accentColor = Color(0xFF616161); // Darker grey
+  static const Color errorColor = Color(0xFFD32F2F); // Red for errors
+  static const Color kLightGrey = Color(0xFFE0E0E0);
 
   static final cardDecoration = BoxDecoration(
-    color: Colors.white,
-    border: Border.all(color: primaryColor, width: 1.5),
-    borderRadius: BorderRadius.circular(12),
-    boxShadow: const [
+    color: cardColor,
+    borderRadius: BorderRadius.circular(8),
+    boxShadow: [
       BoxShadow(
-        color: Colors.black26,
-        blurRadius: 8,
-        offset: Offset(0, 4),
+        color: Colors.black.withOpacity(0.1),
+        blurRadius: 4,
+        offset: const Offset(0, 2),
       ),
     ],
   );
 
   static final prominentCardDecoration = BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(16),
-    border: Border.all(color: Colors.grey[300]!, width: 1), // Thinner border
-    boxShadow: const [
+    color: cardColor,
+    borderRadius: BorderRadius.circular(12),
+    border: Border.all(color: kLightGrey, width: 1),
+    boxShadow: [
       BoxShadow(
-        color: Colors.black12,
+        color: Colors.black.withOpacity(0.05),
         blurRadius: 6,
-        offset: Offset(0, 3),
+        offset: const Offset(0, 3),
       ),
     ],
   );
 
   static final infoCardDecoration = BoxDecoration(
-    color: Colors.blue[50],
-    borderRadius: BorderRadius.circular(12),
-    border: Border.all(color: Colors.blue[200]!, width: 1),
+    color: Color(0xFFE8EAF6), // Light grey-blue
+    borderRadius: BorderRadius.circular(8),
+    border: Border.all(color: Color(0xFF9FA8DA), width: 1),
   );
 
   static const cardTitleStyle = TextStyle(
-    fontSize: 18,
-    fontWeight: FontWeight.bold,
-    color: Colors.black,
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: textPrimary,
   );
 
   static const cardBodyStyle = TextStyle(
-    fontSize: 16,
-    color: Colors.black87,
+    fontSize: 14,
+    color: textSecondary,
   );
 
   static const secondaryTextStyle = TextStyle(
-    fontSize: 14,
-    color: Colors.grey,
+    fontSize: 12,
+    color: textSecondary,
   );
 
-  static final infoTextStyle = TextStyle(
+  static const infoTextStyle = TextStyle(
     fontSize: 14,
-    color: Colors.blue[800],
+    color: textPrimary,
     fontStyle: FontStyle.italic,
   );
 
   static final formFieldDecoration = InputDecoration(
     enabledBorder: OutlineInputBorder(
       borderSide: BorderSide(color: kLightGrey, width: 1),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(8),
     ),
     focusedBorder: OutlineInputBorder(
       borderSide: BorderSide(color: primaryColor, width: 1),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(8),
     ),
     errorBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: kLightGrey, width: 1),
-      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: errorColor, width: 1),
+      borderRadius: BorderRadius.circular(8),
     ),
     focusedErrorBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: primaryColor, width: 1),
-      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: errorColor, width: 1),
+      borderRadius: BorderRadius.circular(8),
     ),
     filled: true,
     fillColor: Colors.white,
-    labelStyle: TextStyle(color: Colors.grey),
+    labelStyle: TextStyle(color: textSecondary),
+    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
   );
 
   static final dialogButtonStyle = ElevatedButton.styleFrom(
     backgroundColor: primaryColor,
-    foregroundColor: Colors.black,
-    minimumSize: Size(120, 40),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    textStyle: TextStyle(fontWeight: FontWeight.bold),
+    foregroundColor: textPrimary,
+    minimumSize: Size(100, 36),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    textStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
   );
 
   static final cancelButtonStyle = ElevatedButton.styleFrom(
-    backgroundColor: cancelColor,
+    backgroundColor: accentColor,
     foregroundColor: Colors.white,
-    minimumSize: Size(120, 40),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    textStyle: TextStyle(fontWeight: FontWeight.bold),
+    minimumSize: Size(100, 36),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    textStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
   );
 
   static final actionButtonStyle = ElevatedButton.styleFrom(
     backgroundColor: primaryColor,
-    foregroundColor: Colors.black,
-    minimumSize: Size(double.infinity, 50),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    textStyle: TextStyle(fontWeight: FontWeight.bold),
+    foregroundColor: textPrimary,
+    minimumSize: Size(double.infinity, 40),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    textStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
   );
 }

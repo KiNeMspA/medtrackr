@@ -180,9 +180,6 @@ class _DosageFormViewState extends State<DosageFormView> {
     double insulinUnits = 0.0;
     if (isTabletOrCapsule) {
       final tabletCount = double.tryParse(_tabletCountController.text) ?? 0.0;
-      final dosePerUnit = widget.medication!.type == MedicationType.tablet
-          ? widget.medication!.dosePerTablet
-          : widget.medication!.dosePerCapsule;
       amount = tabletCount; // Store tablet count directly
     } else if (isInjection && isReconstituted) {
       insulinUnits = double.tryParse(_iuController.text) ?? 0.0;

@@ -63,7 +63,7 @@ class ReconstitutionCalculator {
           'suggestions': [],
           'selectedReconstitution': null,
           'totalAmount': pMg,
-          'targetDose': dMg,
+          'targetDose': d,
           'medicationName': medicationName.isNotEmpty ? medicationName : 'Medication',
           'error': 'Please enter positive values for quantity, dose, and syringe size.',
         };
@@ -79,7 +79,7 @@ class ReconstitutionCalculator {
             'suggestions': [],
             'selectedReconstitution': null,
             'totalAmount': pMg,
-            'targetDose': dMg,
+            'targetDose': d,
             'medicationName': medicationName.isNotEmpty ? medicationName : 'Medication',
             'error': 'Fluid volume cannot exceed 99 mL.',
           };
@@ -87,7 +87,7 @@ class ReconstitutionCalculator {
         final C = pMg / V;
         final vD = dMg / C;
         final U = vD * 100;
-        final maxIU = S == 0.3 ? 30 : S == 0.5 ? 50 : S == 1.0 ? 100 : 300;
+        final maxIU = S == 0.3 ? 30.0 : S == 0.5 ? 50.0 : S == 1.0 ? 100.0 : 300.0;
         final minIU = maxIU * 0.05; // 5% of syringe capacity
 
         if (vD <= S && U <= maxIU && U >= minIU) {
@@ -124,7 +124,7 @@ class ReconstitutionCalculator {
             'suggestions': [],
             'selectedReconstitution': null,
             'totalAmount': pMg,
-            'targetDose': dMg,
+            'targetDose': d,
             'medicationName': medicationName.isNotEmpty ? medicationName : 'Medication',
             'error': U > maxIU
                 ? 'IU (${formatNumber(U)}) exceeds syringe capacity (${formatNumber(maxIU)} IU).'
@@ -141,7 +141,7 @@ class ReconstitutionCalculator {
             'suggestions': [],
             'selectedReconstitution': null,
             'totalAmount': pMg,
-            'targetDose': dMg,
+            'targetDose': d,
             'medicationName': medicationName.isNotEmpty ? medicationName : 'Medication',
             'error': 'The minimum volume required exceeds the syringe size.',
           };
@@ -152,7 +152,7 @@ class ReconstitutionCalculator {
           final C = pMg / roundedV;
           final vD = dMg / C;
           final U = vD * 100;
-          final maxIU = S == 0.3 ? 30 : S == 0.5 ? 50 : S == 1.0 ? 100 : 300;
+          final maxIU = S == 0.3 ? 30.0 : S == 0.5 ? 50.0 : S == 1.0 ? 100.0 : 300.0;
           final minIU = maxIU * 0.05;
 
           if (vD <= S && U <= maxIU && U >= minIU) {

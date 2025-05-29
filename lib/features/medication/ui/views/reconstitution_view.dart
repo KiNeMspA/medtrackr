@@ -99,10 +99,10 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
         final fluidAmount = double.tryParse(_fluidAmountController.text) ?? 0.0;
         final syringeUnits = _selectedReconstitution!['syringeUnits']?.toDouble() ?? 0.0;
         final maxIU = _syringeSize == SyringeSize.size0_3
-            ? 30
+            ? 30.0
             : _syringeSize == SyringeSize.size0_5
-            ? 50
-            : 100;
+            ? 50.0
+            : 100.0;
         final minIU = maxIU * 0.05; // 5% of syringe capacity
 
         if (fluidAmount < 0.5 || fluidAmount > 99) {

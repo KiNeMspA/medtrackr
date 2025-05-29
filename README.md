@@ -7,7 +7,7 @@ A Flutter-based medication tracking app to manage medications, dosages, schedule
 - **Date of Restructuring**: May 28, 2025
 - **Enums**: All enums are consolidated in `lib/core/enums/enums.dart` for app-wide calculations (e.g., `QuantityUnit` conversions). Do not split into feature-specific enum files.
 - **Themes**: General styling for Information, Warning, and Error cards/messages is in `lib/app/themes.dart`. Use `AppThemes.informationCardDecoration`, `AppThemes.warningBackgroundColor`, etc., for consistent UI across all files.
-- **Code Snippets**: When providing changes, include precise line numbers and code references to existing file content to ensure accuracy.
+- **Code Snippets**: When providing changes, include precise line numbers and code references to existing file content to ensure accuracy. this also reduces your load and I dont have to wait for entire code snippet files. 
 - **Restructuring Completed**: Folder structure is modular with feature-specific directories (`medication`, `dosage`, `schedule`). `DataProvider` is split into `MedicationProvider`, `DosageProvider`, and `ScheduleProvider` with corresponding repositories.
 - **When reviewing and adding new code please make sure to utilise the new folder structure and place the required code , operations, functions and files in their respective directory for efficiency. 
 
@@ -161,6 +161,15 @@ Below is the restructured folder structure, detailing where each file type/opera
   - Fixed Reconstitution Form: Set IU warning threshold to 5% of syringe size, enabled target dose updates, validated IU against syringe capacity, reduced non-selected option text, and fixed crash on fluid volume change.
   - Ensured code reuse with `format_helper.dart`, `validators.dart`, `themes.dart`, and `reconstitution_calculator.dart`, respecting folder structure.
   - Progressed verification checklist: completed dosage and reconstitution validation.
+
+### Build and Form Fixes (May 29, 2025, 10:58 AM AEST)
+- **Commit**: `8221e170c72b7656048de81f45a87aa655ad86f3`
+- **Details**:
+  - Fixed build errors: Added missing colors to `constants.dart`, corrected `int` to `double` in `formatNumber`, added `format_helper.dart` import in `dosage_form_fields.dart`.
+  - Dosage Form: Removed empty tablet count warning, fixed tablet quantity validation, added remaining quantity display, implemented up/down arrows, styled `ConfirmDosageDialog`.
+  - Reconstitution Form: Set IU warning threshold to 5% of syringe size, fixed target dose updates, validated IU against syringe capacity, reduced non-selected option text, fixed fluid volume change crash.
+  - Ensured code reuse with `format_helper.dart`, `validators.dart`, `themes.dart`, and `reconstitution_calculator.dart`.
+  - Progressed verification checklist: completed dosage and reconstitution form fixes.
   
   
 ## Planned Features
