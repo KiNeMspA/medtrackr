@@ -8,55 +8,72 @@ import 'package:medtrackr/features/schedule/models/schedule.dart';
 import 'package:medtrackr/features/schedule/data/repos/schedule_repository.dart';
 
 class SchedulePresenter with ChangeNotifier {
+  bool _isDisposed = false;
   final ScheduleRepository _repository;
   final NotificationService _notificationService;
   List<Schedule> _schedules = [];
   List<Dosage> _dosages = [];
   List<Medication> _medications = [];
 
+
   SchedulePresenter(this._repository, this._notificationService);
 
   List<Map<String, dynamic>> get upcomingDoses {
     final now = DateTime.now();
-    final upcoming = <Map<String, dynamic>>[];
+    final upcoming = <Map<String, dynamic>>{};
 
-    for (final medication in _medications) {
-      final schedule = getScheduleForMedication(medication.id);
-      final dosages = getDosagesForMedication(medication.id);
-
-      if (schedule != null) {
+    for (final schedule in _schedules) {
+      final medication = _medications.firstWhere(
+            (m) => m.id == schedule.medicationId,
+        orElse: () => Medication(
+          id: '',
+          name: 'Unknown',
+          type: MedicationType.other,
+          quantityUnit: QuantityUnit.mg,
+          quantity: 0,
+          remainingQuantity: 0,
+          reconstitutionVolumeUnit: '',
+          reconstitutionVolume: 0,
+          reconstitutionFluid: '',
+          notes: '',
+        ),
+      );
+      final dosages = getDosagesForMedication(schedule.medicationId);
+      if (medication.id.isNotEmpty && !upcoming.containsKey(schedule.id)) {
         final hour = schedule.time.hour;
         final minute = schedule.time.minute;
-        final scheduleTime = DateTime(now.year, now.month, now.day, hour, minute);
-        final nextTime = scheduleTime.isBefore(now)
-            ? scheduleTime.add(Duration(
-            days: schedule.frequencyType == FrequencyType.daily ? 1 : 7))
-            : scheduleTime;
-
-        upcoming.add({
+        var scheduleTime = DateTime(now.year, now.month, now.day, hour, minute);
+        if (scheduleTime.isBefore(now)) {
+          scheduleTime = scheduleTime.add(Duration(
+              days: schedule.frequencyType == FrequencyType.daily ? 1 : 7));
+        }
+        upcoming[schedule.id] = {
           'medication': medication,
           'schedule': schedule,
           'dosages': dosages,
-          'nextTime': nextTime,
-        });
-      } else {
-        upcoming.add({
-          'medication': medication,
-          'schedule': null,
-          'dosages': dosages,
-          'nextTime': DateTime.now().add(const Duration(days: 365)),
-        });
+          'nextTime': scheduleTime,
+        };
       }
     }
 
-    upcoming.sort((a, b) => a['nextTime'].compareTo(b['nextTime']));
-    return upcoming;
+    final sorted = upcoming.values.toList()
+      ..sort((a, b) => a['nextTime'].compareTo(b['nextTime']));
+    return sorted;
   }
 
   Future<void> loadSchedules() async {
-    final data = await _repository.loadSchedules();
-    _schedules = data;
-    notifyListeners();
+    if (!_isDisposed) {
+      final data = await _repository.loadSchedules();
+      _schedules = data;
+      if (!_isDisposed) notifyListeners();
+    }
+  }
+
+  bool _isDisposed = false;
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
   }
 
   Future<void> setDependencies(List<Medication> medications, List<Dosage> dosages) async {
@@ -82,6 +99,7 @@ class SchedulePresenter with ChangeNotifier {
       notifyListeners();
     }
   }
+
 
   Future<void> deleteSchedule(String id) async {
     await _repository.deleteSchedule(id);
@@ -127,5 +145,10 @@ class SchedulePresenter with ChangeNotifier {
 
   Future<void> cancelDose(String scheduleId) async {
     await deleteSchedule(scheduleId);
+  }
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
   }
 }
