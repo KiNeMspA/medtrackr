@@ -211,7 +211,14 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
 
   void _calculateReconstitutionSuggestions() {
     try {
-      final fluidAmount = double.tryParse(_fluidAmountController.text) ?? 0;
+      final fluidAmount = double.tryParse(_fluidAmountController.text);
+      if (fluidAmount == null || fluidAmount <= 0 || fluidAmount.isNaN || fluidAmount.isInfinite) {
+        setState(() {
+          _validationError = 'Please enter a valid fluid amount';
+          _isValid = false;
+        });
+        return;
+      }
       if (fluidAmount < 0.5 || fluidAmount > 99) {
         setState(() {
           _validationError = 'Fluid amount must be between 0.5 and 99 mL';
@@ -232,13 +239,13 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
       );
       final result = calculator.calculate();
       setState(() {
-        _reconstitutionSuggestions = result['suggestions'] ?? [];
+        _reconstitutionSuggestions = List<Map<String, dynamic>>.from(result['suggestions'] ?? []);
         _selectedReconstitution = result['selectedReconstitution'];
         if (result['error'] != null) {
           _validationError = result['error'];
           _isValid = false;
         } else {
-          _validateInput(); // Re-validate after suggestions update
+          _validateInput();
         }
       });
     } catch (e) {
@@ -457,7 +464,9 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
                           margin: const EdgeInsets.symmetric(vertical: 4),
                           child: ListTile(
                             title: Text(
-                              '$label: ${formatNumber(suggestion['syringeUnits'])} IU',
+                              isSelected
+                                  ? '${formatNumber(suggestion['syringeUnits'])} IU of ${_syringeSize.displayName}'
+                                  : '$label: ${formatNumber(suggestion['syringeUnits'])} IU',
                               style: AppThemes.reconstitutionOptionTitleStyle.copyWith(
                                 color: isSelected ? AppConstants.primaryColor : AppConstants.textPrimary,
                               ),

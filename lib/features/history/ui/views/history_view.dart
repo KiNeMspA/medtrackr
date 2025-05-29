@@ -33,12 +33,6 @@ class HistoryView extends StatelessWidget {
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.pushNamed(context, '/medication_form'),
-        backgroundColor: AppConstants.primaryColor,
-        tooltip: 'Add a new medication',
-        child: const Icon(Icons.add, color: Colors.black),
-      ),
       bottomNavigationBar: AppBottomNavigationBar(
         currentIndex: 2,
         onTap: (index) {

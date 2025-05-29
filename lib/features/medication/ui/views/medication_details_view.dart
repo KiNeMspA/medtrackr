@@ -4,14 +4,15 @@ import 'package:medtrackr/app/constants.dart';
 import 'package:medtrackr/app/themes.dart';
 import 'package:medtrackr/app/enums.dart';
 import 'package:medtrackr/core/utils/format_helper.dart';
-import 'package:medtrackr/core/widgets/app_bottom_navigation_bar.dart';
 import 'package:medtrackr/core/widgets/animated_action_button.dart';
-import 'package:medtrackr/features/medication/ui/widgets/medication_card.dart';
 import 'package:medtrackr/core/widgets/dosage_edit_dialog.dart';
-import 'package:medtrackr/features/medication/models/medication.dart';
+import 'package:medtrackr/features/medication/ui/widgets/medication_card.dart';
 import 'package:provider/provider.dart';
-import 'package:medtrackr/features/medication/presenters/medication_presenter.dart';
 import 'package:medtrackr/features/dosage/presenters/dosage_presenter.dart';
+import 'package:medtrackr/features/schedule/presenters/schedule_presenter.dart';
+import 'package:medtrackr/features/medication/presenters/medication_presenter.dart';
+import 'package:medtrackr/features/medication/models/medication.dart';
+import 'package:medtrackr/core/widgets/app_bottom_navigation_bar.dart';
 
 class MedicationDetailsView extends StatelessWidget {
   final Medication medication;
@@ -78,9 +79,14 @@ class MedicationDetailsView extends StatelessWidget {
                 child: AnimatedActionButton(
                   label: 'Add Schedule',
                   icon: Icons.schedule,
-                  onPressed: () => dosages.isEmpty
-                      ? _showNoDosageDialog(context)
-                      : Navigator.pushNamed(context, '/add_schedule', arguments: medication),
+                  onPressed: () {
+                    final dosages = Provider.of<DosagePresenter>(context, listen: false).getDosagesForMedication(medication.id);
+                    if (dosages.isEmpty) {
+                      _showNoDosageDialog(context);
+                    } else {
+                      Navigator.pushNamed(context, '/add_schedule', arguments: medication);
+                    }
+                  },
                 ),
               ),
               const SizedBox(width: 8),
@@ -88,9 +94,18 @@ class MedicationDetailsView extends StatelessWidget {
                 child: AnimatedActionButton(
                   label: 'Edit Schedule',
                   icon: Icons.edit_calendar,
-                  onPressed: () => dosages.isEmpty
-                      ? _showNoDosageDialog(context)
-                      : Navigator.pushNamed(context, '/schedule_form', arguments: {'medication': medication, 'schedule': schedulePresenter.getScheduleForMedication(medication.id)}),
+                  onPressed: () {
+                    final dosages = Provider.of<DosagePresenter>(context, listen: false).getDosagesForMedication(medication.id);
+                    final schedulePresenter = Provider.of<SchedulePresenter>(context, listen: false);
+                    if (dosages.isEmpty) {
+                      _showNoDosageDialog(context);
+                    } else {
+                      Navigator.pushNamed(context, '/schedule_form', arguments: {
+                        'medication': medication,
+                        'schedule': schedulePresenter.getScheduleForMedication(medication.id)
+                      });
+                    }
+                  },
                 ),
               ),
               if (medication.type == MedicationType.injection) ...[

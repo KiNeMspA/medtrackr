@@ -50,7 +50,11 @@ enum QuantityUnit {
 
 enum DosageMethod {
   oral,
-  subcutaneous;
+  subcutaneous,
+  intramuscular,
+  intravenous,
+  intradermal,
+  other;
 
   String get displayName {
     switch (this) {
@@ -58,6 +62,14 @@ enum DosageMethod {
         return 'Oral';
       case DosageMethod.subcutaneous:
         return 'Subcutaneous';
+      case DosageMethod.intramuscular:
+        return 'Intramuscular';
+      case DosageMethod.intravenous:
+        return 'Intravenous';
+      case DosageMethod.intradermal:
+        return 'Intradermal';
+      case DosageMethod.other:
+        return 'Other';
     }
   }
 }

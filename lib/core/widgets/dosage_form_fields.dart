@@ -149,16 +149,19 @@ class DosageFormFields extends StatelessWidget {
               const SizedBox(width: 16),
               SizedBox(
                 width: 120,
-                child: DropdownButtonFormField<String>(
-                  value: doseUnit,
+                child: DropdownButtonFormField<DosageMethod>(
+                  value: method,
                   decoration: AppConstants.formFieldDecoration.copyWith(
-                    labelText: 'Unit',
+                    labelText: 'Dosage Method',
+                    labelStyle: AppThemes.formLabelStyle,
                   ),
-                  items: ['g', 'mg', 'mcg', 'mL', 'IU', 'Unit']
-                      .map((unit) => DropdownMenuItem(value: unit, child: Text(unit)))
+                  items: (isTabletOrCapsule
+                      ? [DosageMethod.oral, DosageMethod.other]
+                      : [DosageMethod.subcutaneous, DosageMethod.intramuscular, DosageMethod.intravenous, DosageMethod.intradermal, DosageMethod.other])
+                      .map((method) => DropdownMenuItem(value: method, child: Text(method.displayName)))
                       .toList(),
-                  onChanged: onDoseUnitChanged,
-                  validator: (value) => value == null ? 'Please select a unit' : null,
+                  onChanged: onMethodChanged,
+                  validator: (value) => value == null ? 'Please select a method' : null,
                 ),
               ),
             ],

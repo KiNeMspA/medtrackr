@@ -104,6 +104,15 @@ class ReconstitutionCalculator {
           suggestions.add({
             'volume': V,
             'concentration': C,
+            'doseVolume': vD,
+            'syringeUnits': U,
+            'syringeSize': S,
+            'targetDose': d,
+            'targetDoseUnit': targetDoseUnit,
+          });
+          suggestions.add({
+            'volume': V,
+            'concentration': C,
             'doseVolume': vD * 0.5,
             'syringeUnits': U * 0.5,
             'syringeSize': S,

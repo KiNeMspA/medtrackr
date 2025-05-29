@@ -57,7 +57,7 @@ class NotificationService {
       );
       final notificationId = schedule.id.hashCode;
       // Placeholder for actual notification scheduling (e.g., flutter_local_notifications)
-      print('Scheduled notification $notificationId for ${medication.name} at ${schedule.time.format(context)}');
+      print('Scheduled notification $notificationId for ${medication.name} at ${schedule.time.hour}:${schedule.time.minute}');
     } catch (e) {
       print('Error scheduling notification: $e');
     }

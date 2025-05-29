@@ -82,6 +82,29 @@ class ConfirmDosageDialog extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TextButton(
+                  onPressed: onCancel,
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: AppConstants.accentColor,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: onConfirm,
+                  style: AppConstants.dialogButtonStyle,
+                  child: const Text('Confirm'),
+                ),
+              ],
+            ),
           ],
         ),
       ),

@@ -48,7 +48,7 @@ class _ScheduleFormViewState extends State<ScheduleFormView> {
     _selectedDosage = widget.schedule != null && dosages.isNotEmpty
         ? dosages.firstWhere(
           (d) => d.id == widget.schedule!.dosageId,
-      orElse: () => dosages.isNotEmpty ? dosages.first : null,
+      orElse: () => dosages.first,
     )
         : dosages.isNotEmpty
         ? dosages.first
