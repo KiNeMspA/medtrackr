@@ -115,7 +115,7 @@ class _HomeViewState extends State<HomeView> {
                   const SizedBox(height: 12),
                   nextDose == null
                       ? Container(
-                    decoration: AppThemes.cardDecoration(isDark),
+                    decoration: AppConstants.cardDecoration(isDark),
                     padding: const EdgeInsets.all(16),
                     child: Center(
                       child: Text(
@@ -229,7 +229,7 @@ class _HomeViewState extends State<HomeView> {
     );
 
     return Container(
-      decoration: AppThemes.prominentCardDecoration(isDark),
+      decoration: AppConstants.prominentCardDecoration(isDark),
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -367,7 +367,7 @@ class _HomeViewState extends State<HomeView> {
     }
 
     return Container(
-      decoration: AppThemes.cardDecoration(isDark),
+      decoration: AppConstants.cardDecoration(isDark),
       child: TableCalendar(
         firstDay: DateTime.now().subtract(const Duration(days: 30)),
         lastDay: DateTime.now().add(const Duration(days: 30)),

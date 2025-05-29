@@ -140,18 +140,55 @@ A Flutter-based medication tracking app to manage medications, dosages, schedule
   - Ensured 5.0 mL syringe appears in suggestions.
   - Updated dosage options to include reference ranges within syringe IU limits.
   - Standardized confirmation dialog styling.
+    Theming Overhaul : Updated to a modern, award-winning design with a teal primary color ( `#00C4B4` ), coral accents ( `#FF6F61` / `#FF8A65` ), and the Inter font.
+* Home Screen :
+  ...
 * Consistency : Ensured all views and dialogs use `AppConstants` and `AppThemes` for styling.
 * Build Fixes (May 29, 2025, 07:02 PM AEST) :
   - Commit: `a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6`
   - Fixed `themes.dart` build error by using `AppConstants.cardColor` explicitly.
   - Corrected `pubspec.yaml` font indentation to resolve syntax error.
 * Build Fixes and Enhancements (May 29, 2025, 07:10 PM AEST) :
-  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
+  - Commit: `32850236ec109b8878d022ec007e733c78ef4f65`
   - Fixed syntax errors in `medication_form_view.dart` (unmatched brackets, incorrect commas).
   - Corrected syntax error in `reconstitution_view.dart` by removing erroneous `}d`.
   - Resolved `AppThemes` namespace errors in `home_view.dart`.
   - Replaced invalid `Icons.syringe` with `Icons.medical_services` in `home_view.dart`, `confirm_dosage_dialog.dart`, and `confirm_medication_dialog.dart`.
   - Fixed incorrect reference to `AppThemes.infoCardDecoration` in `medication_form_view.dart` by using `AppConstants.infoCardDecoration`.
+* Build Fixes for Medication Form (May 29, 2025, 07:22 PM AEST) :
+  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
+  - Fixed syntax errors in `medication_form_view.dart` related to unmatched brackets, incorrect commas, and missing semicolons in the `Column` widget.
+* Additional Build Fixes for Medication Form (May 29, 2025, 07:28 PM AEST) :
+  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
+  - Removed duplicate `TextFormField` and `ElevatedButton` widgets in `medication_form_view.dart` to fix syntax errors in the `Column` widget.
+* Reapplied Build Fixes for Medication Form (May 29, 2025, 07:48 PM AEST) :
+  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
+  - Reapplied fix for duplicate `TextFormField` and `ElevatedButton` widgets in `medication_form_view.dart` to resolve syntax errors in the `Column` widget.
+* Reapplied Build Fixes for Medication Form Syntax (May 29, 2025, 07:51 PM AEST) :
+  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
+  - Reapplied fix for duplicate `TextFormField` and `ElevatedButton` widgets in `medication_form_view.dart`, and corrected `Scaffold` closure syntax.
+* Fixed Scaffold Closure in Medication Form (May 29, 2025, 07:55 PM AEST) :
+  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
+  - Fixed `Scaffold` closure syntax in `medication_form_view.dart` by adding a comma before `bottomNavigationBar` and removing an extra parenthesis.
+* Added SingleChildScrollView in Medication Form (May 29, 2025, 08:08 PM AEST) :
+  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
+  - Added `SingleChildScrollView` between `Form` and `Column` in `medication_form_view.dart` to fix bracket mismatch and ensure proper scrolling.
+* Reapplied SingleChildScrollView Fix in Medication Form (May 29, 2025, 08:25 PM AEST) :
+  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
+  - Reapplied the addition of `SingleChildScrollView` between `Form` and `Column` in `medication_form_view.dart` to fix bracket mismatch and ensure proper scrolling.
+* Fixed Class Closure in Medication Form (May 29, 2025, 08:43 PM AEST) :
+  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
+  - Removed extra closing parenthesis at the end of `_MedicationFormViewState` class in `medication_form_view.dart`, replacing it with a proper closing brace to fix syntax error.
+* Reapplied SingleChildScrollView Fix in Medication Form (May 29, 2025, 08:49 PM AEST) :
+  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
+  - Reapplied the addition of `SingleChildScrollView` between `Form` and `Column` in `medication_form_view.dart` to fix bracket mismatch and ensure proper scrolling.
+* Fixed Truncated Widget and Typo in Medication Form (May 29, 2025, 09:00 PM AEST) :
+  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
+  - Completed the truncated `DropdownButtonFormField` widget in the dose per tablet/capsule block and fixed a typo in `_saveMedication` (changed `medicine` to `medication`) in `medication_form_view.dart` to resolve syntax errors.
+* Extracted Widgets in Medication Form (May 29, 2025, 09:10 PM AEST) :
+  - Commit: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
+  - Extracted widgets from `medication_form_view.dart` into separate files in `lib/core/widgets/` (e.g., `medication_type_dropdown.dart`, `medication_name_field.dart`, etc.) for better modularity and reusability.
+  
 
   
 ## Planned Features
