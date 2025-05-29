@@ -95,6 +95,14 @@ A Flutter-based medication tracking app to manage medications, dosages, schedule
   - Ensured code reuse with `format_helper.dart`, `validators.dart`, `themes.dart`, and `reconstitution_calculator.dart`.
   - Progressed verification checklist: completed dosage and reconstitution form fixes.
   
+### Form Fixes and Home Screen Redesign (May 29, 2025, 11:35 AM AEST)
+- **Commit**: `8221e170c72b7656048de81f45a87aa655ad86f3`
+- **Details**:
+  - Dosage Form: Fixed ConfirmDosageDialog button positioning, restricted tablet/capsule methods to Oral/Other, added injection methods, removed duplicate dropdowns.
+  - Reconstitution Form: Updated selected option display, fixed suggestion type error, resolved volume field crash.
+  - Redesign home screen: Compact schedule cards with action buttons, smaller medication cards, View Calendar button.
+  - Optimized code: Consolidated dialog actions, enhanced validators, centralized navigation bar.
+  
   
 ## Planned Features
 - Schedules: Cycle period calculations, multi-dose schedules.

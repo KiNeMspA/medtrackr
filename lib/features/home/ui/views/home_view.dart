@@ -4,7 +4,7 @@ import 'package:medtrackr/app/constants.dart';
 import 'package:medtrackr/app/enums.dart';
 import 'package:medtrackr/core/utils/format_helper.dart';
 import 'package:medtrackr/features/medication/ui/widgets/compact_medication_card.dart';
-import 'package:medtrackr/core/widgets/app_bottom_navigation_bar.dart';
+import 'package:medtrackr/core/widgets/navigation/navigation_wrapper.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/features/medication/presenters/medication_presenter.dart';
 import 'package:medtrackr/features/schedule/presenters/schedule_presenter.dart';
@@ -51,45 +51,22 @@ class _HomeViewState extends State<HomeView> {
     final medications = medicationPresenter.medications;
     final upcomingDoses = schedulePresenter.upcomingDoses;
 
-    return Scaffold(
-      backgroundColor: AppConstants.backgroundColor,
-      appBar: AppBar(
-        title: const Text('MedTrackr'),
-        backgroundColor: AppConstants.primaryColor,
-        automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.schedule, color: Colors.black),
-            onPressed: () {
-              Navigator.pushNamed(context, '/add_schedule');
-            },
-            tooltip: 'Add Schedule',
-          ),
-          IconButton(
-            icon: const Icon(Icons.add, color: Colors.black),
-            onPressed: () {
-              Navigator.pushNamed(context, '/medication_form');
-            },
-            tooltip: 'Add Medication',
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+    return NavigationWrapper(
+      currentIndex: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
         child: medications.isEmpty
             ? Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
+              Text(
                 'No medications added. Add one now.',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
+                style: AppConstants.secondaryTextStyle.copyWith(fontSize: 16),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/medication_form');
-                },
+                onPressed: () => Navigator.pushNamed(context, '/medication_form'),
                 style: AppConstants.actionButtonStyle,
                 child: const Text('Add Medication'),
               ),
@@ -99,24 +76,36 @@ class _HomeViewState extends State<HomeView> {
             : Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Next Scheduled Doses',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Next Scheduled Doses',
+                  style: AppConstants.cardTitleStyle.copyWith(fontSize: 16),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pushNamed(context, '/calendar'),
+                  child: Text(
+                    'View Calendar',
+                    style: TextStyle(color: AppConstants.primaryColor, fontSize: 14),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             upcomingDoses.isEmpty
-                ? const Text(
+                ? Text(
               'No upcoming doses scheduled.',
-              style: TextStyle(fontSize: 14, color: Colors.grey),
+              style: AppConstants.secondaryTextStyle.copyWith(fontSize: 14),
             )
                 : SizedBox(
-              height: 150,
+              height: 100,
               child: Scrollbar(
                 controller: _scheduleScrollController,
                 thumbVisibility: true,
                 trackVisibility: true,
-                thickness: 6,
-                radius: const Radius.circular(8),
+                thickness: 4,
+                radius: const Radius.circular(4),
                 child: ListView.builder(
                   controller: _scheduleScrollController,
                   itemCount: upcomingDoses.length,
@@ -124,18 +113,68 @@ class _HomeViewState extends State<HomeView> {
                     final dose = upcomingDoses[index];
                     if (dose['schedule'] == null) return const SizedBox.shrink();
                     final schedule = dose['schedule'] as Schedule;
-                    return Card(
-                      elevation: 6,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    final medication = medications.firstWhere(
+                          (m) => m.id == schedule.medicationId,
+                      orElse: () => Medication(
+                        id: '',
+                        name: 'Unknown',
+                        type: MedicationType.other,
+                        quantityUnit: QuantityUnit.mg,
+                        quantity: 0,
+                        remainingQuantity: 0,
+                        reconstitutionVolumeUnit: '',
+                        reconstitutionVolume: 0,
+                        reconstitutionFluid: '',
+                        notes: '',
+                      ),
+                    );
+                    return Container(
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      decoration: AppConstants.cardDecoration,
+                      height: 60,
                       child: ListTile(
-                        contentPadding: const EdgeInsets.all(24),
+                        dense: true,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         title: Text(
-                          '${medications.firstWhere((m) => m.id == schedule.medicationId, orElse: () => Medication(id: '', name: 'Unknown', type: MedicationType.other, quantityUnit: QuantityUnit.mg, quantity: 0, remainingQuantity: 0, reconstitutionVolumeUnit: '', reconstitutionVolume: 0, reconstitutionFluid: '', notes: '')).name} (${schedule.dosageName})',
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+                          '${medication.name} (${schedule.dosageName})',
+                          style: AppConstants.cardTitleStyle.copyWith(fontSize: 14),
                         ),
                         subtitle: Text(
-                          'Time: ${schedule.time.format(context)}\nDose: ${formatNumber(schedule.dosageAmount)} ${schedule.dosageUnit}',
-                          style: const TextStyle(fontSize: 14, color: Colors.grey),
+                          '${schedule.time.format(context)} - ${formatNumber(schedule.dosageAmount)} ${schedule.dosageUnit}',
+                          style: AppConstants.secondaryTextStyle.copyWith(fontSize: 12),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.check_circle, size: 18, color: Colors.green),
+                              onPressed: () => Provider.of<DosagePresenter>(context, listen: false).takeDose(
+                                schedule.medicationId,
+                                schedule.id,
+                                schedule.dosageId,
+                              ),
+                              tooltip: 'Take Now',
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.access_time, size: 18, color: AppConstants.primaryColor),
+                              onPressed: () => Provider.of<SchedulePresenter>(context, listen: false).postponeDose(schedule.id, '30'),
+                              tooltip: 'Postpone',
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.cancel, size: 18, color: AppConstants.errorColor),
+                              onPressed: () => Provider.of<SchedulePresenter>(context, listen: false).cancelDose(schedule.id),
+                              tooltip: 'Cancel',
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.edit, size: 18, color: AppConstants.accentColor),
+                              onPressed: () => Navigator.pushNamed(
+                                context,
+                                '/schedule_form',
+                                arguments: {'medication': medication, 'schedule': schedule},
+                              ),
+                              tooltip: 'Edit',
+                            ),
+                          ],
                         ),
                       ),
                     );
@@ -144,25 +183,25 @@ class _HomeViewState extends State<HomeView> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Medications',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+              style: AppConstants.cardTitleStyle.copyWith(fontSize: 16),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             Expanded(
               child: Scrollbar(
                 controller: _medicationScrollController,
                 thumbVisibility: true,
                 trackVisibility: true,
-                thickness: 6,
-                radius: const Radius.circular(8),
+                thickness: 4,
+                radius: const Radius.circular(4),
                 child: ListView.builder(
                   controller: _medicationScrollController,
                   itemCount: medications.length,
                   itemBuilder: (context, index) {
                     final medication = medications[index];
                     return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 4),
                       child: CompactMedicationCard(medication: medication),
                     );
                   },
@@ -171,15 +210,6 @@ class _HomeViewState extends State<HomeView> {
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: AppBottomNavigationBar(
-        currentIndex: 0,
-        onTap: (index) {
-          if (index == 0) Navigator.pushReplacementNamed(context, '/home');
-          if (index == 1) Navigator.pushNamed(context, '/calendar');
-          if (index == 2) Navigator.pushNamed(context, '/history');
-          if (index == 3) Navigator.pushNamed(context, '/settings');
-        },
       ),
     );
   }

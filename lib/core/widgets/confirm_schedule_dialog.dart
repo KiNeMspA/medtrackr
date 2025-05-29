@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:medtrackr/app/constants.dart';
 import 'package:medtrackr/app/themes.dart';
+import 'package:medtrackr/core/widgets/dialogs/dialog_actions.dart';
 import 'package:medtrackr/features/schedule/models/schedule.dart';
 
 class ConfirmScheduleDialog extends StatelessWidget {
@@ -55,18 +56,9 @@ class ConfirmScheduleDialog extends StatelessWidget {
       ),
       actionsAlignment: MainAxisAlignment.center,
       actions: [
-        TextButton(
-          onPressed: onCancel,
-          child: Text(
-            'Cancel',
-            style: TextStyle(color: AppConstants.primaryColor, fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-        ),
-        const SizedBox(width: 16),
-        ElevatedButton(
-          onPressed: onConfirm,
-          style: AppConstants.dialogButtonStyle,
-          child: const Text('Confirm'),
+        DialogActions(
+          onConfirm: onConfirm,
+          onCancel: onCancel,
         ),
       ],
     );
