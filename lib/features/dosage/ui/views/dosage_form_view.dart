@@ -102,22 +102,16 @@ class _DosageFormViewState extends State<DosageFormView> {
       _validationError = null;
       _isValid = true;
 
-      if (isTabletOrCapsule) {
+      if (isTabletOrCapsule && _tabletCountController.text.isNotEmpty) {
         final tabletCount = double.tryParse(_tabletCountController.text) ?? 0.0;
-        final dosePerUnit = widget.medication!.type == MedicationType.tablet
-            ? widget.medication!.dosePerTablet
-            : widget.medication!.dosePerCapsule;
-        if (tabletCount <= 0 || dosePerUnit == null) {
-          _validationError = 'Invalid ${widget.medication!.type == MedicationType.tablet ? "tablet" : "capsule"} count or dose per unit';
+        if (tabletCount <= 0) {
+          _validationError = 'Please enter a valid positive number';
           _isValid = false;
-        } else {
-          final amount = tabletCount * dosePerUnit;
-          if (amount > widget.medication!.remainingQuantity) {
-            _validationError = 'Dosage exceeds remaining stock (${formatNumber(widget.medication!.remainingQuantity)} ${widget.medication!.quantityUnit.displayName})';
-            _isValid = false;
-          }
+        } else if (tabletCount > widget.medication!.remainingQuantity) {
+          _validationError = 'Dosage exceeds remaining stock (${formatNumber(widget.medication!.remainingQuantity)} ${widget.medication!.quantityUnit.displayName})';
+          _isValid = false;
         }
-      } else if (isInjection && isReconstituted) {
+      } else if (isInjection && isReconstituted && _iuController.text.isNotEmpty) {
         final insulinUnits = double.tryParse(_iuController.text) ?? 0.0;
         if (insulinUnits <= 0) {
           _validationError = 'Invalid IU amount';
@@ -131,7 +125,7 @@ class _DosageFormViewState extends State<DosageFormView> {
             _isValid = false;
           }
         }
-      } else {
+      } else if (isInjection && !isReconstituted && _amountController.text.isNotEmpty) {
         final amount = double.tryParse(_amountController.text) ?? 0.0;
         if (amount <= 0) {
           _validationError = 'Invalid dosage amount';
@@ -189,7 +183,7 @@ class _DosageFormViewState extends State<DosageFormView> {
       final dosePerUnit = widget.medication!.type == MedicationType.tablet
           ? widget.medication!.dosePerTablet
           : widget.medication!.dosePerCapsule;
-      amount = tabletCount * dosePerUnit!;
+      amount = tabletCount; // Store tablet count directly
     } else if (isInjection && isReconstituted) {
       insulinUnits = double.tryParse(_iuController.text) ?? 0.0;
       amount = widget.medication!.selectedReconstitution != null
@@ -283,6 +277,11 @@ class _DosageFormViewState extends State<DosageFormView> {
                 Text(
                   'Dosage Details for ${widget.medication!.name}',
                   style: AppConstants.cardTitleStyle.copyWith(fontSize: 20),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Remaining Stock: ${formatNumber(widget.medication!.remainingQuantity)} ${widget.medication!.quantityUnit.displayName}',
+                  style: AppConstants.secondaryTextStyle.copyWith(color: AppConstants.textPrimary),
                 ),
                 const SizedBox(height: 16),
                 DosageFormFields(

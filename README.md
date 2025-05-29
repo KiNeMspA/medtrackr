@@ -153,7 +153,14 @@ Below is the restructured folder structure, detailing where each file type/opera
   - Added dynamic validation warnings in `reconstitution_view.dart` for fluid amount (0.5–99 mL) and target dose, with real-time error display and save button disabling.
   - Ensured code reuse with `format_helper.dart`, `validators.dart`, and `themes.dart`, respecting folder structure (`lib/app`, `lib/core`, `lib/features`).
   - Progressed verification checklist: completed dynamic validation for dosage tracking and reconstitution.
-  
+
+### Dosage and Reconstitution Fixes (May 29, 2025, 10:52 AM AEST)
+- **Commit**: `8221e170c72b7656048de81f45a87aa655ad86f3`
+- **Details**:
+  - Fixed Dosage Form: Removed empty tablet count warning, corrected tablet quantity validation, added remaining quantity display, implemented up/down arrows, and styled `ConfirmDosageDialog` with `themes.dart`.
+  - Fixed Reconstitution Form: Set IU warning threshold to 5% of syringe size, enabled target dose updates, validated IU against syringe capacity, reduced non-selected option text, and fixed crash on fluid volume change.
+  - Ensured code reuse with `format_helper.dart`, `validators.dart`, `themes.dart`, and `reconstitution_calculator.dart`, respecting folder structure.
+  - Progressed verification checklist: completed dosage and reconstitution validation.
   
   
 ## Planned Features

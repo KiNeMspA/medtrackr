@@ -64,6 +64,29 @@ class DosageFormFields extends StatelessWidget {
                   ? (medication.type == MedicationType.tablet ? 'Number of Tablets' : 'Number of Capsules')
                   : null,
               labelStyle: AppThemes.formLabelStyle,
+              suffixIcon: isTabletOrCapsule
+                  ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.remove),
+                    onPressed: () {
+                      final current = double.tryParse(tabletCountController.text) ?? 0.0;
+                      final newValue = (current - 1).clamp(0.0, double.infinity);
+                      tabletCountController.text = formatNumber(newValue);
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add),
+                    onPressed: () {
+                      final current = double.tryParse(tabletCountController.text) ?? 0.0;
+                      final newValue = current + 1;
+                      tabletCountController.text = formatNumber(newValue);
+                    },
+                  ),
+                ],
+              )
+                  : null,
             ),
             keyboardType: TextInputType.number,
             validator: (value) {
@@ -153,16 +176,17 @@ class DosageFormFields extends StatelessWidget {
         ),
         if (isInjection && [DosageMethod.subcutaneous].contains(method)) ...[
           const SizedBox(height: 16),
-          DropdownButtonFormField<SyringeSize>(
-            value: syringeSize,
+          DropdownButtonFormField<DosageMethod>(
+            value: method,
             decoration: AppConstants.formFieldDecoration.copyWith(
-              labelText: 'Syringe Size',
+              labelText: 'Dosage Method',
+              labelStyle: AppThemes.formLabelStyle,
             ),
-            items: SyringeSize.values
-                .map((size) => DropdownMenuItem(value: size, child: Text(size.displayName)))
+            items: (isTabletOrCapsule ? [DosageMethod.oral] : DosageMethod.values)
+                .map((method) => DropdownMenuItem(value: method, child: Text(method.displayName)))
                 .toList(),
-            onChanged: onSyringeSizeChanged,
-            validator: (value) => value == null ? 'Please select a syringe size' : null,
+            onChanged: onMethodChanged,
+            validator: (value) => value == null ? 'Please select a method' : null,
           ),
         ],
       ],

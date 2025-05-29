@@ -72,7 +72,13 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
 
     // Add listeners for real-time validation
     _fluidAmountController.addListener(_validateInput);
-    _targetDoseController.addListener(_validateInput);
+    _targetDoseController.addListener(() {
+      final value = double.tryParse(_targetDoseController.text);
+      if (value != null) {
+        _targetDose = value;
+        _calculateReconstitutionSuggestions();
+      }
+    });
     _calculateReconstitutionSuggestions();
   }
 
@@ -89,17 +95,24 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
       _validationError = null;
       _isValid = true;
 
-      final fluidAmount = double.tryParse(_fluidAmountController.text) ?? 0.0;
-      if (fluidAmount < 0.5 || fluidAmount > 99) {
-        _validationError = 'Fluid amount must be between 0.5 and 99 mL';
-        _isValid = false;
-      }
+      if (_fluidAmountController.text.isNotEmpty && _selectedReconstitution != null) {
+        final fluidAmount = double.tryParse(_fluidAmountController.text) ?? 0.0;
+        final syringeUnits = _selectedReconstitution!['syringeUnits']?.toDouble() ?? 0.0;
+        final maxIU = _syringeSize == SyringeSize.size0_3
+            ? 30
+            : _syringeSize == SyringeSize.size0_5
+            ? 50
+            : 100;
+        final minIU = maxIU * 0.05; // 5% of syringe capacity
 
-      final targetDose = double.tryParse(_targetDoseController.text) ?? 0.0;
-      if (targetDose > 0 && _selectedReconstitution != null) {
-        final totalDoses = (widget.medication.quantity * 1000) / targetDose;
-        if (totalDoses < 1) {
-          _validationError = 'Target dose too high for available quantity';
+        if (fluidAmount < 0.5 || fluidAmount > 99) {
+          _validationError = 'Fluid amount must be between 0.5 and 99 mL';
+          _isValid = false;
+        } else if (syringeUnits > maxIU) {
+          _validationError = 'IU (${formatNumber(syringeUnits)}) exceeds syringe capacity (${formatNumber(maxIU)} IU)';
+          _isValid = false;
+        } else if (syringeUnits < minIU) {
+          _validationError = 'IU (${formatNumber(syringeUnits)}) below minimum (${formatNumber(minIU)} IU)';
           _isValid = false;
         }
       }
@@ -107,7 +120,7 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
   }
 
   Future<void> _saveReconstitution(BuildContext context) async {
-    if (!_isValid) {
+    if (!_isValid || _targetDoseController.text.isEmpty || _fluidAmountController.text.isEmpty || _selectedReconstitution == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please correct the input errors')));
       return;
     }
@@ -119,11 +132,11 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         contentPadding: EdgeInsets.zero,
         content: Container(
           decoration: AppThemes.dialogCardDecoration,
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -131,21 +144,21 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
                 'Confirm Reconstitution',
                 style: AppThemes.dialogTitleStyle,
               ),
-              const SizedBox(height: 16),
-              const Icon(Icons.science, size: 40, color: AppConstants.primaryColor),
+              const SizedBox(height: 12),
+              const Icon(Icons.science, size: 36, color: AppConstants.primaryColor),
               const SizedBox(height: 8),
               Text(
                 'Syringe: ${formatNumber(_selectedReconstitution!['syringeUnits'])} IU (${formatNumber(_selectedReconstitution!['volume'])} mL)',
                 style: AppThemes.dialogContentStyle,
               ),
               Text(
-                'Total Doses Available: ${totalDoses.floor()}',
+                'Total Doses: ${totalDoses.floor()}',
                 style: AppThemes.dialogContentStyle,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Text(
-                'Please verify settings are correct before saving.',
-                style: AppThemes.dialogContentStyle.copyWith(color: Colors.red),
+                'Verify settings before saving.',
+                style: AppThemes.dialogContentStyle.copyWith(color: AppConstants.errorColor),
               ),
             ],
           ),
@@ -156,9 +169,9 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
             child: Text(
               'Cancel',
               style: TextStyle(
-                color: AppConstants.primaryColor,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+                color: AppConstants.accentColor,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
               ),
             ),
           ),
@@ -197,39 +210,43 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
   }
 
   void _calculateReconstitutionSuggestions() {
-    final fluidAmount = double.tryParse(_fluidAmountController.text) ?? 0;
-    if (fluidAmount < 0.5 || fluidAmount > 99) {
+    try {
+      final fluidAmount = double.tryParse(_fluidAmountController.text) ?? 0;
+      if (fluidAmount < 0.5 || fluidAmount > 99) {
+        setState(() {
+          _validationError = 'Fluid amount must be between 0.5 and 99 mL';
+          _isValid = false;
+        });
+        return;
+      }
+
+      final calculator = ReconstitutionCalculator(
+        quantityController: TextEditingController(text: widget.medication.quantity.toString()),
+        targetDoseController: _targetDoseController,
+        quantityUnit: widget.medication.quantityUnit.displayName,
+        targetDoseUnit: _targetDoseUnit.displayName,
+        medicationName: widget.medication.name,
+        syringeSize: _syringeSize.value,
+        fixedVolume: fluidAmount,
+        fixedVolumeUnit: _fluidVolumeUnit,
+      );
+      final result = calculator.calculate();
       setState(() {
-        _validationError = 'Fluid amount must be between 0.5 and 99 mL';
+        _reconstitutionSuggestions = result['suggestions'] ?? [];
+        _selectedReconstitution = result['selectedReconstitution'];
+        if (result['error'] != null) {
+          _validationError = result['error'];
+          _isValid = false;
+        } else {
+          _validateInput(); // Re-validate after suggestions update
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _validationError = 'Error calculating suggestions: $e';
         _isValid = false;
       });
-      return;
     }
-    setState(() => _validationError = null);
-
-    final calculator = ReconstitutionCalculator(
-      quantityController: TextEditingController(text: widget.medication.quantity.toString()),
-      targetDoseController: _targetDoseController,
-      quantityUnit: widget.medication.quantityUnit.displayName,
-      targetDoseUnit: _targetDoseUnit.displayName,
-      medicationName: widget.medication.name,
-      syringeSize: _syringeSize == SyringeSize.size0_3
-          ? 0.3
-          : _syringeSize == SyringeSize.size0_5
-          ? 0.5
-          : 1.0,
-      fixedVolume: fluidAmount,
-      fixedVolumeUnit: _fluidVolumeUnit,
-    );
-    final result = calculator.calculate();
-    setState(() {
-      _reconstitutionSuggestions = result['suggestions'];
-      _selectedReconstitution = result['selectedReconstitution'];
-      if (result['error'] != null && context.mounted) {
-        _validationError = result['error'];
-        _isValid = false;
-      }
-    });
   }
 
   void _adjustFluidVolume(double delta) {
@@ -267,7 +284,7 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
               const SizedBox(height: 16),
               Card(
                 elevation: 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 child: Container(
                   decoration: AppThemes.reconstitutionCardDecoration,
                   padding: const EdgeInsets.all(16.0),
@@ -293,7 +310,6 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
                                 labelStyle: AppThemes.formLabelStyle,
                               ),
                               keyboardType: TextInputType.number,
-                              onChanged: (value) => _calculateReconstitutionSuggestions(),
                               validator: (value) {
                                 if (value == null || value.isEmpty) return 'Please enter a dose';
                                 if (double.tryParse(value) == null || double.parse(value)! <= 0) {
@@ -351,7 +367,6 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
                                 ),
                               ),
                               keyboardType: TextInputType.number,
-                              onChanged: (value) => _calculateReconstitutionSuggestions(),
                               validator: (value) {
                                 if (value == null || value.isEmpty) return 'Please enter an amount';
                                 if (double.tryParse(value) == null || double.parse(value)! <= 0) {
@@ -414,7 +429,7 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
                       const SizedBox(height: 16),
                       Text(
                         'Formula: (${formatNumber(widget.medication.quantity)} ${widget.medication.quantityUnit.displayName} * 1000) / ${_fluidAmountController.text} ${_fluidVolumeUnit.displayName} = ${formatNumber((widget.medication.quantity * 1000) / ((double.tryParse(_fluidAmountController.text) ?? 1) * _fluidVolumeUnit.toMLFactor))} mcg/mL',
-                        style: AppThemes.compactMedicationCardContentStyle.copyWith(color: Colors.grey),
+                        style: AppThemes.compactMedicationCardContentStyle.copyWith(color: AppConstants.textSecondary),
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -433,8 +448,8 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
                         final label = index == 0
                             ? 'Target (Balanced)'
                             : index == 1
-                            ? 'Lower (More Diluted)'
-                            : 'Higher (More Concentrated)';
+                            ? 'Lower (Diluted)'
+                            : 'Higher (Concentrated)';
                         return Container(
                           decoration: isSelected
                               ? AppThemes.reconstitutionSelectedOptionCardDecoration
@@ -444,13 +459,15 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
                             title: Text(
                               '$label: ${formatNumber(suggestion['syringeUnits'])} IU',
                               style: AppThemes.reconstitutionOptionTitleStyle.copyWith(
-                                color: isSelected ? AppConstants.primaryColor : Colors.black,
+                                color: isSelected ? AppConstants.primaryColor : AppConstants.textPrimary,
                               ),
                             ),
-                            subtitle: Text(
+                            subtitle: isSelected
+                                ? Text(
                               'Volume: ${formatNumber(suggestion['volume'])} mL\nConcentration: ${formatNumber(suggestion['concentration'])} mcg/mL',
                               style: AppThemes.reconstitutionOptionSubtitleStyle,
-                            ),
+                            )
+                                : null,
                             trailing: isSelected ? const Icon(Icons.check_circle, color: Colors.green) : null,
                             onTap: () {
                               setState(() {
@@ -466,6 +483,7 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
                                   orElse: () => SyringeSize.size1_0,
                                 );
                               });
+                              _validateInput();
                             },
                           ),
                         );

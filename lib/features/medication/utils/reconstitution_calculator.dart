@@ -74,12 +74,23 @@ class ReconstitutionCalculator {
 
       if (fixedVolume != null && fixedVolume! > 0) {
         final V = fixedVolume! * fixedVolumeUnit.toMLFactor;
+        if (V > 99) {
+          return {
+            'suggestions': [],
+            'selectedReconstitution': null,
+            'totalAmount': pMg,
+            'targetDose': dMg,
+            'medicationName': medicationName.isNotEmpty ? medicationName : 'Medication',
+            'error': 'Fluid volume cannot exceed 99 mL.',
+          };
+        }
         final C = pMg / V;
         final vD = dMg / C;
         final U = vD * 100;
         final maxIU = S == 0.3 ? 30 : S == 0.5 ? 50 : S == 1.0 ? 100 : 300;
+        final minIU = maxIU * 0.05; // 5% of syringe capacity
 
-        if (vD <= S && U <= maxIU) {
+        if (vD <= S && U <= maxIU && U >= minIU) {
           selectedReconstitution = {
             'volume': V,
             'concentration': C,
@@ -115,7 +126,11 @@ class ReconstitutionCalculator {
             'totalAmount': pMg,
             'targetDose': dMg,
             'medicationName': medicationName.isNotEmpty ? medicationName : 'Medication',
-            'error': 'Dose volume or IU (${formatNumber(U)}) exceeds syringe capacity (${formatNumber(maxIU.toDouble())} IU).',
+            'error': U > maxIU
+                ? 'IU (${formatNumber(U)}) exceeds syringe capacity (${formatNumber(maxIU)} IU).'
+                : U < minIU
+                ? 'IU (${formatNumber(U)}) below minimum (${formatNumber(minIU)} IU).'
+                : 'Dose volume exceeds syringe capacity.',
           };
         }
       } else {
@@ -132,14 +147,15 @@ class ReconstitutionCalculator {
           };
         }
 
-        for (var V = (vMin / step).ceil() * step; V <= S; V += step) {
+        for (var V = (vMin / step).ceil() * step; V <= 99; V += step) {
           final roundedV = (V * 100).round() / 100;
           final C = pMg / roundedV;
           final vD = dMg / C;
           final U = vD * 100;
           final maxIU = S == 0.3 ? 30 : S == 0.5 ? 50 : S == 1.0 ? 100 : 300;
+          final minIU = maxIU * 0.05;
 
-          if (vD <= S && U <= maxIU) {
+          if (vD <= S && U <= maxIU && U >= minIU) {
             suggestions.add({
               'volume': roundedV,
               'concentration': C,
@@ -161,29 +177,13 @@ class ReconstitutionCalculator {
         }
       }
 
-      String? warning;
-      if (selectedReconstitution != null) {
-        final concentration = selectedReconstitution['concentration'] as double;
-        final syringeUnits = selectedReconstitution['syringeUnits'] as double;
-        final maxIU = S == 0.3 ? 30 : S == 0.5 ? 50 : S == 1.0 ? 100 : 300;
-        if (syringeUnits < 5) {
-          warning = 'Warning: IU (${formatNumber(syringeUnits)}) is too low. Increase fluid amount.';
-        } else if (syringeUnits > maxIU) {
-          warning = 'Warning: IU (${formatNumber(syringeUnits)}) exceeds syringe capacity (${formatNumber(maxIU.toDouble())} IU).';
-        } else if (concentration < 0.1) {
-          warning = 'Warning: Concentration is ${formatNumber(concentration)} mg/mL, too low.';
-        } else if (concentration > 10) {
-          warning = 'Warning: Concentration is ${formatNumber(concentration)} mg/mL, too high.';
-        }
-      }
-
       return {
         'suggestions': suggestions.take(4).toList(),
         'selectedReconstitution': selectedReconstitution,
         'totalAmount': pMg,
         'targetDose': d,
         'medicationName': medicationName.isNotEmpty ? medicationName : 'Medication',
-        'error': warning,
+        'error': null,
       };
     } catch (e, stackTrace) {
       Logger.logError('Calculation failed', error: e, stackTrace: stackTrace);

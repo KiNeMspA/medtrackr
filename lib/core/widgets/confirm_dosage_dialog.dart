@@ -37,45 +37,47 @@ class ConfirmDosageDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       contentPadding: EdgeInsets.zero,
       content: Container(
         width: MediaQuery.of(context).size.width * 0.85,
-        decoration: AppThemes.informationCardDecoration,
-        padding: const EdgeInsets.all(20.0),
+        decoration: AppThemes.dialogCardDecoration,
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Confirm Dosage', style: AppThemes.informationTitleStyle),
-            const SizedBox(height: 16),
+            Text('Confirm Dosage', style: AppThemes.dialogTitleStyle),
+            const SizedBox(height: 12),
             RichText(
               text: TextSpan(
-                style: AppThemes.informationContentTextStyle?.copyWith(height: 1.5),
+                style: AppThemes.dialogContentStyle,
                 children: [
-                  const TextSpan(text: 'Dosage: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const TextSpan(text: 'Dosage: ', style: TextStyle(fontWeight: FontWeight.w600)),
                   TextSpan(text: dosage.name),
                   const TextSpan(text: '\n'),
-                  const TextSpan(text: 'Amount: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const TextSpan(text: 'Amount: ', style: TextStyle(fontWeight: FontWeight.w600)),
                   TextSpan(
-                      text: isTabletOrCapsule
-                          ? '${formatNumber(amount)} tablets (${formatNumber(amount)} ${dosage.doseUnit})'
-                          : isReconstituted
-                          ? '${formatNumber(insulinUnits)} IU'
-                          : '${formatNumber(amount)} ${dosage.doseUnit}',
-                      style: TextStyle(color: AppConstants.primaryColor)),
+                    text: isTabletOrCapsule
+                        ? '${formatNumber(amount)} ${medication.type == MedicationType.tablet ? 'tablets' : 'capsules'}'
+                        : isReconstituted
+                        ? '${formatNumber(insulinUnits)} IU'
+                        : '${formatNumber(amount)} ${dosage.doseUnit}',
+                    style: TextStyle(color: AppConstants.primaryColor),
+                  ),
                   if (isInjection) ...[
                     const TextSpan(text: '\n'),
-                    const TextSpan(text: 'Volume: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const TextSpan(text: 'Volume: ', style: TextStyle(fontWeight: FontWeight.w600)),
                     TextSpan(
-                        text: '${formatNumber(volume)} mL',
-                        style: TextStyle(color: AppConstants.primaryColor)),
+                      text: '${formatNumber(volume)} mL',
+                      style: TextStyle(color: AppConstants.primaryColor),
+                    ),
                   ],
                   const TextSpan(text: '\n'),
-                  const TextSpan(text: 'Method: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const TextSpan(text: 'Method: ', style: TextStyle(fontWeight: FontWeight.w600)),
                   TextSpan(text: dosage.method.displayName),
                   const TextSpan(text: '\n'),
-                  const TextSpan(text: 'Medication: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const TextSpan(text: 'Medication: ', style: TextStyle(fontWeight: FontWeight.w600)),
                   TextSpan(text: medication.name),
                 ],
               ),
@@ -90,13 +92,13 @@ class ConfirmDosageDialog extends StatelessWidget {
           child: Text(
             'Cancel',
             style: TextStyle(
-              color: AppConstants.primaryColor,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
+              color: AppConstants.accentColor,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
             ),
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 8),
         ElevatedButton(
           onPressed: onConfirm,
           style: AppConstants.dialogButtonStyle,
