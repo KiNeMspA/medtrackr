@@ -1,4 +1,3 @@
-// lib/features/medication/ui/views/medication_form_view.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:medtrackr/app/constants.dart';
@@ -7,6 +6,7 @@ import 'package:medtrackr/core/services/navigation_service.dart';
 import 'package:medtrackr/core/utils/format_helper.dart';
 import 'package:medtrackr/core/utils/validators.dart';
 import 'package:medtrackr/core/services/theme_provider.dart';
+import 'package:medtrackr/core/services/data_collection_service.dart'; // Added import
 import 'package:medtrackr/core/widgets/confirm_medication_dialog.dart';
 import 'package:medtrackr/core/widgets/medication_type_dropdown.dart';
 import 'package:medtrackr/core/widgets/medication_name_field.dart';
@@ -39,6 +39,8 @@ class _MedicationFormViewState extends State<MedicationFormView> {
   QuantityUnit _dosePerTabletUnit = QuantityUnit.mg;
   QuantityUnit _dosePerCapsuleUnit = QuantityUnit.mg;
   bool _isSaving = false;
+  late DataCollectionService _dataCollectionService; // Added
+  final List<String> _collectedData = []; // Added
 
   @override
   void initState() {
@@ -64,6 +66,24 @@ class _MedicationFormViewState extends State<MedicationFormView> {
       _dosePerTabletUnit = QuantityUnit.mg;
       _dosePerCapsuleUnit = QuantityUnit.mg;
     }
+
+    // Initialize DataCollectionService
+    _dataCollectionService = DataCollectionService();
+    _dataCollectionService.setOnDataCollectedCallback((data) {
+      setState(() {
+        _collectedData.add(data);
+      });
+    });
+
+    // Fetch initial data
+    _fetchCollectedData();
+  }
+
+  Future<void> _fetchCollectedData() async {
+    final data = await _dataCollectionService.getCollectedData();
+    setState(() {
+      _collectedData.addAll(data);
+    });
   }
 
   @override
@@ -209,6 +229,14 @@ class _MedicationFormViewState extends State<MedicationFormView> {
                     controller: _notesController,
                     isDark: isDark,
                   ),
+                  const SizedBox(height: 16),
+                  // Display collected data (for demonstration)
+                  const Text(
+                    'Collected Data:',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  ..._collectedData.map((data) => Text(data)).toList(),
                   const SizedBox(height: 24),
                   SaveButton(
                     isSaving: _isSaving,
