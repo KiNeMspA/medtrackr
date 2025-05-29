@@ -1,160 +1,155 @@
 // lib/core/widgets/medication_form_fields.dart
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:medtrackr/app/constants.dart';
+import 'package:medtrackr/app/themes.dart';
 import 'package:medtrackr/app/enums.dart';
+import 'package:medtrackr/core/utils/format_helper.dart';
+import 'package:medtrackr/core/utils/validators.dart';
 
 class MedicationFormFields extends StatelessWidget {
   final TextEditingController nameController;
   final TextEditingController quantityController;
-  final TextEditingController tabletCountController;
-  final TextEditingController volumeController;
   final TextEditingController dosePerTabletController;
+  final TextEditingController dosePerCapsuleController;
   final TextEditingController notesController;
-  final QuantityUnit quantityUnit;
   final MedicationType type;
-  final ValueChanged<String?> onNameChanged;
+  final QuantityUnit quantityUnit;
+  final QuantityUnit dosePerTabletUnit;
+  final QuantityUnit dosePerCapsuleUnit;
   final ValueChanged<MedicationType?> onTypeChanged;
   final ValueChanged<QuantityUnit?> onQuantityUnitChanged;
-  final VoidCallback onQuantityChanged;
+  final ValueChanged<QuantityUnit?> onDosePerTabletUnitChanged;
+  final ValueChanged<QuantityUnit?> onDosePerCapsuleUnitChanged;
+  final bool isDark;
 
   const MedicationFormFields({
     super.key,
     required this.nameController,
     required this.quantityController,
-    required this.tabletCountController,
-    required this.volumeController,
     required this.dosePerTabletController,
+    required this.dosePerCapsuleController,
     required this.notesController,
-    required this.quantityUnit,
     required this.type,
-    required this.onNameChanged,
+    required this.quantityUnit,
+    required this.dosePerTabletUnit,
+    required this.dosePerCapsuleUnit,
     required this.onTypeChanged,
     required this.onQuantityUnitChanged,
-    required this.onQuantityChanged,
+    required this.onDosePerTabletUnitChanged,
+    required this.onDosePerCapsuleUnitChanged,
+    required this.isDark,
   });
+
+  static const Map<MedicationType, List<QuantityUnit>> _quantityUnits = {
+    MedicationType.tablet: [QuantityUnit.tablets],
+    MedicationType.capsule: [QuantityUnit.tablets],
+    MedicationType.injection: [QuantityUnit.mg, QuantityUnit.g, QuantityUnit.mcg, QuantityUnit.mL],
+    MedicationType.other: [QuantityUnit.mg, QuantityUnit.g, QuantityUnit.mcg, QuantityUnit.mL],
+  };
+
+  static const Map<MedicationType, List<QuantityUnit>> _doseUnits = {
+    MedicationType.tablet: [QuantityUnit.mg, QuantityUnit.g, QuantityUnit.mcg],
+    MedicationType.capsule: [QuantityUnit.mg, QuantityUnit.g, QuantityUnit.mcg],
+    MedicationType.injection: [QuantityUnit.mg, QuantityUnit.g, QuantityUnit.mcg, QuantityUnit.iu, QuantityUnit.unit],
+    MedicationType.other: [QuantityUnit.mg, QuantityUnit.g, QuantityUnit.mcg, QuantityUnit.unit],
+  };
 
   @override
   Widget build(BuildContext context) {
-    final quantityUnits = {
-      MedicationType.tablet: [QuantityUnit.tablets],
-      MedicationType.capsule: [QuantityUnit.tablets],
-      MedicationType.injection: [
-        QuantityUnit.g,
-        QuantityUnit.mg,
-        QuantityUnit.mcg,
-        QuantityUnit.mL,
-        QuantityUnit.iu,
-        QuantityUnit.unit,
-      ],
-    }[type] ?? [QuantityUnit.mg];
-
+    final isTabletOrCapsule = type == MedicationType.tablet || type == MedicationType.capsule;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextFormField(
           controller: nameController,
-          decoration: AppConstants.formFieldDecoration.copyWith(
-            labelText: 'Medication Name *',
+          decoration: AppConstants.formFieldDecoration(isDark).copyWith(
+            labelText: 'Medication Name',
+            labelStyle: AppThemes.formLabelStyle(isDark),
           ),
-          validator: (value) => value == null || value.isEmpty ? 'Required' : null,
-          onChanged: onNameChanged,
+          validator: Validators.required,
         ),
         const SizedBox(height: 16),
-        if (type == MedicationType.tablet || type == MedicationType.capsule) ...[
-          TextFormField(
-            controller: tabletCountController,
-            decoration: AppConstants.formFieldDecoration.copyWith(
-              labelText:
-              'Total Number of ${type == MedicationType.tablet ? 'Tablets' : 'Capsules'} *',
+        DropdownButtonFormField<MedicationType>(
+          value: type,
+          decoration: AppConstants.formFieldDecoration(isDark).copyWith(
+            labelText: 'Type',
+            labelStyle: AppThemes.formLabelStyle(isDark),
+          ),
+          items: MedicationType.values
+              .map((type) => DropdownMenuItem(
+            value: type,
+            child: Text(type.displayName, style: const TextStyle(fontFamily: 'Poppins')),
+          ))
+              .toList(),
+          onChanged: onTypeChanged,
+          validator: (value) => value == null ? 'Please select a type' : null,
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: quantityController,
+                decoration: AppConstants.formFieldDecoration(isDark).copyWith(
+                  labelText: 'Quantity',
+                  labelStyle: AppThemes.formLabelStyle(isDark),
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) => Validators.positiveNumber(value, 'Quantity'),
+              ),
             ),
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            validator: (value) {
-              if (value == null || value.isEmpty) return 'Please enter total units';
-              if (double.tryParse(value) == null || double.parse(value)! <= 0) {
-                return 'Please enter a valid positive number';
-              }
-              return null;
-            },
-            onChanged: (value) => onQuantityChanged(),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Total no of ${type == MedicationType.tablet ? 'Tablets' : 'Capsules'}',
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
-          ),
+            const SizedBox(width: 16),
+            SizedBox(
+              width: 120,
+              child: DropdownButtonFormField<QuantityUnit>(
+                value: isTabletOrCapsule ? QuantityUnit.tablets : quantityUnit,
+                decoration: AppConstants.formFieldDecoration(isDark).copyWith(
+                  labelText: 'Unit',
+                  labelStyle: AppThemes.formLabelStyle(isDark),
+                ),
+                items: _quantityUnits[type]!
+                    .map((unit) => DropdownMenuItem<QuantityUnit>(
+                  value: unit,
+                  child: Text(unit.displayName, style: const TextStyle(fontFamily: 'Poppins')),
+                ))
+                    .toList(),
+                onChanged: onQuantityUnitChanged,
+                validator: (value) => value == null ? 'Please select a unit' : null,
+              ),
+            ),
+          ],
+        ),
+        if (isTabletOrCapsule) ...[
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: TextFormField(
-                  controller: dosePerTabletController,
-                  decoration: AppConstants.formFieldDecoration.copyWith(
-                    labelText: type == MedicationType.tablet
-                        ? 'Dose per Tablet *'
-                        : 'Dose per Capsule *',
+                  controller: type == MedicationType.tablet ? dosePerTabletController : dosePerCapsuleController,
+                  decoration: AppConstants.formFieldDecoration(isDark).copyWith(
+                    labelText: type == MedicationType.tablet ? 'Dose per Tablet' : 'Dose per Capsule',
+                    labelStyle: AppThemes.formLabelStyle(isDark),
                   ),
                   keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty)
-                      return 'Please enter dose per ${type == MedicationType.tablet ? 'tablet' : 'capsule'}';
-                    if (double.tryParse(value) == null || double.parse(value)! <= 0) {
-                      return 'Please enter a valid positive number';
-                    }
-                    return null;
-                  },
-                  onChanged: (value) => onQuantityChanged(),
+                  validator: (value) => Validators.positiveNumber(value, 'Dose'),
                 ),
               ),
               const SizedBox(width: 16),
               SizedBox(
                 width: 120,
                 child: DropdownButtonFormField<QuantityUnit>(
-                  value: quantityUnit == QuantityUnit.tablets ? QuantityUnit.mg : quantityUnit,
-                  decoration: AppConstants.formFieldDecoration.copyWith(
+                  value: type == MedicationType.tablet ? dosePerTabletUnit : dosePerCapsuleUnit,
+                  decoration: AppConstants.formFieldDecoration(isDark).copyWith(
                     labelText: 'Unit',
+                    labelStyle: AppThemes.formLabelStyle(isDark),
                   ),
-                  items: [QuantityUnit.g, QuantityUnit.mg, QuantityUnit.mcg]
-                      .map((unit) => DropdownMenuItem(value: unit, child: Text(unit.displayName)))
+                  items: _doseUnits[type]!
+                      .map((unit) => DropdownMenuItem<QuantityUnit>(
+                    value: unit,
+                    child: Text(unit.displayName, style: const TextStyle(fontFamily: 'Poppins')),
+                  ))
                       .toList(),
-                  onChanged: onQuantityUnitChanged,
-                  validator: (value) => value == null ? 'Please select a unit' : null,
-                ),
-              ),
-            ],
-          ),
-        ] else if (type == MedicationType.injection) ...[
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: quantityController,
-                  decoration: AppConstants.formFieldDecoration.copyWith(
-                    labelText: 'Quantity *',
-                  ),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) return 'Please enter a quantity';
-                    if (double.tryParse(value) == null || double.parse(value)! <= 0) {
-                      return 'Please enter a valid positive number';
-                    }
-                    return null;
-                  },
-                  onChanged: (value) => onQuantityChanged(),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: DropdownButtonFormField<QuantityUnit>(
-                  value: quantityUnits.contains(quantityUnit) ? quantityUnit : quantityUnits.first,
-                  decoration: AppConstants.formFieldDecoration.copyWith(
-                    labelText: 'Unit',
-                  ),
-                  items: quantityUnits
-                      .map((unit) => DropdownMenuItem(value: unit, child: Text(unit.displayName)))
-                      .toList(),
-                  onChanged: onQuantityUnitChanged,
+                  onChanged: type == MedicationType.tablet ? onDosePerTabletUnitChanged : onDosePerCapsuleUnitChanged,
                   validator: (value) => value == null ? 'Please select a unit' : null,
                 ),
               ),
@@ -164,10 +159,11 @@ class MedicationFormFields extends StatelessWidget {
         const SizedBox(height: 16),
         TextFormField(
           controller: notesController,
-          decoration: AppConstants.formFieldDecoration.copyWith(
-            labelText: 'Notes',
+          decoration: AppConstants.formFieldDecoration(isDark).copyWith(
+            labelText: 'Notes (Optional)',
+            labelStyle: AppThemes.formLabelStyle(isDark),
           ),
-          maxLines: null,
+          maxLines: 3,
         ),
       ],
     );

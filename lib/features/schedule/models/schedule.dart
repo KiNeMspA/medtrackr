@@ -7,10 +7,11 @@ class Schedule {
   final String medicationId;
   final String dosageId;
   final String dosageName;
-  final TimeOfDay time;
   final double dosageAmount;
   final String dosageUnit;
+  final TimeOfDay time;
   final FrequencyType frequencyType;
+  final DateTime nextDoseTime;
   final int? notificationTime;
 
   Schedule({
@@ -18,10 +19,11 @@ class Schedule {
     required this.medicationId,
     required this.dosageId,
     required this.dosageName,
-    required this.time,
     required this.dosageAmount,
     required this.dosageUnit,
+    required this.time,
     required this.frequencyType,
+    required this.nextDoseTime,
     this.notificationTime,
   });
 
@@ -30,10 +32,11 @@ class Schedule {
     'medicationId': medicationId,
     'dosageId': dosageId,
     'dosageName': dosageName,
-    'time': {'hour': time.hour, 'minute': time.minute},
     'dosageAmount': dosageAmount,
     'dosageUnit': dosageUnit,
+    'time': {'hour': time.hour, 'minute': time.minute},
     'frequencyType': frequencyType.displayName,
+    'nextDoseTime': nextDoseTime.toIso8601String(),
     'notificationTime': notificationTime,
   };
 
@@ -42,12 +45,14 @@ class Schedule {
     medicationId: json['medicationId'],
     dosageId: json['dosageId'],
     dosageName: json['dosageName'],
-    time: TimeOfDay(hour: json['time']['hour'], minute: json['time']['minute']),
     dosageAmount: json['dosageAmount'].toDouble(),
     dosageUnit: json['dosageUnit'],
+    time: TimeOfDay(hour: json['time']['hour'], minute: json['time']['minute']),
     frequencyType: FrequencyType.values.firstWhere(
-            (e) => e.displayName == json['frequencyType'],
-        orElse: () => FrequencyType.daily),
+          (e) => e.displayName == json['frequencyType'],
+      orElse: () => FrequencyType.daily,
+    ),
+    nextDoseTime: DateTime.parse(json['nextDoseTime']),
     notificationTime: json['notificationTime'],
   );
 
@@ -56,21 +61,22 @@ class Schedule {
     String? medicationId,
     String? dosageId,
     String? dosageName,
-    TimeOfDay? time,
     double? dosageAmount,
     String? dosageUnit,
+    TimeOfDay? time,
     FrequencyType? frequencyType,
+    DateTime? nextDoseTime,
     int? notificationTime,
-  }) =>
-      Schedule(
-        id: id ?? this.id,
-        medicationId: medicationId ?? this.medicationId,
-        dosageId: dosageId ?? this.dosageId,
-        dosageName: dosageName ?? this.dosageName,
-        time: time ?? this.time,
-        dosageAmount: dosageAmount ?? this.dosageAmount,
-        dosageUnit: dosageUnit ?? this.dosageUnit,
-        frequencyType: frequencyType ?? this.frequencyType,
-        notificationTime: notificationTime ?? this.notificationTime,
-      );
+  }) => Schedule(
+    id: id ?? this.id,
+    medicationId: medicationId ?? this.medicationId,
+    dosageId: dosageId ?? this.dosageId,
+    dosageName: dosageName ?? this.dosageName,
+    dosageAmount: dosageAmount ?? this.dosageAmount,
+    dosageUnit: dosageUnit ?? this.dosageUnit,
+    time: time ?? this.time,
+    frequencyType: frequencyType ?? this.frequencyType,
+    nextDoseTime: nextDoseTime ?? this.nextDoseTime,
+    notificationTime: notificationTime ?? this.notificationTime,
+  );
 }

@@ -1,12 +1,14 @@
 // lib/features/calendar/ui/views/calendar_view.dart
 import 'package:flutter/material.dart';
 import 'package:medtrackr/app/constants.dart';
-import 'package:medtrackr/app/enums.dart';
-import 'package:medtrackr/core/widgets/app_bottom_navigation_bar.dart';
+import 'package:medtrackr/app/themes.dart';
+import 'package:medtrackr/core/services/navigation_service.dart';
+import 'package:medtrackr/core/utils/format_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:medtrackr/features/schedule/presenters/schedule_presenter.dart';
 import 'package:medtrackr/features/schedule/models/schedule.dart';
+import 'package:medtrackr/core/services/theme_provider.dart';
 
 class CalendarView extends StatefulWidget {
   const CalendarView({super.key});
@@ -22,34 +24,30 @@ class _CalendarViewState extends State<CalendarView> {
   @override
   Widget build(BuildContext context) {
     final schedulePresenter = Provider.of<SchedulePresenter>(context);
+    final navigationService = Provider.of<NavigationService>(context, listen: false);
+    final isDark = Provider.of<ThemeProvider>(context).isDarkMode;
     final upcomingDoses = schedulePresenter.upcomingDoses;
 
     Map<DateTime, List<Schedule>> events = {};
     for (var dose in upcomingDoses) {
       if (dose['schedule'] != null) {
         final schedule = dose['schedule'] as Schedule;
-        DateTime nextTime = dose['nextTime'] as DateTime;
-        if (schedule.frequencyType == FrequencyType.daily) {
-          // Use nextTime directly
-        } else if (schedule.frequencyType == FrequencyType.weekly) {
-          // Adjust to next weekly occurrence
-          while (nextTime.weekday != 1) {
-            nextTime = nextTime.add(const Duration(days: 1));
-          }
-        }
+        final nextTime = dose['nextTime'] as DateTime;
         final key = DateTime(nextTime.year, nextTime.month, nextTime.day);
         events[key] = events[key] ?? [];
         events[key]!.add(schedule);
       }
     }
+
     return Scaffold(
-      backgroundColor: AppConstants.backgroundColor,
+      backgroundColor: AppConstants.backgroundColor(isDark),
       appBar: AppBar(
-        title: const Text('Calendar'),
+        title: const Text('Calendar', style: TextStyle(fontFamily: 'Inter')),
         backgroundColor: AppConstants.primaryColor,
+        foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pushReplacementNamed(context, '/home'),
+          onPressed: () => navigationService.replaceWith('/home'),
         ),
       ),
       body: Column(
@@ -65,14 +63,13 @@ class _CalendarViewState extends State<CalendarView> {
                 _focusedDay = focusedDay;
               });
             },
-            eventLoader: (day) =>
-                events[DateTime(day.year, day.month, day.day)] ?? [],
+            eventLoader: (day) => events[DateTime(day.year, day.month, day.day)] ?? [],
             calendarStyle: CalendarStyle(
               todayDecoration: BoxDecoration(
-                color: AppConstants.primaryColor.withOpacity(0.5),
+                color: AppConstants.accentColor(isDark).withOpacity(0.5),
                 shape: BoxShape.circle,
               ),
-              selectedDecoration: BoxDecoration(
+              selectedDecoration: const BoxDecoration(
                 color: AppConstants.primaryColor,
                 shape: BoxShape.circle,
               ),
@@ -81,27 +78,39 @@ class _CalendarViewState extends State<CalendarView> {
           if (_selectedDay != null)
             Expanded(
               child: ListView(
-                children: (events[DateTime(_selectedDay!.year,
-                            _selectedDay!.month, _selectedDay!.day)] ??
-                        [])
+                padding: const EdgeInsets.all(16.0),
+                children: (events[DateTime(_selectedDay!.year, _selectedDay!.month, _selectedDay!.day)] ?? [])
                     .map((schedule) => ListTile(
-                          title: Text(schedule.dosageName),
-                          subtitle: Text(
-                              '${schedule.time.format(context)} - ${schedule.dosageAmount} ${schedule.dosageUnit}'),
-                        ))
+                  title: Text(schedule.dosageName, style: AppConstants.cardTitleStyle(isDark)),
+                  subtitle: Text(
+                    '${schedule.time.format(context)} - ${formatNumber(schedule.dosageAmount)} ${schedule.dosageUnit}',
+                    style: AppConstants.cardBodyStyle(isDark),
+                  ),
+                ))
                     .toList(),
               ),
             ),
         ],
       ),
-      bottomNavigationBar: AppBottomNavigationBar(
+      bottomNavigationBar: BottomNavigationBar(
         currentIndex: 1,
         onTap: (index) {
-          if (index == 0) Navigator.pushReplacementNamed(context, '/home');
-          if (index == 1) Navigator.pushReplacementNamed(context, '/calendar');
-          if (index == 2) Navigator.pushReplacementNamed(context, '/history');
-          if (index == 3) Navigator.pushReplacementNamed(context, '/settings');
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (index == 0) navigationService.replaceWith('/home');
+            if (index == 1) navigationService.replaceWith('/calendar');
+            if (index == 2) navigationService.navigateTo('/history');
+            if (index == 3) navigationService.navigateTo('/settings');
+          });
         },
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Calendar'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+        ],
+        backgroundColor: isDark ? AppConstants.cardColorDark : Colors.white,
+        selectedItemColor: AppConstants.primaryColor,
+        unselectedItemColor: isDark ? AppConstants.textSecondaryDark : AppConstants.textSecondaryLight,
       ),
     );
   }

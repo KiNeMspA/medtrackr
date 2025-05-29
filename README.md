@@ -11,7 +11,16 @@ A Flutter-based medication tracking app to manage medications, dosages, schedule
 - **Restructuring Completed**: Folder structure is modular with feature-specific directories (`medication`, `dosage`, `schedule`). `DataProvider` is split into `MedicationProvider`, `DosageProvider`, and `ScheduleProvider` with corresponding repositories.
 - **When reviewing and adding new code please make sure to utilise the new folder structure and place the required code , operations, functions and files in their respective directory for efficiency. 
 
-## Features Implemented
+## Features
+
+- **Medication Management**: Add, edit, and delete medications with detailed information (e.g., type, quantity, dose per tablet/capsule).
+- **Dosage Tracking**: Create and manage dosage plans for each medication, including support for tablets, capsules, and injections.
+- **Reconstitution for Injections**: Calculate and manage reconstitution for injectable medications, with support for different syringe sizes and fluid types.
+- **Scheduling**: Set up schedules for dosages with reminders via notifications.
+- **Stock Alerts**: Receive notifications when medication stock is low.
+- **Modern Design**: A 2025-inspired UI with a teal primary color, coral accents, and the Inter font for a clean, geometric look.
+- **Dark Mode**: Toggle between light and dark themes for better accessibility.
+- **Consistent Styling**: All views and dialogs use centralized `AppConstants` and `AppThemes` for a cohesive look and feel.
 
 ### Folder Structure Restructuring (May 28, 2025)
 - **Commit**: `<new_commit_hash>` (Run `git log -1 --pretty=%H` after committing)
@@ -102,7 +111,36 @@ A Flutter-based medication tracking app to manage medications, dosages, schedule
   - Reconstitution Form: Updated selected option display, fixed suggestion type error, resolved volume field crash.
   - Redesign home screen: Compact schedule cards with action buttons, smaller medication cards, View Calendar button.
   - Optimized code: Consolidated dialog actions, enhanced validators, centralized navigation bar.
-  
+
+## Recent Updates (May 2025)
+
+- **Theming Overhaul**: Updated to a modern, award-winning design with a teal primary color (`#00C4B4`), coral accents (`#FF6F61`/`#FF8A65`), and the Inter font.
+- **Home Screen**:
+  - Added a top banner with the app name (placeholder logo).
+  - Moved the Upcoming Doses box above the calendar.
+  - Made medication cards smaller with specific info (tablets/injections), icons, and colored backgrounds.
+  - Updated the calendar to show the full month view with a visible header.
+  - Replaced the FAB with a contextual menu to add medications or schedules.
+- **Medication Details Screen**:
+  - Renamed "Stock Information" to "Information" with detailed info for tablets.
+  - Updated Dosages card to show scheduling status.
+  - Made dose cards smaller, added more info, and included a delete option.
+  - Added a button to schedule a dose.
+  - Replaced action buttons with a modern FAB menu.
+  - Updated Refill to allow editable amounts.
+  - Added bottom navigation bar and ensured the back button navigates to Home.
+- **Add Medication Screen**:
+  - Prompt for medication type first, revealing fields after selection.
+  - Added a warning for injections about reconstitution and volume requirements.
+  - Navigates to `MedicationDetailsView` after saving.
+- **Reconstitution View**:
+  - Removed "Stock: [X]" from the top.
+  - Renamed "Reconstitution Fluid" to "Reconstitution Fluid Name" and added a fluid type tracker.
+  - Added up/down buttons to Target Dose and Fluid Amount fields.
+  - Ensured 5.0 mL syringe appears in suggestions.
+  - Updated dosage options to include reference ranges within syringe IU limits.
+  - Standardized confirmation dialog styling.
+- **Consistency**: Ensured all views and dialogs use `AppConstants` and `AppThemes` for styling.
   
 ## Planned Features
 - Schedules: Cycle period calculations, multi-dose schedules.

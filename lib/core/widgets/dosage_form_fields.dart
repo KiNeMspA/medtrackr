@@ -1,11 +1,10 @@
 // lib/core/widgets/dosage_form_fields.dart
 import 'package:flutter/material.dart';
 import 'package:medtrackr/app/constants.dart';
-import 'package:medtrackr/app/themes.dart';
 import 'package:medtrackr/app/enums.dart';
 import 'package:medtrackr/core/utils/format_helper.dart';
+import 'package:medtrackr/core/utils/validators.dart';
 import 'package:medtrackr/features/medication/models/medication.dart';
-
 
 class DosageFormFields extends StatelessWidget {
   final TextEditingController nameController;
@@ -22,6 +21,7 @@ class DosageFormFields extends StatelessWidget {
   final ValueChanged<String?> onDoseUnitChanged;
   final ValueChanged<DosageMethod?> onMethodChanged;
   final ValueChanged<SyringeSize?> onSyringeSizeChanged;
+  final bool isDark;
 
   const DosageFormFields({
     super.key,
@@ -39,6 +39,7 @@ class DosageFormFields extends StatelessWidget {
     required this.onDoseUnitChanged,
     required this.onMethodChanged,
     required this.onSyringeSizeChanged,
+    required this.isDark,
   });
 
   @override
@@ -52,26 +53,23 @@ class DosageFormFields extends StatelessWidget {
       children: [
         TextFormField(
           controller: nameController,
-          decoration: AppConstants.formFieldDecoration.copyWith(
+          decoration: AppConstants.formFieldDecoration(isDark).copyWith(
             labelText: 'Dosage Name',
           ),
-          validator: (value) => value == null || value.isEmpty ? 'Please enter a name' : null,
+          validator: Validators.required,
         ),
         const SizedBox(height: 16),
         if (isTabletOrCapsule) ...[
           TextFormField(
             controller: tabletCountController,
-            decoration: AppConstants.formFieldDecoration.copyWith(
-              labelText: isTabletOrCapsule
-                  ? (medication.type == MedicationType.tablet ? 'Number of Tablets' : 'Number of Capsules')
-                  : null,
-              labelStyle: AppThemes.formLabelStyle,
-              suffixIcon: isTabletOrCapsule
-                  ? Row(
+            decoration: AppConstants.formFieldDecoration(isDark).copyWith(
+              labelText: medication.type == MedicationType.tablet ? 'Number of Tablets' : 'Number of Capsules',
+              labelStyle: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w500, color: AppConstants.textSecondary(isDark)),
+              suffixIcon: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.remove),
+                    icon: const Icon(Icons.remove, color: AppConstants.primaryColor),
                     onPressed: () {
                       final current = double.tryParse(tabletCountController.text) ?? 0.0;
                       final newValue = (current - 1).clamp(0.0, double.infinity);
@@ -79,7 +77,7 @@ class DosageFormFields extends StatelessWidget {
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.add),
+                    icon: const Icon(Icons.add, color: AppConstants.primaryColor),
                     onPressed: () {
                       final current = double.tryParse(tabletCountController.text) ?? 0.0;
                       final newValue = current + 1;
@@ -87,42 +85,29 @@ class DosageFormFields extends StatelessWidget {
                     },
                   ),
                 ],
-              )
-                  : null,
+              ),
             ),
             keyboardType: TextInputType.number,
-            validator: (value) {
-              if (isTabletOrCapsule && (value == null || value.isEmpty)) return 'Please enter the number';
-              if (isTabletOrCapsule && (double.tryParse(value!) == null || double.parse(value)! <= 0)) {
-                return 'Please enter a valid positive number';
-              }
-              return null;
-            },
+            validator: (value) => Validators.positiveNumber(value, 'Number'),
           ),
           const SizedBox(height: 16),
           Text(
             'Total Dose: ${(double.tryParse(tabletCountController.text) ?? 0) * (medication.dosePerTablet ?? 0)} $doseUnit',
-            style: const TextStyle(color: Colors.grey),
+            style: TextStyle(fontFamily: 'Poppins', fontSize: 14, color: AppConstants.textSecondary(isDark)),
           ),
         ] else if (isInjection && isReconstituted) ...[
           TextFormField(
             controller: iuController,
-            decoration: AppConstants.formFieldDecoration.copyWith(
+            decoration: AppConstants.formFieldDecoration(isDark).copyWith(
               labelText: 'Dosage Amount (IU)',
             ),
             keyboardType: TextInputType.number,
-            validator: (value) {
-              if (value == null || value.isEmpty) return 'Please enter an IU amount';
-              if (double.tryParse(value) == null || double.parse(value)! <= 0) {
-                return 'Please enter a valid positive number';
-              }
-              return null;
-            },
+            validator: (value) => Validators.positiveNumber(value, 'IU Amount'),
           ),
           const SizedBox(height: 16),
           TextFormField(
-            initialValue: mcgValue > 0 ? mcgValue.toStringAsFixed(2) : '',
-            decoration: AppConstants.formFieldDecoration.copyWith(
+            initialValue: mcgValue > 0 ? formatNumber(mcgValue) : '',
+            decoration: AppConstants.formFieldDecoration(isDark).copyWith(
               labelText: 'Equivalent (mcg)',
             ),
             enabled: false,
@@ -133,35 +118,27 @@ class DosageFormFields extends StatelessWidget {
               Expanded(
                 child: TextFormField(
                   controller: amountController,
-                  decoration: AppConstants.formFieldDecoration.copyWith(
+                  decoration: AppConstants.formFieldDecoration(isDark).copyWith(
                     labelText: 'Dosage Amount',
                   ),
                   keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) return 'Please enter an amount';
-                    if (double.tryParse(value) == null || double.parse(value)! <= 0) {
-                      return 'Please enter a valid positive number';
-                    }
-                    return null;
-                  },
+                  validator: (value) => Validators.positiveNumber(value, 'Amount'),
                 ),
               ),
               const SizedBox(width: 16),
               SizedBox(
                 width: 120,
-                child: DropdownButtonFormField<DosageMethod>(
-                  value: method,
-                  decoration: AppConstants.formFieldDecoration.copyWith(
-                    labelText: 'Dosage Method',
-                    labelStyle: AppThemes.formLabelStyle,
+                child: DropdownButtonFormField<String>(
+                  value: doseUnit,
+                  decoration: AppConstants.formFieldDecoration(isDark).copyWith(
+                    labelText: 'Unit',
+                    labelStyle: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w500, color: AppConstants.textSecondary(isDark)),
                   ),
-                  items: (isTabletOrCapsule
-                      ? [DosageMethod.oral, DosageMethod.other]
-                      : [DosageMethod.subcutaneous, DosageMethod.intramuscular, DosageMethod.intravenous, DosageMethod.intradermal, DosageMethod.other])
-                      .map((method) => DropdownMenuItem(value: method, child: Text(method.displayName)))
+                  items: ['mg', 'g', 'mcg', 'mL', 'IU', 'unit']
+                      .map((unit) => DropdownMenuItem(value: unit, child: Text(unit, style: const TextStyle(fontFamily: 'Poppins'))))
                       .toList(),
-                  onChanged: onMethodChanged,
-                  validator: (value) => value == null ? 'Please select a method' : null,
+                  onChanged: onDoseUnitChanged,
+                  validator: (value) => value == null ? 'Please select a unit' : null,
                 ),
               ),
             ],
@@ -170,30 +147,19 @@ class DosageFormFields extends StatelessWidget {
         const SizedBox(height: 16),
         DropdownButtonFormField<DosageMethod>(
           value: method,
-          decoration: AppConstants.formFieldDecoration.copyWith(
+          decoration: AppConstants.formFieldDecoration(isDark).copyWith(
             labelText: 'Dosage Method',
+            labelStyle: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w500, color: AppConstants.textSecondary(isDark)),
           ),
-          items: DosageMethod.values
-              .map((method) => DropdownMenuItem(value: method, child: Text(method.displayName)))
+          items: (isTabletOrCapsule ? [DosageMethod.oral, DosageMethod.other] : DosageMethod.values)
+              .map((method) => DropdownMenuItem(
+            value: method,
+            child: Text(method.displayName, style: const TextStyle(fontFamily: 'Poppins')),
+          ))
               .toList(),
           onChanged: onMethodChanged,
           validator: (value) => value == null ? 'Please select a method' : null,
         ),
-        if (isInjection && [DosageMethod.subcutaneous].contains(method)) ...[
-          const SizedBox(height: 16),
-          DropdownButtonFormField<DosageMethod>(
-            value: method,
-            decoration: AppConstants.formFieldDecoration.copyWith(
-              labelText: 'Dosage Method',
-              labelStyle: AppThemes.formLabelStyle,
-            ),
-            items: (isTabletOrCapsule ? [DosageMethod.oral] : DosageMethod.values)
-                .map((method) => DropdownMenuItem(value: method, child: Text(method.displayName)))
-                .toList(),
-            onChanged: onMethodChanged,
-            validator: (value) => value == null ? 'Please select a method' : null,
-          ),
-        ],
       ],
     );
   }

@@ -1,6 +1,9 @@
 // lib/features/medication/ui/widgets/reconstitution_widgets.dart
 import 'package:flutter/material.dart';
 import 'package:medtrackr/app/constants.dart';
+import 'package:medtrackr/app/themes.dart';
+import 'package:medtrackr/core/utils/format_helper.dart';
+import 'package:medtrackr/core/utils/validators.dart';
 
 class ReconstitutionWidgets extends StatelessWidget {
   final bool isReconstituting;
@@ -22,6 +25,7 @@ class ReconstitutionWidgets extends StatelessWidget {
   final ValueChanged<Map<String, dynamic>> onEditReconstitution;
   final VoidCallback onClearReconstitution;
   final ValueChanged<double> onAdjustVolume;
+  final bool isDark;
 
   const ReconstitutionWidgets({
     super.key,
@@ -44,29 +48,31 @@ class ReconstitutionWidgets extends StatelessWidget {
     required this.onEditReconstitution,
     required this.onClearReconstitution,
     required this.onAdjustVolume,
+    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      color: AppConstants.cardColor(isDark),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Reconstitution Settings',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+              style: AppThemes.reconstitutionTitleStyle(isDark),
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: reconstitutionFluidController,
-              decoration: AppConstants.formFieldDecoration.copyWith(
+              decoration: AppConstants.formFieldDecoration(isDark).copyWith(
                 labelText: 'Reconstitution Fluid',
               ),
+              validator: Validators.required,
               onChanged: (value) => onFluidChanged(),
             ),
             const SizedBox(height: 16),
@@ -75,10 +81,11 @@ class ReconstitutionWidgets extends StatelessWidget {
                 Expanded(
                   child: TextFormField(
                     controller: targetDoseController,
-                    decoration: AppConstants.formFieldDecoration.copyWith(
+                    decoration: AppConstants.formFieldDecoration(isDark).copyWith(
                       labelText: 'Target Dose',
                     ),
                     keyboardType: TextInputType.number,
+                    validator: (value) => Validators.positiveNumber(value, 'Target Dose'),
                     onChanged: (value) => onTargetDoseChanged(),
                   ),
                 ),
@@ -87,47 +94,55 @@ class ReconstitutionWidgets extends StatelessWidget {
                   width: 100,
                   child: DropdownButtonFormField<String>(
                     value: targetDoseUnit,
-                    decoration: AppConstants.formFieldDecoration.copyWith(),
-                    items: ['g', 'mg', 'mcg', 'mL', 'IU', 'Unit']
-                        .map((unit) => DropdownMenuItem(value: unit, child: Text(unit)))
+                    decoration: AppConstants.formFieldDecoration(isDark).copyWith(),
+                    items: ['g', 'mg', 'mcg', 'mL', 'IU', 'unit']
+                        .map((unit) => DropdownMenuItem(
+                      value: unit,
+                      child: Text(unit, style: const TextStyle(fontFamily: 'Poppins')),
+                    ))
                         .toList(),
                     onChanged: onTargetDoseUnitChanged,
+                    validator: (value) => value == null ? 'Please select a unit' : null,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
             Text(
-              'Medication Quantity: ${totalAmount.toStringAsFixed(2)} $quantityUnit',
-              style: const TextStyle(fontSize: 16, color: Colors.grey),
+              'Medication Quantity: ${formatNumber(totalAmount)} $quantityUnit',
+              style: AppThemes.cardBodyStyle(isDark),
             ),
             const SizedBox(height: 16),
             if (reconstitutionSuggestions.isNotEmpty && selectedReconstitution == null) ...[
-              const Text(
+              Text(
                 'Suggested Reconstitutions',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+                style: AppThemes.reconstitutionTitleStyle(isDark),
               ),
               const SizedBox(height: 8),
               ...reconstitutionSuggestions.take(4).map((suggestion) {
                 return ListTile(
                   title: Text(
-                    '${suggestion['volume'].toStringAsFixed(2)} mL, ${suggestion['concentration'].toStringAsFixed(2)} mg/mL',
-                    style: const TextStyle(color: Colors.black),
+                    '${formatNumber(suggestion['volume'])} mL, ${formatNumber(suggestion['concentration'])} mg/mL',
+                    style: AppThemes.cardBodyStyle(isDark),
                   ),
                   onTap: () => onSuggestionSelected(suggestion),
                 );
               }),
             ],
             if (selectedReconstitution != null) ...[
-              const Text(
+              Text(
                 'Selected Reconstitution',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+                style: AppThemes.reconstitutionTitleStyle(isDark),
               ),
               const SizedBox(height: 8),
               ListTile(
                 title: Text(
-                  '${selectedReconstitution!['volume'].toStringAsFixed(2)} mL, ${selectedReconstitution!['concentration'].toStringAsFixed(2)} mg/mL',
-                  style: const TextStyle(color: AppConstants.primaryColor, fontWeight: FontWeight.bold),
+                  '${formatNumber(selectedReconstitution!['volume'])} mL, ${formatNumber(selectedReconstitution!['concentration'])} mg/mL',
+                  style: TextStyle(
+                    color: AppConstants.primaryColor,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Poppins',
+                  ),
                 ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -153,18 +168,15 @@ class ReconstitutionWidgets extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 8.0),
                 child: Text(
                   reconstitutionError!,
-                  style: const TextStyle(color: Colors.red, fontSize: 14),
+                  style: AppThemes.reconstitutionErrorStyle(isDark),
                 ),
               ),
             const SizedBox(height: 16),
             if (selectedReconstitution != null)
               ElevatedButton(
                 onPressed: onClearReconstitution,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('Clear Reconstitution', style: TextStyle(color: Colors.white)),
+                style: AppConstants.deleteButtonStyle(),
+                child: const Text('Clear Reconstitution', style: TextStyle(fontFamily: 'Poppins')),
               ),
           ],
         ),

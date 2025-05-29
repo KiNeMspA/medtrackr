@@ -58,11 +58,13 @@ class Medication {
     id: json['id'],
     name: json['name'],
     type: MedicationType.values.firstWhere(
-            (e) => e.displayName == json['type'],
-        orElse: () => MedicationType.other),
+          (e) => e.displayName == json['type'],
+      orElse: () => MedicationType.other,
+    ),
     quantityUnit: QuantityUnit.values.firstWhere(
-            (e) => e.displayName == json['quantityUnit'],
-        orElse: () => QuantityUnit.mg),
+          (e) => e.displayName == json['quantityUnit'],
+      orElse: () => QuantityUnit.mg,
+    ),
     quantity: json['quantity'].toDouble(),
     remainingQuantity: json['remainingQuantity'].toDouble(),
     reconstitutionVolumeUnit: json['reconstitutionVolumeUnit'],
@@ -73,13 +75,15 @@ class Medication {
     dosePerCapsule: json['dosePerCapsule']?.toDouble(),
     dosePerTabletUnit: json['dosePerTabletUnit'] != null
         ? QuantityUnit.values.firstWhere(
-            (e) => e.displayName == json['dosePerTabletUnit'],
-        orElse: () => QuantityUnit.mg)
+          (e) => e.displayName == json['dosePerTabletUnit'],
+      orElse: () => QuantityUnit.mg,
+    )
         : null,
     dosePerCapsuleUnit: json['dosePerCapsuleUnit'] != null
         ? QuantityUnit.values.firstWhere(
-            (e) => e.displayName == json['dosePerCapsuleUnit'],
-        orElse: () => QuantityUnit.mg)
+          (e) => e.displayName == json['dosePerCapsuleUnit'],
+      orElse: () => QuantityUnit.mg,
+    )
         : null,
     selectedReconstitution: json['selectedReconstitution'],
   );
@@ -100,22 +104,23 @@ class Medication {
     QuantityUnit? dosePerTabletUnit,
     QuantityUnit? dosePerCapsuleUnit,
     Map<String, dynamic>? selectedReconstitution,
-  }) =>
-      Medication(
-        id: id ?? this.id,
-        name: name ?? this.name,
-        type: type ?? this.type,
-        quantityUnit: quantityUnit ?? this.quantityUnit,
-        quantity: quantity ?? this.quantity,
-        remainingQuantity: remainingQuantity ?? this.remainingQuantity,
-        reconstitutionVolumeUnit: reconstitutionVolumeUnit ?? this.reconstitutionVolumeUnit,
-        reconstitutionVolume: reconstitutionVolume ?? this.reconstitutionVolume,
-        reconstitutionFluid: reconstitutionFluid ?? this.reconstitutionFluid,
-        notes: notes ?? this.notes,
-        dosePerTablet: dosePerTablet ?? this.dosePerTablet,
-        dosePerCapsule: dosePerCapsule ?? this.dosePerCapsule,
-        dosePerTabletUnit: dosePerTabletUnit ?? this.dosePerTabletUnit,
-        dosePerCapsuleUnit: dosePerCapsuleUnit ?? this.dosePerCapsuleUnit,
-        selectedReconstitution: selectedReconstitution ?? this.selectedReconstitution,
-      );
+  }) => Medication(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    type: type ?? this.type,
+    quantityUnit: quantityUnit ?? this.quantityUnit,
+    quantity: quantity ?? this.quantity,
+    remainingQuantity: remainingQuantity ?? this.remainingQuantity,
+    reconstitutionVolumeUnit: reconstitutionVolumeUnit ?? this.reconstitutionVolumeUnit,
+    reconstitutionVolume: reconstitutionVolume ?? this.reconstitutionVolume,
+    reconstitutionFluid: reconstitutionFluid ?? this.reconstitutionFluid,
+    notes: notes ?? this.notes,
+    dosePerTablet: dosePerTablet ?? this.dosePerTablet,
+    dosePerCapsule: dosePerCapsule ?? this.dosePerCapsule,
+    dosePerTabletUnit: dosePerTabletUnit ?? this.dosePerTabletUnit,
+    dosePerCapsuleUnit: dosePerCapsuleUnit ?? this.dosePerCapsuleUnit,
+    selectedReconstitution: selectedReconstitution ?? this.selectedReconstitution,
+  );
+
+  bool get isLowStock => remainingQuantity / quantity <= 0.2;
 }

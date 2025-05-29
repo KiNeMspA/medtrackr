@@ -1,16 +1,18 @@
 // lib/features/home/ui/views/home_view.dart
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:table_calendar/table_calendar.dart';
 import 'package:medtrackr/app/constants.dart';
 import 'package:medtrackr/app/enums.dart';
+import 'package:medtrackr/core/services/navigation_service.dart';
 import 'package:medtrackr/core/utils/format_helper.dart';
-import 'package:medtrackr/features/medication/ui/widgets/compact_medication_card.dart';
-import 'package:medtrackr/core/widgets/navigation/navigation_wrapper.dart';
-import 'package:provider/provider.dart';
+import 'package:medtrackr/core/services/theme_provider.dart';
 import 'package:medtrackr/features/medication/presenters/medication_presenter.dart';
 import 'package:medtrackr/features/schedule/presenters/schedule_presenter.dart';
 import 'package:medtrackr/features/dosage/presenters/dosage_presenter.dart';
 import 'package:medtrackr/features/medication/models/medication.dart';
 import 'package:medtrackr/features/schedule/models/schedule.dart';
+import 'package:medtrackr/features/dosage/models/dosage.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -20,331 +22,442 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
-  final ScrollController _scrollController = ScrollController();
+  final PageController _pageController = PageController(viewportFraction: 0.9);
   bool _isMounted = true;
-  final Map<String, bool> _expandedMedications = {};
+  bool _isLoading = true;
+  bool _showAddMenu = false;
 
   @override
   void initState() {
     super.initState();
-    final medicationPresenter = Provider.of<MedicationPresenter>(
-        context, listen: false);
-    final schedulePresenter = Provider.of<SchedulePresenter>(
-        context, listen: false);
-    medicationPresenter.loadMedications().then((_) {
-      if (_isMounted) setState(() {});
-    });
-    schedulePresenter.loadSchedules().then((_) {
-      if (_isMounted) setState(() {});
-    });
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    final medicationPresenter = Provider.of<MedicationPresenter>(context, listen: false);
+    final schedulePresenter = Provider.of<SchedulePresenter>(context, listen: false);
+    final dosagePresenter = Provider.of<DosagePresenter>(context, listen: false);
+    try {
+      await Future.wait([
+        medicationPresenter.loadMedications(),
+        schedulePresenter.loadSchedules(),
+        dosagePresenter.loadDosages(),
+      ]);
+      if (_isMounted) setState(() => _isLoading = false);
+    } catch (e) {
+      if (_isMounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error loading data: $e')));
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
   void dispose() {
     _isMounted = false;
-    _scrollController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Provider.of<ThemeProvider>(context).isDarkMode;
+    final navigationService = Provider.of<NavigationService>(context, listen: false);
     final medicationPresenter = Provider.of<MedicationPresenter>(context);
     final schedulePresenter = Provider.of<SchedulePresenter>(context);
     final dosagePresenter = Provider.of<DosagePresenter>(context);
     final medications = medicationPresenter.medications;
-    final schedules = schedulePresenter.upcomingDoses;
+    final upcomingDoses = schedulePresenter.upcomingDoses;
+    final nextDose = upcomingDoses.isNotEmpty ? upcomingDoses.first : null;
 
-    return NavigationWrapper(
-      currentIndex: 0,
-
-      child: Padding(
-
-        padding: const EdgeInsets.all(12.0),
-        child: medications.isEmpty
-            ? Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'No medications added. Add one now.',
-                style: AppConstants.secondaryTextStyle.copyWith(fontSize: 16),
+    return Scaffold(
+      backgroundColor: AppConstants.backgroundColor(isDark),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: AppConstants.primaryColor))
+          : CustomScrollView(
+        slivers: [
+          // Top Banner with App Name
+          SliverAppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            pinned: true,
+            expandedHeight: 120,
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: AppThemes.bannerDecoration(isDark),
+                child: const Center(
+                  child: Text(
+                    'MedTrackr', // Placeholder for logo
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontFamily: 'Inter',
+                    ),
+                  ),
+                ),
               ),
-              const SizedBox(height: 12),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Upcoming Doses Section
+                  Text(
+                    'Next Dose',
+                    style: AppConstants.nextDoseTitleStyle(isDark),
+                  ),
+                  const SizedBox(height: 12),
+                  nextDose == null
+                      ? Container(
+                    decoration: AppThemes.cardDecoration(isDark),
+                    padding: const EdgeInsets.all(16),
+                    child: Center(
+                      child: Text(
+                        'No upcoming doses.',
+                        style: AppConstants.nextDoseSubtitleStyle(isDark),
+                      ),
+                    ),
+                  )
+                      : _buildNextDoseCard(context, nextDose, schedulePresenter, dosagePresenter),
+                  const SizedBox(height: 16),
+                  // Calendar Section
+                  Text(
+                    'Upcoming Schedule',
+                    style: AppConstants.nextDoseTitleStyle(isDark),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildMiniCalendar(context, schedulePresenter),
+                  const SizedBox(height: 16),
+                  // Medications Section
+                  Text(
+                    'Medications',
+                    style: AppConstants.nextDoseTitleStyle(isDark),
+                  ),
+                  const SizedBox(height: 12),
+                  medications.isEmpty
+                      ? Center(
+                    child: Column(
+                      children: [
+                        Text(
+                          'No medications added.',
+                          style: AppConstants.cardTitleStyle(isDark),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => navigationService.navigateTo('/medication_form'),
+                          style: AppConstants.homeActionButtonStyle(),
+                          child: const Text('Add Medication', style: TextStyle(fontFamily: 'Inter')),
+                        ),
+                      ],
+                    ),
+                  )
+                      : SizedBox(
+                    height: 120, // Smaller height for compact cards
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: medications.length,
+                      itemBuilder: (context, index) {
+                        return _buildMedicationCard(context, medications[index], dosagePresenter, schedulePresenter);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          setState(() => _showAddMenu = !_showAddMenu);
+        },
+        backgroundColor: AppConstants.primaryColor,
+        child: Icon(_showAddMenu ? Icons.close : Icons.add),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 0,
+        onTap: (index) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (index == 0) navigationService.replaceWith('/home');
+            if (index == 1) navigationService.navigateTo('/calendar');
+            if (index == 2) navigationService.navigateTo('/history');
+            if (index == 3) navigationService.navigateTo('/settings');
+          });
+        },
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Calendar'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+        ],
+        backgroundColor: isDark ? AppConstants.cardColorDark : Colors.white,
+        selectedItemColor: AppConstants.primaryColor,
+        unselectedItemColor: isDark ? AppConstants.textSecondaryDark : AppConstants.textSecondaryLight,
+      ),
+    );
+  }
+
+  Widget _buildNextDoseCard(
+      BuildContext context,
+      Map<String, dynamic> dose,
+      SchedulePresenter schedulePresenter,
+      DosagePresenter dosagePresenter,
+      ) {
+    final isDark = Provider.of<ThemeProvider>(context).isDarkMode;
+    final schedule = dose['schedule'] as Schedule;
+    final medication = dose['medication'] as Medication;
+    final dosages = dosagePresenter.getDosagesForMedication(medication.id);
+    final dosage = dosages.firstWhere(
+          (d) => d.id == schedule.dosageId,
+      orElse: () => Dosage(
+        id: '',
+        medicationId: '',
+        name: 'Unknown',
+        method: DosageMethod.oral,
+        doseUnit: '',
+        totalDose: 0.0,
+        volume: 0.0,
+        insulinUnits: 0.0,
+      ),
+    );
+
+    return Container(
+      decoration: AppThemes.prominentCardDecoration(isDark),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            medication.name,
+            style: AppConstants.nextDoseTitleStyle(isDark),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${schedule.dosageName} - ${formatNumber(schedule.dosageAmount)} ${schedule.dosageUnit}',
+            style: AppConstants.nextDoseSubtitleStyle(isDark),
+          ),
+          Text(
+            'Time: ${schedule.time.format(context)}',
+            style: AppConstants.nextDoseSubtitleStyle(isDark),
+          ),
+          if (schedule.notificationTime != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Reminder: ${schedule.notificationTime} minutes before',
+              style: AppConstants.nextDoseSubtitleStyle(isDark),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
               ElevatedButton(
-                onPressed: () =>
-                    Navigator.pushNamed(context, '/medication_form'),
-                style: AppConstants.actionButtonStyle,
-                child: const Text('Add Medication'),
+                onPressed: () => dosagePresenter.takeDose(
+                  schedule.medicationId,
+                  schedule.id,
+                  schedule.dosageId,
+                ).then((_) => _loadData()).catchError((e) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                }),
+                style: AppConstants.homeActionButtonStyle(),
+                child: const Text('Take', style: TextStyle(fontFamily: 'Inter')),
+              ),
+              ElevatedButton(
+                onPressed: () => schedulePresenter.postponeDose(schedule.id, '30').then((_) => _loadData()),
+                style: AppConstants.snoozeButtonStyle(isDark),
+                child: const Text('Snooze', style: TextStyle(fontFamily: 'Inter')),
+              ),
+              ElevatedButton(
+                onPressed: () => schedulePresenter.cancelDose(schedule.id).then((_) => _loadData()),
+                style: AppConstants.homeCancelButtonStyle(),
+                child: const Text('Cancel', style: TextStyle(fontFamily: 'Inter')),
               ),
             ],
           ),
-        )
-            : Column(
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMedicationCard(
+      BuildContext context,
+      Medication medication,
+      DosagePresenter dosagePresenter,
+      SchedulePresenter schedulePresenter,
+      ) {
+    final isDark = Provider.of<ThemeProvider>(context).isDarkMode;
+    final dosages = dosagePresenter.getDosagesForMedication(medication.id);
+    final schedule = schedulePresenter.getScheduleForMedication(medication.id);
+    final isTablet = medication.type == MedicationType.tablet || medication.type == MedicationType.capsule;
+    final backgroundColor = isTablet ? AppConstants.tabletCardBackground : AppConstants.injectionCardBackground;
+
+    return GestureDetector(
+      onTap: () => Provider.of<NavigationService>(context, listen: false).navigateTo('/medication_details', arguments: medication),
+      child: Container(
+        width: 160, // Compact width
+        margin: const EdgeInsets.only(right: 12),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(12),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Today’s Overview',
-                  style: AppConstants.cardTitleStyle.copyWith(fontSize: 18),
+                Icon(
+                  isTablet ? Icons.tablet : Icons.syringe,
+                  color: AppConstants.primaryColor,
+                  size: 20,
                 ),
-                TextButton(
-                  onPressed: () => Navigator.pushNamed(context, '/calendar'),
+                const SizedBox(width: 8),
+                Expanded(
                   child: Text(
-                    'View Calendar',
-                    style: TextStyle(
-                        color: AppConstants.primaryColor, fontSize: 14),
+                    medication.name,
+                    style: AppConstants.medicationCardTitleStyle(isDark),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-              floatingActionButton: FloatingActionButton(
-                onPressed: () => Navigator.pushNamed(context, '/medication_form'),
-                backgroundColor: AppConstants.primaryColor,
-                child: const Icon(Icons.add),
-                tooltip: 'Add Medication',
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${schedules
-                          .where((dose) =>
-                      dose['nextTime'].day == DateTime
-                          .now()
-                          .day)
-                          .length} doses today',
-                      style: AppConstants.cardTitleStyle.copyWith(fontSize: 14),
-                    ),
-                    Text(
-                      '${medications
-                          .where((m) => m.remainingQuantity < m.quantity * 0.2)
-                          .length} low stock alerts',
-                      style: AppConstants.secondaryTextStyle.copyWith(
-                          fontSize: 12, color: AppConstants.errorColor),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
             Text(
-              'Medications & Schedules',
-              style: AppConstants.cardTitleStyle.copyWith(fontSize: 18),
+              isTablet
+                  ? '${formatNumber(medication.remainingQuantity)}/${formatNumber(medication.quantity)} Tablets'
+                  : '${formatNumber(medication.remainingQuantity)}/${formatNumber(medication.quantity)} Remaining',
+              style: AppConstants.medicationCardSubtitleStyle(isDark),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              schedule != null && dosages.isNotEmpty
+                  ? 'Next: ${schedule.time.format(context)}'
+                  : 'No schedule',
+              style: AppConstants.medicationCardSubtitleStyle(isDark),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMiniCalendar(BuildContext context, SchedulePresenter schedulePresenter) {
+    final isDark = Provider.of<ThemeProvider>(context).isDarkMode;
+    final events = <DateTime, List<Schedule>>{};
+    for (var dose in schedulePresenter.upcomingDoses) {
+      final schedule = dose['schedule'] as Schedule;
+      final nextTime = dose['nextTime'] as DateTime;
+      final key = DateTime(nextTime.year, nextTime.month, nextTime.day);
+      events[key] = events[key] ?? [];
+      events[key]!.add(schedule);
+    }
+
+    return Container(
+      decoration: AppThemes.cardDecoration(isDark),
+      child: TableCalendar(
+        firstDay: DateTime.now().subtract(const Duration(days: 30)),
+        lastDay: DateTime.now().add(const Duration(days: 30)),
+        focusedDay: DateTime.now(),
+        calendarFormat: CalendarFormat.month, // Show full month view
+        headerStyle: HeaderStyle(
+          formatButtonVisible: false,
+          titleTextStyle: AppConstants.cardTitleStyle(isDark),
+          leftChevronIcon: Icon(Icons.chevron_left, color: AppConstants.primaryColor),
+          rightChevronIcon: Icon(Icons.chevron_right, color: AppConstants.primaryColor),
+        ),
+        daysOfWeekHeight: 20,
+        rowHeight: 40,
+        eventLoader: (day) => events[DateTime(day.year, day.month, day.day)] ?? [],
+        calendarStyle: CalendarStyle(
+          todayDecoration: BoxDecoration(
+            color: AppConstants.accentColor(isDark).withOpacity(0.3),
+            shape: BoxShape.circle,
+          ),
+          markerDecoration: BoxDecoration(
+            color: AppConstants.primaryColor,
+            shape: BoxShape.circle,
+          ),
+        ),
+        onDaySelected: (selectedDay, focusedDay) {
+          Provider.of<NavigationService>(context, listen: false).navigateTo('/calendar');
+        },
+      ),
+    );
+  }
+
+  // Add Menu Overlay for FAB
+  Widget _buildAddMenu(BuildContext context) {
+    final navigationService = Provider.of<NavigationService>(context, listen: false);
+    return _showAddMenu
+        ? Positioned(
+      bottom: 80,
+      right: 16,
+      child: Material(
+        color: Colors.transparent,
+        child: Column(
+          children: [
+            _buildAddMenuItem(
+              context,
+              label: 'Add Medication',
+              icon: Icons.medication,
+              onTap: () {
+                setState(() => _showAddMenu = false);
+                navigationService.navigateTo('/medication_form');
+              },
             ),
             const SizedBox(height: 8),
-            Expanded(
-              child: Scrollbar(
-                controller: _scrollController,
-                thumbVisibility: true,
-                trackVisibility: true,
-                thickness: 4,
-                radius: const Radius.circular(4),
-                child: ListView.builder(
-                  controller: _scrollController,
-                  itemCount: medications.length,
-                  itemBuilder: (context, index) {
-                    final medication = medications[index];
-                    final medicationSchedules = schedules
-                        .where((dose) =>
-                    dose['schedule'] != null && dose['schedule'].medicationId ==
-                        medication.id)
-                        .toList();
-                    final isExpanded = _expandedMedications[medication.id] ??
-                        false;
-
-                    return Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      child: Column(
-                        children: [
-                          ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 4),
-                            title: Text(
-                              medication.name,
-                              style: AppConstants.cardTitleStyle.copyWith(
-                                  fontSize: 16),
-                            ),
-                            subtitle: Text(
-                              'Stock: ${formatNumber(
-                                  medication.remainingQuantity)}/${formatNumber(
-                                  medication.quantity)} ${medication
-                                  .quantityUnit.displayName}',
-                              style: AppConstants.secondaryTextStyle.copyWith(
-                                  fontSize: 12),
-                            ),
-                            trailing: IconButton(
-                              icon: Icon(
-                                isExpanded ? Icons.expand_less : Icons
-                                    .expand_more,
-                                color: AppConstants.primaryColor,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _expandedMedications[medication.id] =
-                                  !isExpanded;
-                                });
-                              },
-                            ),
-                            onTap: () =>
-                                Navigator.pushNamed(
-                                    context, '/medication_details',
-                                    arguments: medication),
-                          ),
-
-
-                          if (isExpanded)
-                            Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Schedules (${medicationSchedules.length})',
-                                    style: AppConstants.cardTitleStyle.copyWith(
-                                        fontSize: 14),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  if (medicationSchedules.isEmpty)
-                                    Text(
-                                      'No schedules added.',
-                                      style: AppConstants.secondaryTextStyle
-                                          .copyWith(fontSize: 12),
-                                    )
-
-                                  else
-                                    ...medicationSchedules.map((dose) {
-                                      final schedule = dose['schedule'] as Schedule;
-                                      return Container(
-                                        margin: const EdgeInsets.symmetric(
-                                            vertical: 4),
-                                        decoration: AppConstants.cardDecoration
-                                            .copyWith(
-                                          borderRadius: BorderRadius.circular(
-                                              6),
-                                        ),
-
-                                        height: 60,
-                                        child: ListTile(
-                                          dense: true,
-                                          contentPadding: const EdgeInsets
-                                              .symmetric(
-                                              horizontal: 8, vertical: 4),
-                                          title: Text(
-                                            schedule.dosageName,
-                                            style: AppConstants.cardTitleStyle
-                                                .copyWith(fontSize: 14),
-                                          ),
-                                          subtitle: Text(
-                                            '${schedule.time.format(
-                                                context)} - ${formatNumber(
-                                                schedule
-                                                    .dosageAmount)} ${schedule
-                                                .dosageUnit}',
-                                            style: AppConstants
-                                                .secondaryTextStyle.copyWith(
-                                                fontSize: 12),
-                                          ),
-                                          trailing: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              IconButton(
-                                                icon: const Icon(
-                                                    Icons.check_circle,
-                                                    size: 18,
-                                                    color: Colors.green),
-                                                onPressed: () =>
-                                                    dosagePresenter.takeDose(
-                                                      schedule.medicationId,
-                                                      schedule.id,
-                                                      schedule.dosageId,
-                                                    ),
-                                                tooltip: 'Take Now',
-                                              ),
-                                              IconButton(
-                                                icon: const Icon(
-                                                    Icons.access_time, size: 18,
-                                                    color: AppConstants
-                                                        .primaryColor),
-                                                onPressed: () =>
-                                                    schedulePresenter
-                                                        .postponeDose(
-                                                        schedule.id, '30'),
-                                                tooltip: 'Postpone',
-                                              ),
-                                              IconButton(
-                                                icon: const Icon(
-                                                    Icons.cancel, size: 18,
-                                                    color: AppConstants
-                                                        .errorColor),
-                                                onPressed: () =>
-                                                    schedulePresenter
-                                                        .cancelDose(
-                                                        schedule.id),
-                                                tooltip: 'Cancel',
-                                              ),
-                                              IconButton(
-                                                icon: const Icon(Icons.edit, size: 18, color: AppConstants.accentColor),
-                                                onPressed: () {
-                                                  if (schedule.id.isNotEmpty) {
-                                                    print('Navigating to schedule_form with schedule: ${schedule.id}');
-                                                    Navigator.pushNamed(
-                                                      context,
-                                                      '/schedule_form',
-                                                      arguments: {'medication': medication, 'schedule': schedule},
-                                                    );
-                                                  } else {
-                                                    print('Invalid schedule ID');
-                                                  }
-                                                },
-                                                tooltip: 'Edit',
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    }),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.pushNamed(
-                                                context, '/dosage_form',
-                                                arguments: medication),
-                                        child: const Text('Add Dosage'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.pushNamed(
-                                                context, '/add_schedule',
-                                                arguments: medication),
-                                        child: const Text('Add Schedule'),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
+            _buildAddMenuItem(
+              context,
+              label: 'Add Schedule',
+              icon: Icons.schedule,
+              onTap: () {
+                setState(() => _showAddMenu = false);
+                // Navigate to a screen to select a medication first
+                navigationService.navigateTo('/add_schedule');
+              },
             ),
+          ],
+        ),
+      ),
+    )
+        : const SizedBox.shrink();
+  }
+
+  Widget _buildAddMenuItem(BuildContext context, {required String label, required IconData icon, required VoidCallback onTap}) {
+    final isDark = Provider.of<ThemeProvider>(context).isDarkMode;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppConstants.cardColor(isDark),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: AppConstants.primaryColor, size: 20),
+            const SizedBox(width: 8),
+            Text(label, style: AppConstants.cardBodyStyle(isDark)),
           ],
         ),
       ),

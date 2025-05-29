@@ -22,93 +22,114 @@ class DosagePresenter with ChangeNotifier {
         _notificationService = notificationService;
 
   List<Dosage> get dosages => _dosages;
-  MedicationPresenter get medicationPresenter => _medicationPresenter; // Add this
 
   List<Dosage> getDosagesForMedication(String medicationId) {
     return _dosages.where((d) => d.medicationId == medicationId).toList();
   }
 
+  Dosage? getDosageById(String id) {
+    try {
+      return _dosages.firstWhere((dosage) => dosage.id == id);
+    } catch (e) {
+      return null;
+    }
+  }
+
   Future<void> loadDosages() async {
-    final data = await _repository.loadDosages();
-    _dosages = data;
-    notifyListeners();
+    try {
+      final data = await _repository.loadDosages();
+      _dosages = data;
+      notifyListeners();
+    } catch (e) {
+      throw Exception('Failed to load dosages: $e');
+    }
   }
 
   Future<void> addDosage(Dosage dosage) async {
-    await _repository.addDosage(dosage);
-    _dosages.add(dosage);
-    if (dosage.takenTime != null) {
-      await _updateMedicationQuantity(dosage);
-    }
-    notifyListeners();
-  }
-
-  Future<void> updateDosage(String id, Dosage dosage) async {
-    await _repository.updateDosage(id, dosage);
-    final index = _dosages.indexWhere((d) => d.id == id);
-    if (index != -1) {
-      _dosages[index] = dosage;
+    try {
+      await _repository.addDosage(dosage);
+      _dosages.add(dosage);
       if (dosage.takenTime != null) {
         await _updateMedicationQuantity(dosage);
       }
       notifyListeners();
+    } catch (e) {
+      throw Exception('Failed to add dosage: $e');
+    }
+  }
+
+  Future<void> updateDosage(String id, Dosage dosage) async {
+    try {
+      await _repository.updateDosage(id, dosage);
+      final index = _dosages.indexWhere((d) => d.id == id);
+      if (index != -1) {
+        _dosages[index] = dosage;
+        if (dosage.takenTime != null) {
+          await _updateMedicationQuantity(dosage);
+        }
+        notifyListeners();
+      }
+    } catch (e) {
+      throw Exception('Failed to update dosage: $e');
     }
   }
 
   Future<void> deleteDosage(String id) async {
-    await _repository.deleteDosage(id);
-    _dosages.removeWhere((d) => d.id == id);
-    _notificationService.cancelNotification(id.hashCode);
-    notifyListeners();
+    try {
+      await _repository.deleteDosage(id);
+      _dosages.removeWhere((d) => d.id == id);
+      await _notificationService.cancelNotification(id.hashCode);
+      notifyListeners();
+    } catch (e) {
+      throw Exception('Failed to delete dosage: $e');
+    }
   }
 
   Future<void> takeDose(String medicationId, String scheduleId, String dosageId) async {
-    final dosage = _dosages.firstWhere(
-          (d) => d.id == dosageId,
-      orElse: () => Dosage(
-        id: '',
-        medicationId: '',
-        name: '',
-        method: DosageMethod.subcutaneous,
-        doseUnit: '',
-        totalDose: 0.0,
-        volume: 0.0,
-        insulinUnits: 0.0,
-      ),
-    );
-    if (dosage.id.isNotEmpty) {
+    try {
+      final dosageIndex = _dosages.indexWhere((d) => d.id == dosageId);
+      if (dosageIndex == -1) throw Exception('Dosage not found');
+      final dosage = _dosages[dosageIndex];
       final updatedDosage = dosage.copyWith(takenTime: DateTime.now());
-      await addDosage(updatedDosage);
+      await updateDosage(dosageId, updatedDosage);
+      await _notificationService.cancelNotification(scheduleId.hashCode);
+    } catch (e) {
+      throw Exception('Failed to take dose: $e');
     }
   }
 
   Future<void> _updateMedicationQuantity(Dosage dosage) async {
-    final medication = _medicationPresenter.medications.firstWhere(
-          (m) => m.id == dosage.medicationId,
-      orElse: () => Medication(
-        id: '',
-        name: 'Unknown',
-        type: MedicationType.other,
-        quantityUnit: QuantityUnit.mg,
-        quantity: 0,
-        remainingQuantity: 0,
-        reconstitutionVolumeUnit: '',
-        reconstitutionVolume: 0,
-        reconstitutionFluid: '',
-        notes: '',
-      ),
-    );
-    if (medication.id.isNotEmpty) {
+    try {
+      final medication = _medicationPresenter.medications.firstWhere(
+            (m) => m.id == dosage.medicationId,
+        orElse: () => Medication(
+          id: '',
+          name: 'Unknown',
+          type: MedicationType.other,
+          quantityUnit: QuantityUnit.mg,
+          quantity: 0,
+          remainingQuantity: 0,
+          reconstitutionVolumeUnit: '',
+          reconstitutionVolume: 0,
+          reconstitutionFluid: '',
+          notes: '',
+        ),
+      );
+      if (medication.id.isEmpty) throw Exception('Medication not found');
       double doseInMg = dosage.totalDose;
       if (dosage.doseUnit == 'mcg') {
         doseInMg = dosage.totalDose / 1000;
       } else if (dosage.doseUnit == 'g') {
         doseInMg = dosage.totalDose * 1000;
       }
+      final newQuantity = medication.remainingQuantity - doseInMg;
+      if (newQuantity < 0) throw Exception('Insufficient stock');
       await _medicationPresenter.updateMedication(
         medication.id,
-        medication.copyWith(remainingQuantity: medication.remainingQuantity - doseInMg),
+        medication.copyWith(remainingQuantity: newQuantity),
       );
+    } catch (e) {
+      throw Exception('Failed to update medication quantity: $e');
     }
   }
 }

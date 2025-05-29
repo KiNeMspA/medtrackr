@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:medtrackr/app/constants.dart';
 import 'package:medtrackr/app/enums.dart';
+import 'package:medtrackr/core/services/navigation_service.dart';
 import 'package:medtrackr/core/utils/format_helper.dart';
 import 'package:medtrackr/features/medication/models/medication.dart';
 import 'package:provider/provider.dart';
@@ -10,32 +11,31 @@ import 'package:medtrackr/features/schedule/presenters/schedule_presenter.dart';
 
 class MedicationCard extends StatelessWidget {
   final Medication medication;
+  final bool isDark;
 
-  const MedicationCard({super.key, required this.medication});
+  const MedicationCard({super.key, required this.medication, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
     final dosagePresenter = Provider.of<DosagePresenter>(context);
     final schedulePresenter = Provider.of<SchedulePresenter>(context);
+    final navigationService = Provider.of<NavigationService>(context, listen: false);
     final dosages = dosagePresenter.getDosagesForMedication(medication.id);
     final schedule = schedulePresenter.getScheduleForMedication(medication.id);
     final isReconstituted = medication.reconstitutionVolume > 0;
-    final reconVolumeUnit = medication.reconstitutionVolumeUnit.isNotEmpty
-        ? medication.reconstitutionVolumeUnit
-        : 'mL';
-    final remainingFraction =
-        '${formatNumber(medication.remainingQuantity)}/${formatNumber(medication.quantity)} ${medication.quantityUnit.displayName}';
+    final reconVolumeUnit = medication.reconstitutionVolumeUnit.isNotEmpty ? medication.reconstitutionVolumeUnit : 'mL';
+    final remainingFraction = '${formatNumber(medication.remainingQuantity)}/${formatNumber(medication.quantity)} ${medication.quantityUnit.displayName}';
     final reconRemaining = isReconstituted
         ? '${formatNumber(medication.remainingQuantity / (medication.quantity / medication.reconstitutionVolume))}/${formatNumber(medication.reconstitutionVolume)} $reconVolumeUnit'
         : '';
 
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(context, '/medication_form', arguments: medication);
+        navigationService.navigateTo('/medication_form', arguments: medication);
       },
       child: Container(
         width: double.infinity,
-        decoration: AppConstants.cardDecoration,
+        decoration: AppConstants.cardDecoration(isDark),
         padding: const EdgeInsets.all(12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,19 +45,19 @@ class MedicationCard extends StatelessWidget {
               children: [
                 Text(
                   medication.name,
-                  style: AppConstants.cardTitleStyle.copyWith(fontSize: 20),
+                  style: AppConstants.cardTitleStyle(isDark).copyWith(fontSize: 20),
                 ),
                 IconButton(
                   icon: const Icon(Icons.refresh, color: AppConstants.primaryColor),
                   tooltip: 'Refill Medication',
-                  onPressed: () => Navigator.pushNamed(context, '/medication_form', arguments: medication),
+                  onPressed: () => navigationService.navigateTo('/medication_form', arguments: medication),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             RichText(
               text: TextSpan(
-                style: AppConstants.cardBodyStyle.copyWith(fontSize: 14),
+                style: AppConstants.cardBodyStyle(isDark).copyWith(fontSize: 14),
                 children: [
                   const TextSpan(
                     text: 'Type: ',
@@ -70,7 +70,7 @@ class MedicationCard extends StatelessWidget {
             const SizedBox(height: 8),
             RichText(
               text: TextSpan(
-                style: AppConstants.cardBodyStyle.copyWith(fontSize: 14),
+                style: AppConstants.cardBodyStyle(isDark).copyWith(fontSize: 14),
                 children: [
                   const TextSpan(
                     text: 'Stock: ',
@@ -88,7 +88,7 @@ class MedicationCard extends StatelessWidget {
               const SizedBox(height: 8),
               RichText(
                 text: TextSpan(
-                  style: AppConstants.cardBodyStyle.copyWith(fontSize: 14),
+                  style: AppConstants.cardBodyStyle(isDark).copyWith(fontSize: 14),
                   children: [
                     const TextSpan(
                       text: 'Method: ',
@@ -101,7 +101,7 @@ class MedicationCard extends StatelessWidget {
               const SizedBox(height: 8),
               RichText(
                 text: TextSpan(
-                  style: AppConstants.cardBodyStyle.copyWith(fontSize: 14),
+                  style: AppConstants.cardBodyStyle(isDark).copyWith(fontSize: 14),
                   children: [
                     const TextSpan(
                       text: 'Next Dose: ',
@@ -120,15 +120,14 @@ class MedicationCard extends StatelessWidget {
               const SizedBox(height: 8),
               RichText(
                 text: TextSpan(
-                  style: AppConstants.cardBodyStyle.copyWith(fontSize: 14),
+                  style: AppConstants.cardBodyStyle(isDark).copyWith(fontSize: 14),
                   children: [
                     const TextSpan(
                       text: 'Reconstituted with: ',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     TextSpan(
-                      text:
-                      '${formatNumber(medication.reconstitutionVolume)} $reconVolumeUnit of ${medication.reconstitutionFluid.isNotEmpty ? medication.reconstitutionFluid : 'None'}',
+                      text: '${formatNumber(medication.reconstitutionVolume)} $reconVolumeUnit of ${medication.reconstitutionFluid.isNotEmpty ? medication.reconstitutionFluid : 'None'}',
                     ),
                   ],
                 ),
@@ -137,21 +136,19 @@ class MedicationCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 RichText(
                   text: TextSpan(
-                    style: AppConstants.cardBodyStyle.copyWith(fontSize: 14),
+                    style: AppConstants.cardBodyStyle(isDark).copyWith(fontSize: 14),
                     children: [
                       const TextSpan(
                         text: 'Reference Dose: ',
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       TextSpan(
-                        text:
-                        '${formatNumber(medication.selectedReconstitution?['syringeUnits']?.toDouble() ?? 0)} IU',
+                        text: '${formatNumber(medication.selectedReconstitution?['syringeUnits']?.toDouble() ?? 0)} IU',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       const TextSpan(text: ' contains '),
                       TextSpan(
-                        text:
-                        '${formatNumber(medication.selectedReconstitution?['targetDose']?.toDouble() ?? 0)} ${medication.selectedReconstitution?['targetDoseUnit'] ?? 'mcg'}',
+                        text: '${formatNumber(medication.selectedReconstitution?['targetDose']?.toDouble() ?? 0)} ${medication.selectedReconstitution?['targetDoseUnit'] ?? 'mcg'}',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ],
@@ -160,25 +157,31 @@ class MedicationCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 RichText(
                   text: TextSpan(
-                    style: AppConstants.secondaryTextStyle.copyWith(fontSize: 12),
+                    style: AppConstants.secondaryTextStyle(isDark).copyWith(fontSize: 12),
                     children: [
                       const TextSpan(
                         text: 'Concentration: ',
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       TextSpan(
-                        text:
-                        '${formatNumber(medication.selectedReconstitution!['concentration'] ?? 0)} mg/mL',
+                        text: '${formatNumber(medication.selectedReconstitution!['concentration'] ?? 0)} mg/mL',
                       ),
                     ],
                   ),
                 ),
               ],
             ],
+            if (medication.isLowStock) ...[
+              const SizedBox(height: 8),
+              Text(
+                '⚠️ Low Stock Warning',
+                style: AppThemes.reconstitutionErrorStyle(isDark),
+              ),
+            ],
             const SizedBox(height: 8),
             RichText(
               text: TextSpan(
-                style: AppConstants.cardBodyStyle.copyWith(fontSize: 14),
+                style: AppConstants.cardBodyStyle(isDark).copyWith(fontSize: 14),
                 children: [
                   const TextSpan(
                     text: 'Notes: ',

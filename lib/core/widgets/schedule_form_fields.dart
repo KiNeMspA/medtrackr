@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:medtrackr/app/constants.dart';
 import 'package:medtrackr/app/enums.dart';
+import 'package:medtrackr/core/utils/format_helper.dart';
+import 'package:medtrackr/core/utils/validators.dart';
 import 'package:medtrackr/features/dosage/models/dosage.dart';
 
 class ScheduleFormFields extends StatelessWidget {
@@ -15,6 +17,7 @@ class ScheduleFormFields extends StatelessWidget {
   final ValueChanged<TimeOfDay?> onTimeChanged;
   final ValueChanged<FrequencyType?> onFrequencyChanged;
   final ValueChanged<int?> onNotificationTimeChanged;
+  final bool isDark;
 
   const ScheduleFormFields({
     super.key,
@@ -28,6 +31,7 @@ class ScheduleFormFields extends StatelessWidget {
     required this.onTimeChanged,
     required this.onFrequencyChanged,
     required this.onNotificationTimeChanged,
+    required this.isDark,
   });
 
   @override
@@ -37,11 +41,17 @@ class ScheduleFormFields extends StatelessWidget {
       children: [
         DropdownButtonFormField<Dosage>(
           value: selectedDosage,
-          decoration: AppConstants.formFieldDecoration.copyWith(
+          decoration: AppConstants.formFieldDecoration(isDark).copyWith(
             labelText: 'Dosage *',
           ),
           items: dosages
-              .map((dosage) => DropdownMenuItem(value: dosage, child: Text(dosage.name)))
+              .map((dosage) => DropdownMenuItem(
+            value: dosage,
+            child: Text(
+              '${dosage.name} (${formatNumber(dosage.totalDose)} ${dosage.doseUnit})',
+              style: const TextStyle(fontFamily: 'Poppins'),
+            ),
+          ))
               .toList(),
           onChanged: onDosageChanged,
           validator: (value) => value == null ? 'Please select a dosage' : null,
@@ -49,14 +59,14 @@ class ScheduleFormFields extends StatelessWidget {
         const SizedBox(height: 16),
         TextFormField(
           controller: dosageNameController,
-          decoration: AppConstants.formFieldDecoration.copyWith(
+          decoration: AppConstants.formFieldDecoration(isDark).copyWith(
             labelText: 'Schedule Name (Optional)',
           ),
         ),
         const SizedBox(height: 16),
         ListTile(
-          title: Text('Time: ${time.format(context)}'),
-          trailing: const Icon(Icons.access_time),
+          title: Text('Time: ${time.format(context)}', style: AppThemes.cardBodyStyle(isDark)),
+          trailing: const Icon(Icons.access_time, color: AppConstants.primaryColor),
           onTap: () async {
             final selectedTime = await showTimePicker(
               context: context,
@@ -68,11 +78,14 @@ class ScheduleFormFields extends StatelessWidget {
         const SizedBox(height: 16),
         DropdownButtonFormField<FrequencyType>(
           value: frequencyType,
-          decoration: AppConstants.formFieldDecoration.copyWith(
+          decoration: AppConstants.formFieldDecoration(isDark).copyWith(
             labelText: 'Frequency *',
           ),
           items: FrequencyType.values
-              .map((freq) => DropdownMenuItem(value: freq, child: Text(freq.displayName)))
+              .map((freq) => DropdownMenuItem(
+            value: freq,
+            child: Text(freq.displayName, style: const TextStyle(fontFamily: 'Poppins')),
+          ))
               .toList(),
           onChanged: onFrequencyChanged,
           validator: (value) => value == null ? 'Please select a frequency' : null,
@@ -80,10 +93,11 @@ class ScheduleFormFields extends StatelessWidget {
         const SizedBox(height: 16),
         TextFormField(
           initialValue: notificationTime?.toString(),
-          decoration: AppConstants.formFieldDecoration.copyWith(
-            labelText: 'Notification Time (Minutes Before, Optional)',
+          decoration: AppConstants.formFieldDecoration(isDark).copyWith(
+            labelText: 'Reminder (Minutes Before, Optional)',
           ),
           keyboardType: TextInputType.number,
+          validator: (value) => value != null && value.isNotEmpty ? Validators.positiveNumber(value, 'Reminder Time') : null,
           onChanged: (value) {
             onNotificationTimeChanged(int.tryParse(value));
           },

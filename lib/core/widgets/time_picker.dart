@@ -5,11 +5,13 @@ import 'package:medtrackr/app/constants.dart';
 class CustomTimePicker extends StatelessWidget {
   final TimeOfDay initialTime;
   final ValueChanged<TimeOfDay> onTimeSelected;
+  final bool isDark;
 
   const CustomTimePicker({
     super.key,
     required this.initialTime,
     required this.onTimeSelected,
+    required this.isDark,
   });
 
   @override
@@ -18,7 +20,8 @@ class CustomTimePicker extends StatelessWidget {
     int minute = initialTime.minute;
 
     return AlertDialog(
-      title: const Text('Select Time'),
+      title: const Text('Select Time', style: TextStyle(fontFamily: 'Poppins')),
+      backgroundColor: AppConstants.backgroundColor(isDark),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -27,10 +30,12 @@ class CustomTimePicker extends StatelessWidget {
             children: [
               DropdownButton<int>(
                 value: hour,
-                items: List.generate(24, (index) => DropdownMenuItem(
-                  value: index,
-                  child: Text(index.toString().padLeft(2, '0')),
-                )),
+                items: List.generate(
+                    24,
+                        (index) => DropdownMenuItem(
+                      value: index,
+                      child: Text(index.toString().padLeft(2, '0'), style: const TextStyle(fontFamily: 'Poppins')),
+                    )),
                 onChanged: (value) {
                   if (value != null) {
                     hour = value;
@@ -38,13 +43,15 @@ class CustomTimePicker extends StatelessWidget {
                   }
                 },
               ),
-              const Text(':'),
+              const Text(':', style: TextStyle(fontFamily: 'Poppins')),
               DropdownButton<int>(
                 value: minute,
-                items: List.generate(60, (index) => DropdownMenuItem(
-                  value: index,
-                  child: Text(index.toString().padLeft(2, '0')),
-                )),
+                items: List.generate(
+                    60,
+                        (index) => DropdownMenuItem(
+                      value: index,
+                      child: Text(index.toString().padLeft(2, '0'), style: const TextStyle(fontFamily: 'Poppins')),
+                    )),
                 onChanged: (value) {
                   if (value != null) {
                     minute = value;
@@ -59,12 +66,12 @@ class CustomTimePicker extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text('Cancel', style: TextStyle(color: AppConstants.accentColor(isDark), fontFamily: 'Poppins')),
         ),
         ElevatedButton(
           onPressed: () => Navigator.pop(context),
-          style: AppConstants.dialogButtonStyle,
-          child: const Text('OK'),
+          style: AppConstants.dialogButtonStyle(),
+          child: const Text('OK', style: TextStyle(fontFamily: 'Poppins')),
         ),
       ],
     );

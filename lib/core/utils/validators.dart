@@ -1,11 +1,11 @@
 // lib/core/utils/validators.dart
 class Validators {
   static String? required(String? value, [String fieldName = 'Field']) {
-    return value == null || value.isEmpty ? '$fieldName is required' : null;
+    return value == null || value.trim().isEmpty ? '$fieldName is required' : null;
   }
 
   static String? positiveNumber(String? value, [String fieldName = 'Value']) {
-    if (value == null || value.isEmpty) return '$fieldName is required';
+    if (value == null || value.trim().isEmpty) return '$fieldName is required';
     final number = double.tryParse(value);
     if (number == null || number <= 0) {
       return 'Enter a valid positive $fieldName';

@@ -20,6 +20,7 @@ dependencies:
   timezone: ^0.10.1
   intl: ^0.20.2
   table_calendar: ^3.0.8
+  workmanager: ^0.5.1
 
 
 dev_dependencies:
@@ -29,4 +30,14 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Inter-SemiBold.tff
+          weight: 600
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
 

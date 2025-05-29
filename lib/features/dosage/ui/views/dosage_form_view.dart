@@ -4,8 +4,10 @@ import 'package:provider/provider.dart';
 import 'package:medtrackr/app/constants.dart';
 import 'package:medtrackr/app/themes.dart';
 import 'package:medtrackr/app/enums.dart';
+import 'package:medtrackr/core/services/navigation_service.dart';
 import 'package:medtrackr/core/utils/format_helper.dart';
-import 'package:medtrackr/core/widgets/app_bottom_navigation_bar.dart';
+import 'package:medtrackr/core/utils/validators.dart';
+import 'package:medtrackr/core/services/theme_provider.dart';
 import 'package:medtrackr/core/widgets/dosage_form_fields.dart';
 import 'package:medtrackr/core/widgets/confirm_dosage_dialog.dart';
 import 'package:medtrackr/features/dosage/models/dosage.dart';
@@ -39,9 +41,10 @@ class _DosageFormViewState extends State<DosageFormView> {
   @override
   void initState() {
     super.initState();
+    final navigationService = Provider.of<NavigationService>(context, listen: false);
     if (widget.medication == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pushReplacementNamed(context, '/home');
+        navigationService.replaceWith('/home');
       });
       return;
     }
@@ -53,12 +56,12 @@ class _DosageFormViewState extends State<DosageFormView> {
     _doseCount = dosagePresenter.getDosagesForMedication(widget.medication!.id).length + 1;
 
     if (widget.dosage != null) {
-      _amountController.text = widget.dosage!.totalDose.toString();
+      _amountController.text = formatNumber(widget.dosage!.totalDose);
       _doseUnit = widget.dosage!.doseUnit;
       _method = widget.dosage!.method;
       _nameController.text = widget.dosage!.name;
       _tabletCountController.text = isTabletOrCapsule ? widget.dosage!.totalDose.toInt().toString() : '';
-      _iuController.text = isInjection && isReconstituted ? widget.dosage!.insulinUnits.toString() : '';
+      _iuController.text = isInjection && isReconstituted ? formatNumber(widget.dosage!.insulinUnits) : '';
     } else {
       if (isInjection && isReconstituted && recon != null) {
         final targetDose = recon['targetDose']?.toDouble() ?? 0;
@@ -79,7 +82,6 @@ class _DosageFormViewState extends State<DosageFormView> {
       }
     }
 
-    // Add listeners for real-time validation
     _tabletCountController.addListener(_validateInput);
     _iuController.addListener(_validateInput);
     _amountController.addListener(_validateInput);
@@ -145,6 +147,8 @@ class _DosageFormViewState extends State<DosageFormView> {
     }
 
     setState(() => _isSaving = true);
+    final isDark = Provider.of<ThemeProvider>(context, listen: false).isDarkMode;
+    final navigationService = Provider.of<NavigationService>(context, listen: false);
     final isTabletOrCapsule = widget.medication!.type == MedicationType.tablet || widget.medication!.type == MedicationType.capsule;
     final isInjection = widget.medication!.type == MedicationType.injection;
     final isReconstituted = widget.medication!.reconstitutionVolume > 0;
@@ -153,25 +157,52 @@ class _DosageFormViewState extends State<DosageFormView> {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          backgroundColor: AppThemes.warningBackgroundColor,
-          title: Text('Volume Required', style: AppThemes.warningTitleStyle),
-          content: Text('Non-reconstituted injections require a volume in mL.', style: AppThemes.warningContentTextStyle),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
+          backgroundColor: AppConstants.cardColor(isDark),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          contentPadding: EdgeInsets.zero,
+          content: Container(
+            decoration: AppThemes.dialogCardDecoration(isDark),
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Volume Required',
+                  style: AppThemes.dialogTitleStyle(isDark),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Non-reconstituted injections require a volume in mL.',
+                  style: AppThemes.dialogContentStyle(isDark),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(color: AppConstants.accentColor(isDark), fontFamily: 'Inter'),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: AppConstants.dialogButtonStyle(),
+                      child: const Text('Edit Medication', style: TextStyle(fontFamily: 'Inter')),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: AppConstants.dialogButtonStyle,
-              child: const Text('Edit Medication'),
-            ),
-          ],
+          ),
         ),
       );
       setState(() => _isSaving = false);
       if (confirmed == true) {
-        Navigator.pushNamed(context, '/medication_form', arguments: widget.medication);
+        navigationService.navigateTo('/medication_form', arguments: widget.medication);
       }
       return;
     }
@@ -180,7 +211,7 @@ class _DosageFormViewState extends State<DosageFormView> {
     double insulinUnits = 0.0;
     if (isTabletOrCapsule) {
       final tabletCount = double.tryParse(_tabletCountController.text) ?? 0.0;
-      amount = tabletCount; // Store tablet count directly
+      amount = tabletCount;
     } else if (isInjection && isReconstituted) {
       insulinUnits = double.tryParse(_iuController.text) ?? 0.0;
       amount = widget.medication!.selectedReconstitution != null
@@ -222,6 +253,7 @@ class _DosageFormViewState extends State<DosageFormView> {
         volume: volume,
         onConfirm: () => Navigator.pop(context, true),
         onCancel: () => Navigator.pop(context, false),
+        isDark: isDark,
       ),
     );
 
@@ -251,6 +283,8 @@ class _DosageFormViewState extends State<DosageFormView> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Provider.of<ThemeProvider>(context).isDarkMode;
+    final navigationService = Provider.of<NavigationService>(context, listen: false);
     if (widget.medication == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -258,10 +292,11 @@ class _DosageFormViewState extends State<DosageFormView> {
     final isTabletOrCapsule = widget.medication!.type == MedicationType.tablet || widget.medication!.type == MedicationType.capsule;
 
     return Scaffold(
-      backgroundColor: AppConstants.backgroundColor,
+      backgroundColor: AppConstants.backgroundColor(isDark),
       appBar: AppBar(
-        title: Text(widget.dosage == null ? 'Add Dosage' : 'Edit Dosage'),
+        title: Text(widget.dosage == null ? 'Add Dosage' : 'Edit Dosage', style: const TextStyle(fontFamily: 'Inter')),
         backgroundColor: AppConstants.primaryColor,
+        foregroundColor: Colors.white,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -273,12 +308,12 @@ class _DosageFormViewState extends State<DosageFormView> {
               children: [
                 Text(
                   'Dosage Details for ${widget.medication!.name}',
-                  style: AppConstants.cardTitleStyle.copyWith(fontSize: 20),
+                  style: AppConstants.cardTitleStyle(isDark).copyWith(fontSize: 20),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Remaining Stock: ${formatNumber(widget.medication!.remainingQuantity)} ${widget.medication!.quantityUnit.displayName}',
-                  style: AppConstants.secondaryTextStyle.copyWith(color: AppConstants.textPrimary),
+                  style: AppConstants.secondaryTextStyle(isDark).copyWith(color: AppConstants.textPrimary(isDark)),
                 ),
                 const SizedBox(height: 16),
                 DosageFormFields(
@@ -302,23 +337,24 @@ class _DosageFormViewState extends State<DosageFormView> {
                     if (value != null) setState(() => _doseUnit = value);
                   },
                   onMethodChanged: (value) => setState(() => _method = value ?? _method),
-                  onSyringeSizeChanged: (_) {}, // No-op, handled by Medication
+                  onSyringeSizeChanged: (_) {},
+                  isDark: isDark,
                 ),
                 if (_validationError != null) ...[
                   const SizedBox(height: 8),
                   Text(
                     _validationError!,
-                    style: AppThemes.reconstitutionErrorStyle,
+                    style: AppThemes.reconstitutionErrorStyle(isDark),
                   ),
                 ],
                 const SizedBox(height: 24),
                 Center(
                   child: ElevatedButton(
                     onPressed: _isSaving || !_isValid ? null : () => _saveDosage(context),
-                    style: AppConstants.actionButtonStyle,
+                    style: AppConstants.actionButtonStyle(),
                     child: _isSaving
                         ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text('Save Dosage'),
+                        : const Text('Save Dosage', style: TextStyle(fontFamily: 'Inter')),
                   ),
                 ),
               ],
@@ -326,14 +362,25 @@ class _DosageFormViewState extends State<DosageFormView> {
           ),
         ),
       ),
-      bottomNavigationBar: AppBottomNavigationBar(
+      bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
         onTap: (index) {
-          if (index == 0) Navigator.pushReplacementNamed(context, '/home');
-          if (index == 1) Navigator.pushNamed(context, '/calendar');
-          if (index == 2) Navigator.pushNamed(context, '/history');
-          if (index == 3) Navigator.pushNamed(context, '/settings');
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (index == 0) navigationService.replaceWith('/home');
+            if (index == 1) navigationService.navigateTo('/calendar');
+            if (index == 2) navigationService.navigateTo('/history');
+            if (index == 3) navigationService.navigateTo('/settings');
+          });
         },
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Calendar'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+        ],
+        backgroundColor: isDark ? AppConstants.cardColorDark : Colors.white,
+        selectedItemColor: AppConstants.primaryColor,
+        unselectedItemColor: isDark ? AppConstants.textSecondaryDark : AppConstants.textSecondaryLight,
       ),
     );
   }

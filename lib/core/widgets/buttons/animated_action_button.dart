@@ -1,5 +1,4 @@
-// In lib/core/widgets/buttons/animated_action_button.dart
-
+// lib/core/widgets/buttons/animated_action_button.dart
 import 'package:flutter/material.dart';
 import 'package:medtrackr/app/constants.dart';
 
@@ -7,12 +6,14 @@ class AnimatedActionButton extends StatelessWidget {
   final String label;
   final IconData icon;
   final VoidCallback onPressed;
+  final bool isDark;
 
   const AnimatedActionButton({
     super.key,
     required this.label,
     required this.icon,
     required this.onPressed,
+    required this.isDark,
   });
 
   @override
@@ -24,7 +25,7 @@ class AnimatedActionButton extends StatelessWidget {
         onPressed: onPressed,
         icon: Icon(icon, size: 20),
         label: Text(label, style: const TextStyle(fontSize: 14)),
-        style: AppConstants.actionButtonStyle.copyWith(
+        style: AppConstants.actionButtonStyle().copyWith(
           padding: WidgetStateProperty.all(const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0)),
         ),
       ),

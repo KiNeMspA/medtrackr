@@ -1,151 +1,126 @@
 // lib/app/enums.dart
 enum MedicationType {
-  tablet,
-  capsule,
-  injection,
-  other;
+  tablet('Tablet'),
+  capsule('Capsule'),
+  injection('Injection'),
+  other('Other');
 
-  String get displayName {
-    switch (this) {
-      case MedicationType.tablet:
-        return 'Tablet';
-      case MedicationType.capsule:
-        return 'Capsule';
-      case MedicationType.injection:
-        return 'Injection';
-      case MedicationType.other:
-        return 'Other';
-    }
-  }
-}
+  final String displayName;
 
-enum QuantityUnit {
-  g,
-  mg,
-  mcg,
-  mL,
-  iu,
-  unit,
-  tablets;
-
-  String get displayName {
-    switch (this) {
-      case QuantityUnit.g:
-        return 'g';
-      case QuantityUnit.mg:
-        return 'mg';
-      case QuantityUnit.mcg:
-        return 'mcg';
-      case QuantityUnit.mL:
-        return 'mL';
-      case QuantityUnit.iu:
-        return 'IU';
-      case QuantityUnit.unit:
-        return 'Unit';
-      case QuantityUnit.tablets:
-        return 'Tablets';
-    }
-  }
+  const MedicationType(this.displayName);
 }
 
 enum DosageMethod {
-  oral,
-  subcutaneous,
-  intramuscular,
-  intravenous,
-  intradermal,
-  other;
+  oral('Oral'),
+  subcutaneous('Subcutaneous'),
+  intramuscular('Intramuscular'),
+  intravenous('Intravenous'),
+  intradermal('Intradermal'),
+  other('Other');
 
-  String get displayName {
-    switch (this) {
-      case DosageMethod.oral:
-        return 'Oral';
-      case DosageMethod.subcutaneous:
-        return 'Subcutaneous';
-      case DosageMethod.intramuscular:
-        return 'Intramuscular';
-      case DosageMethod.intravenous:
-        return 'Intravenous';
-      case DosageMethod.intradermal:
-        return 'Intradermal';
-      case DosageMethod.other:
-        return 'Other';
-    }
-  }
+  final String displayName;
+
+  const DosageMethod(this.displayName);
+
+  bool get isInjection => this != oral && this != other;
+}
+
+enum QuantityUnit {
+  mg('mg'),
+  g('g'),
+  mcg('mcg'),
+  mL('mL'),
+  tablets('tablets'),
+  unit('unit'),
+  iu('IU');
+
+  final String displayName;
+
+  const QuantityUnit(this.displayName);
+}
+
+enum TargetDoseUnit {
+  mcg('mcg'),
+  mg('mg'),
+  g('g');
+
+  final String displayName;
+
+  const TargetDoseUnit(this.displayName);
+}
+
+enum FluidUnit {
+  mL('mL', 1.0),
+  L('L', 1000.0);
+
+  final String displayName;
+  final double toMLFactor;
+
+  const FluidUnit(this.displayName, this.toMLFactor);
 }
 
 enum SyringeSize {
-  size0_3(value: 0.3),
-  size0_5(value: 0.5),
-  size1_0(value: 1.0),
-  size3_0(value: 3.0),
-  size5_0(value: 5.0);
+  size0_3('0.3 mL'),
+  size0_5('0.5 mL'),
+  size1_0('1.0 mL'),
+  size3_0('3.0 mL');
 
-  final double value;
+  final String displayName;
 
-  const SyringeSize({required this.value});
+  const SyringeSize(this.displayName);
 
-  String get displayName {
-    return '${value.toStringAsFixed(1)} mL';
+  double get value => double.parse(displayName.split(' ').first);
+
+  double get maxVolume {
+    switch (this) {
+      case SyringeSize.size0_3:
+        return 0.3;
+      case SyringeSize.size0_5:
+        return 0.5;
+      case SyringeSize.size1_0:
+        return 1.0;
+      case SyringeSize.size3_0:
+        return 3.0;
+    }
+  }
+
+  double get maxIU {
+    switch (this) {
+      case SyringeSize.size0_3:
+        return 30.0;
+      case SyringeSize.size0_5:
+        return 50.0;
+      case SyringeSize.size1_0:
+        return 100.0;
+      case SyringeSize.size3_0:
+        return 300.0;
+    }
   }
 }
 
 enum FrequencyType {
-  hourly,
-  daily,
-  weekly,
-  monthly;
+  once('Once'),
+  hourly('Hourly'),
+  daily('Daily'),
+  weekly('Weekly'),
+  monthly('Monthly');
 
-  String get displayName {
+  final String displayName;
+
+  const FrequencyType(this.displayName);
+
+  Duration get duration {
     switch (this) {
+      case FrequencyType.once:
+        return const Duration(minutes: 1);
       case FrequencyType.hourly:
-        return 'Hourly';
+        return const Duration(hours: 1);
       case FrequencyType.daily:
-        return 'Daily';
+        return const Duration(days: 1);
       case FrequencyType.weekly:
-        return 'Weekly';
+        return const Duration(days: 7);
       case FrequencyType.monthly:
-        return 'Monthly';
-    }
-  }
-}
-
-enum FluidUnit {
-  mL,
-  L;
-
-  String get displayName {
-    switch (this) {
-      case FluidUnit.mL:
-        return 'mL';
-      case FluidUnit.L:
-        return 'L';
-    }
-  }
-
-  double get toMLFactor {
-    switch (this) {
-      case FluidUnit.mL:
-        return 1.0;
-      case FluidUnit.L:
-        return 1000.0;
-    }
-  }
-}
-
-enum TargetDoseUnit {
-  g,
-  mg,
-  mcg;
-
-  String get displayName {
-    switch (this) {
-      case TargetDoseUnit.g:
-        return 'g';
-      case TargetDoseUnit.mg:
-        return 'mg';
-      case TargetDoseUnit.mcg:
-        return 'mcg';
+        return const Duration(days: 30);
     }
   }
 }

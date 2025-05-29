@@ -18,6 +18,7 @@ class ConfirmDosageDialog extends StatelessWidget {
   final double volume;
   final VoidCallback onConfirm;
   final VoidCallback onCancel;
+  final bool isDark;
 
   const ConfirmDosageDialog({
     super.key,
@@ -31,56 +32,123 @@ class ConfirmDosageDialog extends StatelessWidget {
     required this.volume,
     required this.onConfirm,
     required this.onCancel,
+    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      backgroundColor: AppConstants.cardColor(isDark),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       contentPadding: EdgeInsets.zero,
       content: Container(
-        width: MediaQuery.of(context).size.width * 0.85,
-        decoration: AppThemes.dialogCardDecoration,
+        decoration: AppThemes.dialogCardDecoration(isDark),
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Confirm Dosage', style: AppThemes.dialogTitleStyle),
+            Text(
+              'Confirm Dosage',
+              style: AppThemes.dialogTitleStyle(isDark),
+            ),
             const SizedBox(height: 12),
+            Icon(
+              isTabletOrCapsule ? Icons.tablet : Icons.syringe,
+              size: 36,
+              color: AppConstants.primaryColor,
+            ),
+            const SizedBox(height: 8),
             RichText(
               text: TextSpan(
-                style: AppThemes.dialogContentStyle,
+                style: AppThemes.dialogContentStyle(isDark),
                 children: [
-                  const TextSpan(text: 'Dosage: ', style: TextStyle(fontWeight: FontWeight.w600)),
-                  TextSpan(text: dosage.name),
-                  const TextSpan(text: '\n'),
-                  const TextSpan(text: 'Amount: ', style: TextStyle(fontWeight: FontWeight.w600)),
+                  const TextSpan(text: 'Dosage: '),
                   TextSpan(
-                    text: isTabletOrCapsule
-                        ? '${formatNumber(amount)} ${medication.type == MedicationType.tablet ? 'tablets' : 'capsules'}'
-                        : isReconstituted
-                        ? '${formatNumber(insulinUnits)} IU'
-                        : '${formatNumber(amount)} ${dosage.doseUnit}',
-                    style: TextStyle(color: AppConstants.primaryColor),
+                    text: dosage.name,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  if (isInjection) ...[
-                    const TextSpan(text: '\n'),
-                    const TextSpan(text: 'Volume: ', style: TextStyle(fontWeight: FontWeight.w600)),
-                    TextSpan(
-                      text: '${formatNumber(volume)} mL',
-                      style: TextStyle(color: AppConstants.primaryColor),
-                    ),
-                  ],
-                  const TextSpan(text: '\n'),
-                  const TextSpan(text: 'Method: ', style: TextStyle(fontWeight: FontWeight.w600)),
-                  TextSpan(text: dosage.method.displayName),
-                  const TextSpan(text: '\n'),
-                  const TextSpan(text: 'Medication: ', style: TextStyle(fontWeight: FontWeight.w600)),
-                  TextSpan(text: medication.name),
                 ],
               ),
+            ),
+            RichText(
+              text: TextSpan(
+                style: AppThemes.dialogContentStyle(isDark),
+                children: [
+                  const TextSpan(text: 'Method: '),
+                  TextSpan(
+                    text: dosage.method.displayName,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+            if (isTabletOrCapsule) ...[
+              RichText(
+                text: TextSpan(
+                  style: AppThemes.dialogContentStyle(isDark),
+                  children: [
+                    const TextSpan(text: 'Tablets: '),
+                    TextSpan(
+                      text: formatNumber(amount),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            if (isInjection && isReconstituted) ...[
+              RichText(
+                text: TextSpan(
+                  style: AppThemes.dialogContentStyle(isDark),
+                  children: [
+                    const TextSpan(text: 'IU: '),
+                    TextSpan(
+                      text: formatNumber(insulinUnits),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const TextSpan(text: ' ('),
+                    TextSpan(
+                      text: formatNumber(amount),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const TextSpan(text: ' mg)'),
+                  ],
+                ),
+              ),
+              RichText(
+                text: TextSpan(
+                  style: AppThemes.dialogContentStyle(isDark),
+                  children: [
+                    const TextSpan(text: 'Volume: '),
+                    TextSpan(
+                      text: formatNumber(volume),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const TextSpan(text: ' mL'),
+                  ],
+                ),
+              ),
+            ],
+            if (isInjection && !isReconstituted) ...[
+              RichText(
+                text: TextSpan(
+                  style: AppThemes.dialogContentStyle(isDark),
+                  children: [
+                    const TextSpan(text: 'Volume: '),
+                    TextSpan(
+                      text: formatNumber(amount),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const TextSpan(text: ' mL'),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            Text(
+              'Verify dosage details before saving.',
+              style: AppThemes.dialogContentStyle(isDark).copyWith(color: AppConstants.errorColor),
             ),
             const SizedBox(height: 16),
             Row(
@@ -90,44 +158,20 @@ class ConfirmDosageDialog extends StatelessWidget {
                   onPressed: onCancel,
                   child: Text(
                     'Cancel',
-                    style: TextStyle(
-                      color: AppConstants.accentColor,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: AppConstants.accentColor(isDark), fontFamily: 'Inter'),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 16),
                 ElevatedButton(
                   onPressed: onConfirm,
-                  style: AppConstants.dialogButtonStyle,
-                  child: const Text('Confirm'),
+                  style: AppConstants.dialogButtonStyle(),
+                  child: const Text('Confirm', style: TextStyle(fontFamily: 'Inter')),
                 ),
               ],
             ),
           ],
         ),
       ),
-      actionsAlignment: MainAxisAlignment.center,
-      actions: [
-        TextButton(
-          onPressed: onCancel,
-          child: Text(
-            'Cancel',
-            style: TextStyle(
-              color: AppConstants.accentColor,
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        ElevatedButton(
-          onPressed: onConfirm,
-          style: AppConstants.dialogButtonStyle,
-          child: const Text('Confirm'),
-        ),
-      ],
     );
   }
 }

@@ -7,6 +7,7 @@ class DialogActions extends StatelessWidget {
   final VoidCallback onCancel;
   final String confirmText;
   final String cancelText;
+  final bool isDark;
 
   const DialogActions({
     super.key,
@@ -14,6 +15,7 @@ class DialogActions extends StatelessWidget {
     required this.onCancel,
     this.confirmText = 'Confirm',
     this.cancelText = 'Cancel',
+    required this.isDark,
   });
 
   @override
@@ -26,7 +28,7 @@ class DialogActions extends StatelessWidget {
           child: Text(
             cancelText,
             style: TextStyle(
-              color: AppConstants.accentColor,
+              color: AppConstants.accentColor(isDark),
               fontWeight: FontWeight.w600,
               fontSize: 14,
             ),
@@ -35,7 +37,7 @@ class DialogActions extends StatelessWidget {
         const SizedBox(width: 8),
         ElevatedButton(
           onPressed: onConfirm,
-          style: AppConstants.dialogButtonStyle,
+          style: AppConstants.dialogButtonStyle(),
           child: Text(confirmText),
         ),
       ],

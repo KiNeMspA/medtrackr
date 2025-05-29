@@ -42,8 +42,9 @@ class Dosage {
     medicationId: json['medicationId'],
     name: json['name'],
     method: DosageMethod.values.firstWhere(
-            (e) => e.displayName == json['method'],
-        orElse: () => DosageMethod.subcutaneous),
+          (e) => e.displayName == json['method'],
+      orElse: () => DosageMethod.oral,
+    ),
     doseUnit: json['doseUnit'],
     totalDose: json['totalDose'].toDouble(),
     volume: json['volume'].toDouble(),
@@ -61,16 +62,15 @@ class Dosage {
     double? volume,
     double? insulinUnits,
     DateTime? takenTime,
-  }) =>
-      Dosage(
-        id: id ?? this.id,
-        medicationId: medicationId ?? this.medicationId,
-        name: name ?? this.name,
-        method: method ?? this.method,
-        doseUnit: doseUnit ?? this.doseUnit,
-        totalDose: totalDose ?? this.totalDose,
-        volume: volume ?? this.volume,
-        insulinUnits: insulinUnits ?? this.insulinUnits,
-        takenTime: takenTime ?? this.takenTime,
-      );
+  }) => Dosage(
+    id: id ?? this.id,
+    medicationId: medicationId ?? this.medicationId,
+    name: name ?? this.name,
+    method: method ?? this.method,
+    doseUnit: doseUnit ?? this.doseUnit,
+    totalDose: totalDose ?? this.totalDose,
+    volume: volume ?? this.volume,
+    insulinUnits: insulinUnits ?? this.insulinUnits,
+    takenTime: takenTime ?? this.takenTime,
+  );
 }
