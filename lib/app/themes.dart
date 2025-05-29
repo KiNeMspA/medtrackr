@@ -123,7 +123,7 @@ class AppThemes {
 
   // Restored styles previously removed
   static BoxDecoration stockCardDecoration(bool isDark) => BoxDecoration(
-    color: cardColor(isDark),
+    color: AppConstants.cardColor(isDark),
     borderRadius: BorderRadius.circular(12),
     boxShadow: [
       BoxShadow(
