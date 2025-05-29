@@ -56,13 +56,9 @@ class _HomeViewState extends State<HomeView> {
 
     return NavigationWrapper(
       currentIndex: 0,
+
       child: Padding(
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => Navigator.pushNamed(context, '/medication_form'),
-          backgroundColor: AppConstants.primaryColor,
-          child: const Icon(Icons.add),
-          tooltip: 'Add Medication',
-        ),
+
         padding: const EdgeInsets.all(12.0),
         child: medications.isEmpty
             ? Center(
@@ -108,6 +104,12 @@ class _HomeViewState extends State<HomeView> {
               elevation: 2,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8)),
+              floatingActionButton: FloatingActionButton(
+                onPressed: () => Navigator.pushNamed(context, '/medication_form'),
+                backgroundColor: AppConstants.primaryColor,
+                child: const Icon(Icons.add),
+                tooltip: 'Add Medication',
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(12.0),
                 child: Column(
@@ -232,12 +234,7 @@ class _HomeViewState extends State<HomeView> {
                                           borderRadius: BorderRadius.circular(
                                               6),
                                         ),
-                                        floatingActionButton: FloatingActionButton(
-                                          onPressed: () => Navigator.pushNamed(context, '/medication_form'),
-                                          backgroundColor: AppConstants.primaryColor,
-                                          child: const Icon(Icons.add),
-                                          tooltip: 'Add Medication',
-                                        ),
+
                                         height: 60,
                                         child: ListTile(
                                           dense: true,

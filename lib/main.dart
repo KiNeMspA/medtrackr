@@ -42,26 +42,9 @@ class MyApp extends StatelessWidget {
           create: (_) => MedicationPresenter(MedicationRepository(DatabaseService()), NotificationService()),
           update: (_, repo, notif, __) => MedicationPresenter(repo, notif)..loadMedications(),
         ),
-        ChangeNotifierProxyProvider3<DosageRepository, MedicationPresenter, NotificationService, DosagePresenter>(
-          create: (_) => DosagePresenter(
-            repository: DosageRepository(DatabaseService()),
-            medicationPresenter: MedicationPresenter(MedicationRepository(DatabaseService()), NotificationService()),
-            notificationService: NotificationService(),
-          ),
-          update: (_, repo, medPresenter, notif, __) => DosagePresenter(
-            repository: repo,
-            medicationPresenter: medPresenter,
-            notificationService: notif,
-          )..loadDosages(),
-        ),
-        ChangeNotifierProxyProvider3<ScheduleRepository, NotificationService, DosagePresenter, SchedulePresenter>(
+        ChangeNotifierProxyProvider2<ScheduleRepository, NotificationService, SchedulePresenter>(
           create: (_) => SchedulePresenter(ScheduleRepository(DatabaseService()), NotificationService()),
-          update: (_, repo, notif, dosagePresenter, __) {
-            final presenter = SchedulePresenter(repo, notif);
-            presenter.setDependencies(dosagePresenter.medicationPresenter.medications, dosagePresenter.dosages);
-            presenter.loadSchedules();
-            return presenter;
-          },
+          update: (_, repo, notif, __) => SchedulePresenter(repo, notif)..loadSchedules(),
         ),
       ],
       child: MaterialApp(

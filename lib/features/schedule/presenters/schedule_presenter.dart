@@ -9,6 +9,12 @@ import 'package:medtrackr/features/schedule/data/repos/schedule_repository.dart'
 
 class SchedulePresenter with ChangeNotifier {
   bool _isDisposed = false;
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
   final ScheduleRepository _repository;
   final NotificationService _notificationService;
   List<Schedule> _schedules = [];
@@ -69,7 +75,6 @@ class SchedulePresenter with ChangeNotifier {
     }
   }
 
-  bool _isDisposed = false;
   @override
   void dispose() {
     _isDisposed = true;
@@ -146,9 +151,5 @@ class SchedulePresenter with ChangeNotifier {
   Future<void> cancelDose(String scheduleId) async {
     await deleteSchedule(scheduleId);
   }
-  @override
-  void dispose() {
-    _isDisposed = true;
-    super.dispose();
-  }
+
 }

@@ -49,11 +49,10 @@ class AppRoutes {
                 medication: args['medication'] as Medication,
                 dosage: args['dosage'] as Dosage?,
               ));
-        }
-        return MaterialPageRoute(builder: (_) => const HomeView());
-      case scheduleForm:
+        }case scheduleForm:
       case addSchedule:
-        final medication = settings.arguments as Medication? ??
+        final args = settings.arguments as Map<String, dynamic>?;
+        final medication = args?['medication'] as Medication? ??
             Medication(
               id: '',
               name: '',
@@ -66,8 +65,10 @@ class AppRoutes {
               reconstitutionFluid: '',
               notes: '',
             );
+        final schedule = args?['schedule'] as Schedule?;
         return MaterialPageRoute(
-            builder: (_) => ScheduleFormView(medication: medication));
+          builder: (_) => ScheduleFormView(medication: medication, schedule: schedule),
+        );
       case reconstitute:
         final medication = settings.arguments as Medication;
         return MaterialPageRoute(
