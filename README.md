@@ -145,6 +145,14 @@ Below is the restructured folder structure, detailing where each file type/opera
   - Removed non-constant `scrollbarTheme` from `themes.dart` to fix build errors.
   - Enhanced `schedule_form_view.dart` for proper schedule editing initialization.
   - Progressed verification checklist: confirmed data persistence, fixed dosage labels, notifications toggle, multiple schedules display, and scheduling functionality.
+
+### Dynamic Validation Warnings (May 28, 2025, 9:22 PM AEST)
+- **Commit**: `8221e170c72b7656048de81f45a87aa655ad86f3`
+- **Details**:
+  - Implemented dynamic validation warnings in `dosage_form_view.dart` for dosage amounts exceeding remaining stock, with real-time error display and save button disabling.
+  - Added dynamic validation warnings in `reconstitution_view.dart` for fluid amount (0.5–99 mL) and target dose, with real-time error display and save button disabling.
+  - Ensured code reuse with `format_helper.dart`, `validators.dart`, and `themes.dart`, respecting folder structure (`lib/app`, `lib/core`, `lib/features`).
+  - Progressed verification checklist: completed dynamic validation for dosage tracking and reconstitution.
   
   
   

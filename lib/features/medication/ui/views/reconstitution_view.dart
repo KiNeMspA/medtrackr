@@ -30,7 +30,8 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
   Map<String, dynamic>? _selectedReconstitution;
   List<Map<String, dynamic>> _reconstitutionSuggestions = [];
   bool _isSaving = false;
-  String? _calculationError;
+  String? _validationError;
+  bool _isValid = true;
 
   @override
   void initState() {
@@ -68,6 +69,10 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
       orElse: () => FluidUnit.mL,
     )
         : FluidUnit.mL;
+
+    // Add listeners for real-time validation
+    _fluidAmountController.addListener(_validateInput);
+    _targetDoseController.addListener(_validateInput);
     _calculateReconstitutionSuggestions();
   }
 
@@ -79,9 +84,31 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
     super.dispose();
   }
 
+  void _validateInput() {
+    setState(() {
+      _validationError = null;
+      _isValid = true;
+
+      final fluidAmount = double.tryParse(_fluidAmountController.text) ?? 0.0;
+      if (fluidAmount < 0.5 || fluidAmount > 99) {
+        _validationError = 'Fluid amount must be between 0.5 and 99 mL';
+        _isValid = false;
+      }
+
+      final targetDose = double.tryParse(_targetDoseController.text) ?? 0.0;
+      if (targetDose > 0 && _selectedReconstitution != null) {
+        final totalDoses = (widget.medication.quantity * 1000) / targetDose;
+        if (totalDoses < 1) {
+          _validationError = 'Target dose too high for available quantity';
+          _isValid = false;
+        }
+      }
+    });
+  }
+
   Future<void> _saveReconstitution(BuildContext context) async {
-    if (_targetDoseController.text.isEmpty || _fluidAmountController.text.isEmpty || _selectedReconstitution == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill all required fields')));
+    if (!_isValid) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please correct the input errors')));
       return;
     }
 
@@ -171,13 +198,14 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
 
   void _calculateReconstitutionSuggestions() {
     final fluidAmount = double.tryParse(_fluidAmountController.text) ?? 0;
-    if (fluidAmount < 0.5 || fluidAmount > 10) {
+    if (fluidAmount < 0.5 || fluidAmount > 99) {
       setState(() {
-        _calculationError = 'Fluid amount must be between 0.5 and 10 mL. Adjust the value.';
+        _validationError = 'Fluid amount must be between 0.5 and 99 mL';
+        _isValid = false;
       });
       return;
     }
-    setState(() => _calculationError = null);
+    setState(() => _validationError = null);
 
     final calculator = ReconstitutionCalculator(
       quantityController: TextEditingController(text: widget.medication.quantity.toString()),
@@ -198,14 +226,15 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
       _reconstitutionSuggestions = result['suggestions'];
       _selectedReconstitution = result['selectedReconstitution'];
       if (result['error'] != null && context.mounted) {
-        _calculationError = result['error'];
+        _validationError = result['error'];
+        _isValid = false;
       }
     });
   }
 
   void _adjustFluidVolume(double delta) {
     final current = double.tryParse(_fluidAmountController.text) ?? 2;
-    final newVolume = (current + delta).clamp(0.5, 10.0);
+    final newVolume = (current + delta).clamp(0.5, 99.0);
     _fluidAmountController.text = formatNumber(newVolume);
     _calculateReconstitutionSuggestions();
   }
@@ -356,6 +385,13 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
                           ),
                         ],
                       ),
+                      if (_validationError != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          _validationError!,
+                          style: AppThemes.reconstitutionErrorStyle,
+                        ),
+                      ],
                       const SizedBox(height: 16),
                       DropdownButtonFormField<SyringeSize>(
                         value: _syringeSize,
@@ -380,14 +416,6 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
                         'Formula: (${formatNumber(widget.medication.quantity)} ${widget.medication.quantityUnit.displayName} * 1000) / ${_fluidAmountController.text} ${_fluidVolumeUnit.displayName} = ${formatNumber((widget.medication.quantity * 1000) / ((double.tryParse(_fluidAmountController.text) ?? 1) * _fluidVolumeUnit.toMLFactor))} mcg/mL',
                         style: AppThemes.compactMedicationCardContentStyle.copyWith(color: Colors.grey),
                       ),
-                      if (_calculationError != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            _calculationError!,
-                            style: AppThemes.reconstitutionErrorStyle,
-                          ),
-                        ),
                       const SizedBox(height: 16),
                       Text(
                         'Reconstitution Options',
@@ -445,7 +473,7 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
                       const SizedBox(height: 24),
                       Center(
                         child: ElevatedButton(
-                          onPressed: _isSaving ? null : () => _saveReconstitution(context),
+                          onPressed: _isSaving || !_isValid ? null : () => _saveReconstitution(context),
                           style: AppConstants.actionButtonStyle,
                           child: _isSaving
                               ? const CircularProgressIndicator(color: Colors.white)
@@ -464,9 +492,9 @@ class _ReconstitutionViewState extends State<ReconstitutionView> {
         currentIndex: 0,
         onTap: (index) {
           if (index == 0) Navigator.pushReplacementNamed(context, '/home');
-          if (index == 1) Navigator.pushReplacementNamed(context, '/calendar');
-          if (index == 2) Navigator.pushReplacementNamed(context, '/history');
-          if (index == 3) Navigator.pushReplacementNamed(context, '/settings');
+          if (index == 1) Navigator.pushNamed(context, '/calendar');
+          if (index == 2) Navigator.pushNamed(context, '/history');
+          if (index == 3) Navigator.pushNamed(context, '/settings');
         },
       ),
     );

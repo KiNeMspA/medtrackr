@@ -33,6 +33,8 @@ class _DosageFormViewState extends State<DosageFormView> {
   DosageMethod _method = DosageMethod.oral;
   bool _isSaving = false;
   int _doseCount = 0;
+  String? _validationError;
+  bool _isValid = true;
 
   @override
   void initState() {
@@ -76,6 +78,11 @@ class _DosageFormViewState extends State<DosageFormView> {
         _nameController.text = 'Dose $_doseCount';
       }
     }
+
+    // Add listeners for real-time validation
+    _tabletCountController.addListener(_validateInput);
+    _iuController.addListener(_validateInput);
+    _amountController.addListener(_validateInput);
   }
 
   @override
@@ -87,8 +94,61 @@ class _DosageFormViewState extends State<DosageFormView> {
     super.dispose();
   }
 
+  void _validateInput() {
+    final isTabletOrCapsule = widget.medication!.type == MedicationType.tablet || widget.medication!.type == MedicationType.capsule;
+    final isInjection = widget.medication!.type == MedicationType.injection;
+    final isReconstituted = widget.medication!.reconstitutionVolume > 0;
+    setState(() {
+      _validationError = null;
+      _isValid = true;
+
+      if (isTabletOrCapsule) {
+        final tabletCount = double.tryParse(_tabletCountController.text) ?? 0.0;
+        final dosePerUnit = widget.medication!.type == MedicationType.tablet
+            ? widget.medication!.dosePerTablet
+            : widget.medication!.dosePerCapsule;
+        if (tabletCount <= 0 || dosePerUnit == null) {
+          _validationError = 'Invalid ${widget.medication!.type == MedicationType.tablet ? "tablet" : "capsule"} count or dose per unit';
+          _isValid = false;
+        } else {
+          final amount = tabletCount * dosePerUnit;
+          if (amount > widget.medication!.remainingQuantity) {
+            _validationError = 'Dosage exceeds remaining stock (${formatNumber(widget.medication!.remainingQuantity)} ${widget.medication!.quantityUnit.displayName})';
+            _isValid = false;
+          }
+        }
+      } else if (isInjection && isReconstituted) {
+        final insulinUnits = double.tryParse(_iuController.text) ?? 0.0;
+        if (insulinUnits <= 0) {
+          _validationError = 'Invalid IU amount';
+          _isValid = false;
+        } else {
+          final amount = widget.medication!.selectedReconstitution != null
+              ? insulinUnits * (widget.medication!.selectedReconstitution!['concentration']?.toDouble() ?? 1.0) / 100
+              : 0.0;
+          if (amount > widget.medication!.remainingQuantity) {
+            _validationError = 'Dosage exceeds remaining stock (${formatNumber(widget.medication!.remainingQuantity)} mg)';
+            _isValid = false;
+          }
+        }
+      } else {
+        final amount = double.tryParse(_amountController.text) ?? 0.0;
+        if (amount <= 0) {
+          _validationError = 'Invalid dosage amount';
+          _isValid = false;
+        } else if (amount > widget.medication!.remainingQuantity) {
+          _validationError = 'Dosage exceeds remaining stock (${formatNumber(widget.medication!.remainingQuantity)} ${widget.medication!.quantityUnit.displayName})';
+          _isValid = false;
+        }
+      }
+    });
+  }
+
   Future<void> _saveDosage(BuildContext context) async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate() || !_isValid) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please correct the input errors')));
+      return;
+    }
 
     setState(() => _isSaving = true);
     final isTabletOrCapsule = widget.medication!.type == MedicationType.tablet || widget.medication!.type == MedicationType.capsule;
@@ -104,8 +164,9 @@ class _DosageFormViewState extends State<DosageFormView> {
           content: Text('Non-reconstituted injections require a volume in mL.', style: AppThemes.warningContentTextStyle),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel')),
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               style: AppConstants.dialogButtonStyle,
@@ -125,29 +186,17 @@ class _DosageFormViewState extends State<DosageFormView> {
     double insulinUnits = 0.0;
     if (isTabletOrCapsule) {
       final tabletCount = double.tryParse(_tabletCountController.text) ?? 0.0;
-      if (tabletCount <= 0 || widget.medication!.dosePerTablet == null) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Invalid tablet count or dose per tablet')));
-        setState(() => _isSaving = false);
-        return;
-      }
-      amount = tabletCount * widget.medication!.dosePerTablet!;
+      final dosePerUnit = widget.medication!.type == MedicationType.tablet
+          ? widget.medication!.dosePerTablet
+          : widget.medication!.dosePerCapsule;
+      amount = tabletCount * dosePerUnit!;
     } else if (isInjection && isReconstituted) {
       insulinUnits = double.tryParse(_iuController.text) ?? 0.0;
-      if (insulinUnits <= 0) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Invalid IU amount')));
-        setState(() => _isSaving = false);
-        return;
-      }
       amount = widget.medication!.selectedReconstitution != null
           ? insulinUnits * (widget.medication!.selectedReconstitution!['concentration']?.toDouble() ?? 1.0) / 100
           : 0.0;
     } else {
       amount = double.tryParse(_amountController.text) ?? 0.0;
-      if (amount <= 0) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Invalid dosage amount')));
-        setState(() => _isSaving = false);
-        return;
-      }
     }
 
     double volume = 0.0;
@@ -259,10 +308,17 @@ class _DosageFormViewState extends State<DosageFormView> {
                   onMethodChanged: (value) => setState(() => _method = value ?? _method),
                   onSyringeSizeChanged: (_) {}, // No-op, handled by Medication
                 ),
+                if (_validationError != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    _validationError!,
+                    style: AppThemes.reconstitutionErrorStyle,
+                  ),
+                ],
                 const SizedBox(height: 24),
                 Center(
                   child: ElevatedButton(
-                    onPressed: _isSaving ? null : () => _saveDosage(context),
+                    onPressed: _isSaving || !_isValid ? null : () => _saveDosage(context),
                     style: AppConstants.actionButtonStyle,
                     child: _isSaving
                         ? const CircularProgressIndicator(color: Colors.white)
@@ -278,9 +334,9 @@ class _DosageFormViewState extends State<DosageFormView> {
         currentIndex: 0,
         onTap: (index) {
           if (index == 0) Navigator.pushReplacementNamed(context, '/home');
-          if (index == 1) Navigator.pushReplacementNamed(context, '/calendar');
-          if (index == 2) Navigator.pushReplacementNamed(context, '/history');
-          if (index == 3) Navigator.pushReplacementNamed(context, '/settings');
+          if (index == 1) Navigator.pushNamed(context, '/calendar');
+          if (index == 2) Navigator.pushNamed(context, '/history');
+          if (index == 3) Navigator.pushNamed(context, '/settings');
         },
       ),
     );
